@@ -1,0 +1,221 @@
+# GUI
+gui:
+  # Window layout
+  expandFocusedSidePanel: true
+  mainPanelSplitMode: flexible # horizontal / vertical / flexible
+  enlargedSideViewLocation: left
+  sidePanelWidth: 0.25
+  # Theme — integrates well with WezTerm
+  nerdFontsVersion: "3"
+  border: rounded
+  theme:
+    activeBorderColor: [yellow, bold] # gruvbox yellow
+    inactiveBorderColor: [white]
+    selectedLineBgColor: [default]
+    cherryPickedCommitBgColor: [cyan]
+    cherryPickedCommitFgColor: [blue]
+    unstagedChangesColor: [red]
+  # Behaviour
+  mouseEvents: true
+  skipDiscardChangeWarning: false
+  skipStashWarning: false
+  showFileTree: true # group files by directory
+  showListFooter: true
+  showRandomTip: false
+  showCommandLog: true
+  commandLogSize: 8
+  splitDiff: auto # auto / always
+  # Time format
+  timeFormat: "2006-01-02 15:04"
+  shortTimeFormat: "15:04"
+# Git behaviour
+# git:
+#   pagers:
+#     - colorArg: always
+#       pager: delta --dark --line-numbers --side-by-side # requires delta
+#   commit:
+#     signOff: false
+#     verbose: always # show diff in commit editor
+#   merging:
+#     manualCommit: false
+#     args: ""
+#   log:
+#     order: topo-order # topo-order / date-order / author-date-order
+#     showGraph: when-maximised # always / never / whenMaximised
+#     showWholeGraph: false
+#   pull:
+#     mode: rebase # merge / rebase / ff-only
+#   push:
+#     skipForcePushWarning: false
+#   branchLogCmd: >
+#     git log --graph --color=always --abbrev-commit --decorate --date=relative --pretty=medium {{branchName}} --
+#
+#   autoFetch: true
+#   autoRefresh: true
+#   fetchAll: true
+#   autoStageResolvedConflicts: true
+#   parseEmoji: true
+#   overrideGpg: false
+#   disableForcePushing: false
+#   allBranchesLogCmds:
+#     - |
+#       git log --graph --color=always --abbrev-commit --decorate --date=relative --pretty=medium --all
+# OS integration
+os:
+  # Open files from lazygit directly in your editor
+  edit: "nvim {{filename}}" # change to code, hx, etc.
+  editAtLine: "nvim +{{line}} {{filename}}"
+  editAtLineAndWait: "nvim +{{line}} {{filename}}"
+  open: "xdg-open {{link}}"
+# ── Refreshing ───────────────────────────────────────────────
+refresher:
+  refreshInterval: 10
+  fetchInterval: 60
+# ── Update ───────────────────────────────────────────────────
+update:
+  method: prompt # prompt / always / never
+  days: 14
+# # # ── Keybindings ──────────────────────────────────────────────
+# # keybinding:
+# #   universal:
+# #     quit: q
+# #     quit-alt1: <c-c>
+# #     return: <esc>
+# #     nextItem: j
+# #     prevItem: k
+# #     nextPage: <c-d>
+# #     prevPage: <c-u>
+# #     gotoTop: gg
+# #     gotoBottom: G
+# #     scrollLeft: H
+# #     scrollRight: L
+# #     prevBlock: <left>
+# #     nextBlock: <right>
+# #     prevBlock-alt: '['
+# #     nextBlock-alt: ']'
+# #     openRecentRepos: <c-r>
+# #     createRebaseOptionsMenu: <m-r>
+# #     submitEditorText: <enter>
+# #     extrasMenu: '@'
+# #     toggleWhitespaceInDiffView: <c-w>
+# #     increaseContextInDiffView: '}'
+# #     decreaseContextInDiffView: '{'
+# #     openDiffTool: <m-enter>
+# #   files:
+# #     commitChanges: c
+# #     commitChangesWithoutHook: C
+# #     amendLastCommit: A
+# #     commitChangesWithEditor: '<c-e>'
+# #     findBaseCommitForFixup: '<c-b>'
+# #     confirmDiscard: x
+# #     ignoreFile: i
+# #     refreshFiles: r
+# #     stashAllChanges: s
+# #     viewStashOptions: S
+# #     toggleStagedAll: a
+# #     viewResetOptions: D
+# #     fetch: f
+# #     toggleTreeView: '`'
+# #     openMergeTool: M
+# #     openStatusFilter: '<c-b>'
+# #   branches:
+# #     createPullRequest: o
+# #     viewPullRequestOptions: O
+# #     checkoutBranchByName: '<c-y>'
+# #     forceCheckoutBranch: F
+# #     rebaseBranch: r
+# #     renameBranch: R
+# #     mergeIntoCurrentBranch: M
+# #     viewGitFlowOptions: i
+# #     fastForward: f
+# #     createTag: T
+# #     pushTag: P
+# #     setUpstream: u
+# #     fetchRemote: f
+# #   commits:
+# #     squashDown: s
+# #     renameCommit: r
+# #     renameCommitWithEditor: R
+# #     viewResetOptions: g
+# #     markAsBaseCommit: B
+# #     amendToCommit: A
+# #     amendAttributeOfCommit: a
+# #     pickCommit: p
+# #     revertCommit: t
+# #     cherryPickCopyRange: '<c-r>'
+# #     pasteCommits: v
+# #     createFixupCommit: f
+# #     squashAboveCommits: F
+# #     moveDownCommit: '<c-j>'
+# #     moveUpCommit: '<c-k>'
+# #     diffCommit: '<enter>'
+# #     tagCommit: T
+# #     checkoutCommit: '<space>'
+# #     resetCherryPick: '<c-c>'
+# #     copyCommitAttributeToClipboard: y
+# #     openLogMenu: '<c-l>'
+# #     openInBrowser: o
+# #     viewBisectOptions: b
+# #   stash:
+# #     popStash: p
+# #     renameStash: r
+# #   worktrees:
+# #     viewWorktreeOptions: w
+# # # ── Custom commands (developer workflow) ─────────────────────
+# # customCommands:
+# #   # # Conventional commit helper
+# #   # - key: "<c-m>"
+# #   #   context: files
+# #   #   description: "Conventional commit"
+# #   #   prompts:
+# #   #     - type: menu
+# #   #       title: "Commit type"
+# #   #       key: Type
+# #   #       options:
+# #   #         - name: "feat"     description: "New feature"
+# #   #         - name: "fix"      description: "Bug fix"
+# #   #         - name: "docs"     description: "Documentation"
+# #   #         - name: "style"    description: "Formatting, no logic change"
+# #   #         - name: "refactor" description: "Refactor"
+# #   #         - name: "test"     description: "Tests"
+# #   #         - name: "chore"    description: "Build / tooling"
+# #   #         - name: "perf"     description: "Performance"
+# #   #         - name: "ci"       description: "CI/CD"
+# #   #     - type: input
+# #   #       title: "Scope (optional, e.g. auth)"
+# #   #       key: Scope
+# #   #       initialValue: ""
+# #   #     - type: input
+# #   #       title: "Short description"
+# #   #       key: Msg
+# #   #     - type: confirm
+# #   #       title: "Breaking change?"
+# #   #       key: Breaking
+# #   #   command: >
+# #   #     git commit -m "{{.Form.Type}}{{if .Form.Scope}}({{.Form.Scope}}){{end}}{{if .Form.Breaking}}!{{end}}: {{.Form.Msg}}"
+# #   #   loadingText: "Committing…"
+# #
+# #   # Push and open PR (GitHub CLI)
+# #   - key: P
+# #     context: localBranches
+# #     description: "Push and open PR"
+# #     command: "git push origin HEAD && gh pr create --web"
+# #     loadingText: "Pushing…"
+# #   # Interactive rebase onto main/master
+# #   - key: "<c-i>"
+# #     context: localBranches
+# #     description: "Rebase onto main"
+# #     command: "git rebase -i $(git merge-base HEAD main 2>/dev/null || git merge-base HEAD master)"
+# #     loadingText: "Rebasing…"
+# #   # Copy current branch name
+# #   - key: "<c-y>"
+# #     context: localBranches
+# #     description: "Copy branch name"
+# #     command: "git rev-parse --abbrev-ref HEAD | tr -d '\n' | wl-copy"
+# #     loadingText: "Copied!"
+# #   # Open GitHub repo in browser
+# #   - key: "G"
+# #     context: global
+# #     description: "Open repo on GitHub"
+# #     command: "gh repo view --web"
+# #     loadingText: "Opening…"

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+printf "### pipx.dev %s\n" "$(readlink -f "$0")"
+
+if [ "$PENNYKIT_OS_VERSION_CODENAME" == "trixie" ]; then
+    PENNYKIT_PIPX_DEV+=("harlequin")        # pkg: harlequin; desc: Terminal SQL IDE with schema browser and query results
+else
+    :
+fi

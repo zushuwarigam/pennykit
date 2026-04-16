@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+printf "### %s\n" "$(readlink -f "$0")"
+
+mkdir -p "${HOME}/.config"
+
+if [[ ! -d "${HOME}/.config/lazygit" ]]; then
+    ln -s "${PENNYKIT_HOME}/configs/lazygit" "${HOME}/.config/lazygit"
+fi

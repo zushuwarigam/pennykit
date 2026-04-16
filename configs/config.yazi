@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+printf "### %s\n" "$(readlink -f "$0")"
+
+if [ "$PENNYKIT_ON_CONTAINER" == "false" ]; then
+    if [[ ! -d "${HOME}/.config/yazi" ]]; then
+        ln -s "${PENNYKIT_HOME}/configs/yazi" "${HOME}/.config/yazi"
+    fi
+
+    export PATH="$HOME/.local/bin:$PATH"
+
+    ya pkg add yazi-rs/plugins:git
+    ya pkg add yazi-rs/plugins:fzf
+    ya pkg add yazi-rs/plugins:rg
+    ya pkg add bennyyip/gruvbox-dark
+fi

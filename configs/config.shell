@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -euo pipefail
+printf "### %s\n" "$(readlink -f "$0")"
+
+if [[ -f "${HOME}/.bashrc" ]]; then
+
+    if ! grep -q "export PENNYKIT_HOME" "${HOME}/.bashrc"; then
+        echo -e "\nexport PENNYKIT_HOME=\"\$HOME/.pennykit\"" >> "${HOME}/.bashrc"
+    else
+        sed -i "s/export PENNYKIT_HOME=.*/export PENNYKIT_HOME=\"\$HOME\/.pennykit\"/g" "${HOME}/.bashrc"
+    fi
+
+    if ! grep -q "source.*pennykit" "${HOME}/.bashrc"; then
+        echo -e "\n[[ -f ~/.pennykit/pennykit.bash ]] && source \${HOME}/.pennykit/pennykit.bash" >> "${HOME}/.bashrc"
+    fi
+
+    if [[ ! -v OSH ]]; then
+        bash -c "$(_curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" --unattended
+    fi
+    sed -i 's/^OSH_THEME.*/OSH_THEME="duru"/g' "${HOME}/.bashrc"
+
+    # Fix: add exports to .bash (oh-my-bash create custom .bashrc)
+    echo -e "\nexport PENNYKIT_HOME=\"\$HOME/.pennykit\"" >> "${HOME}/.bashrc"
+    echo -e "\n[[ -f ~/.pennykit/pennykit.bash ]] && source \${HOME}/.pennykit/pennykit.bash" >> "${HOME}/.bashrc"
+
+    if [[ -f "${HOME}/.fzf.bash" ]]; then
+        echo -e "\n[ -f ~/.fzf.bash ] && source ~/.fzf.bash" >> "${HOME}/.bashrc"
+    fi
+fi
+
+if [[ -f "${HOME}/.zshrc" ]]; then
+
+    if [[ ! -v ZSH ]]; then
+        sh -c "$(_curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" -- --unattended --skip-chsh
+    fi
+
+    if ! grep -q "export PENNYKIT_HOME" "${HOME}/.zshrc"; then
+        echo -e "\nexport PENNYKIT_HOME=\"\$HOME/.pennykit\"" >> "${HOME}/.zshrc"
+    else
+        sed -i "s/export PENNYKIT_HOME=.*/export PENNYKIT_HOME=\"\$HOME\/.pennykit\"/g" "${HOME}/.zshrc"
+    fi
+
+    if ! grep -q "source.*pennykit" "${HOME}/.zshrc"; then
+        echo -e "\n[[ -f ~/.pennykit/pennykit.zsh ]] && source \${HOME}/.pennykit/pennykit.zsh" >> "${HOME}/.zshrc"
+    fi
+fi
+
+
+# TODO: Add plugins to zsh: z

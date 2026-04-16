@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+printf "### apt.default.postinst %s\n" "$(readlink -f "$0")"
+
+if [ "$PENNYKIT_OS_VERSION_CODENAME" == "trixie" ]; then
+    if [ "$PENNYKIT_ON_CONTAINER" == "false" ]; then
+        rustup default stable
+    fi
+fi

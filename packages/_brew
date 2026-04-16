@@ -1,0 +1,44 @@
+printf "### %s\n" "$(readlink -f "$0")"
+
+PENNYKIT_BREW_DEFAULT+=("7zip") # +
+PENNYKIT_BREW_DEFAULT+=("bottom") # + btm
+PENNYKIT_BREW_DEFAULT+=("chafa") # +
+PENNYKIT_BREW_DEFAULT+=("composer") # +
+PENNYKIT_BREW_DEFAULT+=("devcontainer") # -
+PENNYKIT_BREW_DEFAULT+=("fd") # + fd-find
+PENNYKIT_BREW_DEFAULT+=("ffind") # -
+PENNYKIT_BREW_DEFAULT+=("ffmpeg") # +
+PENNYKIT_BREW_DEFAULT+=("fzf") # +
+PENNYKIT_BREW_DEFAULT+=("godap") # -
+PENNYKIT_BREW_DEFAULT+=("golang") # +
+PENNYKIT_BREW_DEFAULT+=("gs") # + ghostscript
+PENNYKIT_BREW_DEFAULT+=("harlequin") # -
+PENNYKIT_BREW_DEFAULT+=("java") # ? openjdk-25-jre
+PENNYKIT_BREW_DEFAULT+=("jq") # +
+PENNYKIT_BREW_DEFAULT+=("julia") # -
+PENNYKIT_BREW_DEFAULT+=("lazygit") # +
+PENNYKIT_BREW_DEFAULT+=("lf") # +
+PENNYKIT_BREW_DEFAULT+=("lsd") # +
+PENNYKIT_BREW_DEFAULT+=("lua") # ? lua5.1
+PENNYKIT_BREW_DEFAULT+=("luarocks") # +
+PENNYKIT_BREW_DEFAULT+=("mermaid-cli") # -
+PENNYKIT_BREW_DEFAULT+=("neovim") # +
+PENNYKIT_BREW_DEFAULT+=("npm") # +
+PENNYKIT_BREW_DEFAULT+=("pdftoipe") # +
+PENNYKIT_BREW_DEFAULT+=("php") # +
+PENNYKIT_BREW_DEFAULT+=("pipx") # +
+PENNYKIT_BREW_DEFAULT+=("resvg") # +
+PENNYKIT_BREW_DEFAULT+=("ripgrep") # +
+PENNYKIT_BREW_DEFAULT+=("ruby") # +
+PENNYKIT_BREW_DEFAULT+=("rust") # + rust-all
+PENNYKIT_BREW_DEFAULT+=("tectonic") # -
+PENNYKIT_BREW_DEFAULT+=("tmux") # +
+PENNYKIT_BREW_DEFAULT+=("trash-cli") # +
+PENNYKIT_BREW_DEFAULT+=("tree-sitter-cli") # +
+PENNYKIT_BREW_DEFAULT+=("viu") # -
+PENNYKIT_BREW_DEFAULT+=("w3m") # +
+PENNYKIT_BREW_DEFAULT+=("xsel") # +
+PENNYKIT_BREW_DEFAULT+=("yazi") # -
+PENNYKIT_BREW_DEFAULT+=("zoxide") # +
+
+PENNYKIT_BREW_DEBUG+=("delve") # +

@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+printf "### apt.admin %s\n" "$(readlink -f "$0")"
+
+PENNYKIT_APT_ADMIN+=("bind9-dnsutils")  # pkg: bind9-dnsutils; desc: DNS lookup utilities (dig, nslookup, nsupdate)
+PENNYKIT_APT_ADMIN+=("httpie")          # pkg: httpie; desc: User-friendly HTTP client for APIs and web testing
+PENNYKIT_APT_ADMIN+=("iproute2")        # pkg: iproute2; desc: Modern network configuration tools (ip, ss, tc, etc.)
+PENNYKIT_APT_ADMIN+=("lsof")            # pkg: lsof; desc: List open files and the processes using them
+PENNYKIT_APT_ADMIN+=("net-tools")       # pkg: net-tools; desc: Legacy network tools (ifconfig, netstat, route, etc.)
+PENNYKIT_APT_ADMIN+=("nmap")            # pkg: nmap; desc: Network scanner for host discovery and port auditing
+PENNYKIT_APT_ADMIN+=("socat")           # pkg: socat; desc: Multipurpose relay for bidirectional data transfer
+PENNYKIT_APT_ADMIN+=("strace")          # pkg: strace; desc: Trace system calls and signals for debugging
+PENNYKIT_APT_ADMIN+=("tcpdump")         # pkg: tcpdump; desc: Command-line packet capture and network analyzer
+PENNYKIT_APT_ADMIN+=("termshark")       # pkg: termshark; desc: Terminal UI for Wireshark/tshark packet inspection
+PENNYKIT_APT_ADMIN+=("tshark")          # pkg: tshark; desc: Command-line network protocol analyzer (Wireshark CLI)
+PENNYKIT_APT_ADMIN+=("xh")              # pkg: xh; desc: Fast, friendly HTTP client (httpie-compatible, Rust-based)

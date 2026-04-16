@@ -1,0 +1,107 @@
+[manager]
+ratio          = [1, 2, 4]        # pane width ratios (parent:current:preview)
+sort_by        = "natural"
+sort_sensitive = false
+sort_reverse   = false
+sort_dir_first = true
+show_hidden    = true
+show_symlink   = true
+linemode       = "size"           # none / size / permissions / mtime / owner
+
+[preview]
+tab_size        = 2
+max_width       = 1200
+max_height      = 900
+cache_dir       = ""
+image_filter    = "triangle"
+image_quality   = 75
+sixel_fraction  = 15
+ueberzug_scale  = 1
+ueberzug_offset = [0, 0, 0, 0]
+
+# WezTerm — use the built-in iTerm2 protocol
+[preview.iterm2]
+font_size   = 14
+tmux_hook   = false
+
+[opener]
+edit = [
+  { run = '$EDITOR "$@"', block = true, desc = "$EDITOR" },
+]
+open = [
+  { run = 'xdg-open "$@"', desc = "Open" },
+]
+reveal = [
+  { run = 'xdg-open "$(dirname "$@")"', desc = "Reveal in file manager" },
+]
+# Code / text
+code = [
+  { run = '$EDITOR "$@"', block = true, desc = "Edit in $EDITOR" },
+  { run = 'code "$@"',                  desc = "VSCode" },
+]
+# Images
+view_image = [
+  { run = 'sxiv "$@"',   desc = "sxiv"  },
+  { run = 'gimp "$@"',   desc = "GIMP"  },
+]
+# PDFs
+view_pdf = [
+  { run = 'zathura "$@"', desc = "Zathura" },
+]
+# Video / audio
+play = [
+  { run = 'mpv "$@"', desc = "mpv" },
+]
+# Archives
+extract = [
+  { run = 'aunpack "$@"', desc = "Extract here" },
+]
+
+[open]
+rules = [
+  # Directories
+  { mime = "inode/directory", use = "edit" },
+
+  # Code & text
+  { mime = "text/*",                          use = ["code",       "edit"] },
+  { mime = "application/json",                use = ["code",       "edit"] },
+  { mime = "application/javascript",          use = ["code",       "edit"] },
+  { mime = "application/typescript",          use = ["code",       "edit"] },
+  { mime = "application/x-sh",               use = ["code",       "edit"] },
+  { mime = "application/x-python",           use = ["code",       "edit"] },
+  { mime = "application/toml",               use = ["code",       "edit"] },
+  { mime = "application/yaml",               use = ["code",       "edit"] },
+
+  # Images
+  { mime = "image/*", use = ["view_image", "edit"] },
+
+  # PDF
+  { mime = "application/pdf", use = ["view_pdf", "open"] },
+
+  # Video / audio
+  { mime = "video/*", use = "play" },
+  { mime = "audio/*", use = "play" },
+
+  # Archives
+  { mime = "application/zip",              use = ["extract", "open"] },
+  { mime = "application/x-tar",            use = ["extract", "open"] },
+  { mime = "application/gzip",             use = ["extract", "open"] },
+  { mime = "application/x-bzip2",          use = ["extract", "open"] },
+  { mime = "application/x-7z-compressed",  use = ["extract", "open"] },
+  { mime = "application/x-rar",            use = ["extract", "open"] },
+
+  # Fallback
+  { mime = "*", use = ["open", "edit"] },
+]
+
+[tasks]
+micro_workers    = 10
+macro_workers    = 10
+bizarre_retry    = 5
+image_alloc      = 536870912   # 512 MiB
+image_bound      = [0, 0]
+suppress_preload = false
+
+[log]
+enabled = false
+

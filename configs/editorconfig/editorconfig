@@ -1,0 +1,185 @@
+# EditorConfig — portable indentation for all editors/systems
+# https://editorconfig.org
+# Place this file at your project or home directory root (~/.editorconfig for global)
+
+root = true
+
+# ──────────────────────────────────────────────
+# Defaults (applies to everything not matched below)
+# ──────────────────────────────────────────────
+[*]
+charset                  = utf-8
+end_of_line              = lf
+insert_final_newline     = true
+trim_trailing_whitespace = true
+indent_style             = space
+indent_size              = 4
+
+# ──────────────────────────────────────────────
+# Web / Scripting — 2 spaces
+# ──────────────────────────────────────────────
+[*.{js,jsx,ts,tsx,mjs,cjs}]
+indent_style = space
+indent_size  = 2
+
+[*.{html,htm,xhtml}]
+indent_style = space
+indent_size  = 2
+
+[*.{css,scss,sass,less}]
+indent_style = space
+indent_size  = 2
+
+[*.{json,jsonc,json5}]
+indent_style = space
+indent_size  = 2
+
+[*.{yaml,yml}]
+indent_style = space
+indent_size  = 2
+
+[*.{vue,svelte}]
+indent_style = space
+indent_size  = 2
+
+[*.{graphql,gql}]
+indent_style = space
+indent_size  = 2
+
+# ──────────────────────────────────────────────
+# Systems / Backend — 4 spaces
+# ──────────────────────────────────────────────
+[*.py]
+indent_style = space
+indent_size  = 4
+max_line_length = 88   # Black formatter default
+
+[*.{rb,rake,gemspec}]
+indent_style = space
+indent_size  = 2       # Ruby community standard
+
+[*.{java,kt,kts}]
+indent_style = space
+indent_size  = 4
+
+[*.{cs,csx}]
+indent_style = space
+indent_size  = 4
+
+[*.{swift}]
+indent_style = space
+indent_size  = 4
+
+[*.{php,phtml}]
+indent_style = space
+indent_size  = 4
+
+[*.{rs}]
+indent_style = space
+indent_size  = 4
+
+[*.{go}]
+indent_style = tab      # Go mandates tabs (gofmt)
+indent_size  = 4        # Display width of each tab
+
+# ──────────────────────────────────────────────
+# C / C++ / Objective-C
+# ──────────────────────────────────────────────
+[*.{c,h}]
+indent_style = space
+indent_size  = 4
+
+[*.{cpp,cxx,cc,hpp,hxx,hh}]
+indent_style = space
+indent_size  = 4
+
+[*.{m,mm}]
+indent_style = space
+indent_size  = 4
+
+# ──────────────────────────────────────────────
+# Shell / Config
+# ──────────────────────────────────────────────
+[*.{sh,bash,zsh,fish}]
+indent_style = space
+indent_size  = 2
+
+[*.{toml}]
+indent_style = space
+indent_size  = 2
+
+[*.{xml,xsd,xsl,xslt,wsdl,svg}]
+indent_style = space
+indent_size  = 2
+
+[*.{lua}]
+indent_style = space
+indent_size  = 2
+
+# ──────────────────────────────────────────────
+# Functional languages
+# ──────────────────────────────────────────────
+[*.{hs,lhs}]           # Haskell
+indent_style = space
+indent_size  = 2
+
+[*.{ex,exs}]           # Elixir
+indent_style = space
+indent_size  = 2
+
+[*.{erl,hrl}]          # Erlang
+indent_style = space
+indent_size  = 4
+
+[*.{clj,cljs,cljc,edn}] # Clojure
+indent_style = space
+indent_size  = 2
+
+[*.{ml,mli}]           # OCaml
+indent_style = space
+indent_size  = 2
+
+[*.{scala,sbt}]
+indent_style = space
+indent_size  = 2
+
+# ──────────────────────────────────────────────
+# Markup / Docs
+# ──────────────────────────────────────────────
+[*.{md,mdx,markdown}]
+indent_style             = space
+indent_size              = 2
+trim_trailing_whitespace = false   # Trailing spaces = line break in Markdown
+
+[*.{rst,txt}]
+indent_style = space
+indent_size  = 3
+
+[*.{tex,bib}]
+indent_style = space
+indent_size  = 2
+
+# ──────────────────────────────────────────────
+# Infrastructure / DevOps
+# ──────────────────────────────────────────────
+[*.{tf,tfvars}]        # Terraform
+indent_style = space
+indent_size  = 2
+
+[Dockerfile*]
+indent_style = space
+indent_size  = 4
+
+[*.{nix}]
+indent_style = space
+indent_size  = 2
+
+# ──────────────────────────────────────────────
+# Never modify
+# ──────────────────────────────────────────────
+[*.{diff,patch}]
+trim_trailing_whitespace = false
+
+[{Makefile,makefile,*.mk,*.mak}]
+indent_style = tab      # Make requires literal tabs
+indent_size  = 4

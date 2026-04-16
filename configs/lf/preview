@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# $1 = file  $2 = width  $3 = height  $4 = x  $5 = y
+
+FILE="$1"
+
+case "$(file --mime-type -b "$FILE")" in
+    text/html)
+        # w3m -dump "$FILE"
+        w3m "$FILE"
+        ;;
+
+    # Text/code
+    text/*|application/json|application/javascript|application/x-sh|application/mbox)
+        batcat --color=always --style=numbers,changes \
+            --wrap=character --terminal-width="$2" "$FILE"
+        exit 0
+        ;;
+
+    # Image
+    image/*)
+        if command -v chafa >/dev/null; then
+            chafa "$FILE"
+        elif command -v viu >/dev/null; then
+            viu "$FILE"
+        else
+            identify "$FILE"
+        fi
+        ;;
+
+    # Video
+    video/*)
+        ffprobe -hide_banner "$FILE"
+        ;;
+
+    # Audio
+    audio/*)
+        ffprobe -hide_banner "$FILE"
+        ;;
+
+    # PDF
+    application/pdf)
+        pdftotext -l 5 "$FILE" - | head -200
+        exit 0 ;;
+
+    # Archives
+    application/zip)          unzip -l  "$FILE"; exit 0 ;;
+    application/x-tar|application/gzip|application/x-bzip2)
+                              tar -tf   "$FILE"; exit 0 ;;
+    application/x-7z-compressed) 7z l  "$FILE"; exit 0 ;;
+esac
+
+# Fallback
+case "${FILE##*.}" in
+    md|markdown) batcat --color=always --language=markdown "$FILE"; exit 0 ;;
+    json)        jq  --color-output .   "$FILE";                 exit 0 ;;
+    yaml|yml)    batcat --color=always --language=yaml "$FILE";     exit 0 ;;
+    toml)        batcat --color=always --language=toml "$FILE";     exit 0 ;;
+    Dockerfile)  batcat --color=always --language=dockerfile "$FILE"; exit 0 ;;
+esac
+
+file --brief "$FILE"
+

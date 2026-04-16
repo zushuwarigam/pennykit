@@ -1,0 +1,129 @@
+# ── Gruvbox Dark ─────────────────────────────────────────────
+[flavor]
+use = "gruvbox-dark"               # requires the flavor installed (see below)
+
+[manager]
+cwd = { fg = "#83a598" }
+
+# Highlighting
+hovered         = { fg = "#1d2021", bg = "#d79921", bold = true }
+preview_hovered = { underline = true }
+
+# Find matches
+find_keyword  = { fg = "#fabd2f", bold = true, italic = true, underline = true }
+find_position = { fg = "#fe8019", bg = "reset", bold = true, italic = true }
+
+# Marker colors (multi-select)
+marker_copied  = { fg = "#98971a", bg = "#98971a" }
+marker_cut     = { fg = "#cc241d", bg = "#cc241d" }
+marker_marked  = { fg = "#d65d0e", bg = "#d65d0e" }
+marker_selected = { fg = "#458588", bg = "#458588" }
+
+# Tab bar
+tab_active   = { fg = "#1d2021", bg = "#d79921", bold = true }
+tab_inactive = { fg = "#ebdbb2", bg = "#3c3836" }
+tab_width    = 1
+
+# Count badges
+count_copied   = { fg = "#1d2021", bg = "#98971a" }
+count_cut      = { fg = "#1d2021", bg = "#cc241d" }
+count_selected = { fg = "#1d2021", bg = "#458588" }
+
+# Border
+border_symbol = "│"
+border_style  = { fg = "#928374" }
+
+[status]
+separator_open  = ""
+separator_close = ""
+separator_style = { fg = "#3c3836", bg = "#3c3836" }
+
+# Mode badges
+mode_normal  = { fg = "#1d2021", bg = "#d79921", bold = true }
+mode_select  = { fg = "#1d2021", bg = "#98971a", bold = true }
+mode_unset   = { fg = "#1d2021", bg = "#cc241d", bold = true }
+
+# Progress bar
+progress_label  = { fg = "#ebdbb2", bold = true }
+progress_normal = { fg = "#458588", bg = "#3c3836" }
+progress_error  = { fg = "#cc241d", bg = "#3c3836" }
+
+# Permissions
+perm_type  = { fg = "#458588" }
+perm_read  = { fg = "#d79921" }
+perm_write = { fg = "#cc241d" }
+perm_exec  = { fg = "#98971a" }
+perm_sep   = { fg = "#928374" }
+
+[filetype]
+rules = [
+  # Code
+  { mime = "text/x-python",     fg = "#83a598" },
+  { mime = "text/x-rust",       fg = "#fe8019" },
+  { mime = "text/x-go",         fg = "#83a598" },
+  { mime = "application/json",  fg = "#fabd2f" },
+  { mime = "application/toml",  fg = "#d79921" },
+  { mime = "application/yaml",  fg = "#d79921" },
+  { mime = "text/x-shellscript", fg = "#b8bb26" },
+
+  # Media
+  { mime = "image/*", fg = "#d3869b" },
+  { mime = "video/*", fg = "#b16286" },
+  { mime = "audio/*", fg = "#d3869b" },
+
+  # Archives
+  { mime = "application/zip",             fg = "#fe8019" },
+  { mime = "application/x-tar",           fg = "#fe8019" },
+  { mime = "application/x-7z-compressed", fg = "#fe8019" },
+
+  # Dirs & symlinks
+  { name = "*/",  fg = "#83a598", bold = true },
+  { name = "*",   fg = "#ebdbb2" },
+]
+
+[icon]
+rules = [
+  # Dotfiles / config
+  { name = ".gitignore",    text = "" },
+  { name = ".gitconfig",    text = "" },
+  { name = ".env",          text = "" },
+  { name = "Dockerfile",    text = "" },
+  { name = "docker-compose*", text = "" },
+  { name = "Makefile",      text = "" },
+  { name = "*.toml",        text = "" },
+  { name = "*.yaml",        text = "" },
+  { name = "*.yml",         text = "" },
+  { name = "*.json",        text = "" },
+  { name = "*.lock",        text = "" },
+
+  # Languages
+  { name = "*.rs",   text = "" },
+  { name = "*.py",   text = "" },
+  { name = "*.js",   text = "" },
+  { name = "*.ts",   text = "" },
+  { name = "*.go",   text = "" },
+  { name = "*.c",    text = "" },
+  { name = "*.cpp",  text = "" },
+  { name = "*.h",    text = "" },
+  { name = "*.sh",   text = "" },
+  { name = "*.bash", text = "" },
+  { name = "*.zsh",  text = "" },
+  { name = "*.lua",  text = "" },
+  { name = "*.md",   text = "" },
+  { name = "*.html", text = "" },
+  { name = "*.css",  text = "" },
+  { name = "*.sql",  text = "" },
+
+  # Dev dirs
+  { name = ".git/",          text = "" },
+  { name = "node_modules/",  text = "" },
+  { name = "target/",        text = "" },
+  { name = "dist/",          text = "" },
+  { name = "build/",         text = "" },
+  { name = "src/",           text = "" },
+
+  # Directories fallback
+  { name = "*/", text = "" },
+  { name = "*",  text = "" },
+]
+

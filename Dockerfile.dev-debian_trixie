@@ -1,0 +1,12 @@
+FROM debian:trixie
+
+RUN apt-get update && \
+apt-get upgrade -y && \
+apt-get install \
+  -y --no-install-recommends \
+  curl wget git ca-certificates netselect-apt
+
+# RUN netselect-apt -c ru -t 15 -a amd64 -n trixie && \
+#     mv -v sources.list /etc/apt/sources.list && \
+#     rm -vf /etc/apt/sources.list.d/docker.sources && \
+#     apt-get update

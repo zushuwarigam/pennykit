@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+printf "### %s\n" "$(readlink -f "$0")"
+
+if [[ -L "${HOME}/.editorconfig" ]]; then
+    unlink "${HOME}/.editorconfig"
+elif [[ -f "${HOME}/.editorconfig" ]]; then
+    mv -v "${HOME}/.editorconfig" "${HOME}/.editorconfig_$(date +%Y%m%d)"
+fi
+
+ln -s "${PENNYKIT_HOME}/configs/editorconfig/editorconfig" "${HOME}/.editorconfig"
