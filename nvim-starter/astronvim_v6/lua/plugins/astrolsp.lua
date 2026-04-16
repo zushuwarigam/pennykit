@@ -1,9 +1,24 @@
-if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
+-- if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
 
 -- AstroLSP allows you to customize the features in AstroNvim's LSP configuration engine
 -- Configuration documentation can be found with `:h astrolsp`
 -- NOTE: We highly recommend setting up the Lua Language Server (`:LspInstall lua_ls`)
 --       as this provides autocomplete and documentation while editing
+
+local function load_wordlist(filename)
+  local path = vim.fn.stdpath "config" .. "/spell/" .. filename
+  local file = io.open(path, "r")
+  if not file then return {} end
+  local words = {}
+  for word in file:lines() do
+    table.insert(words, word)
+  end
+  file:close()
+  return words
+end
+
+local en_words = load_wordlist "en.utf-8.add"
+local ru_words = load_wordlist "ru.utf-8.add"
 
 ---@type LazySpec
 return {
@@ -20,7 +35,7 @@ return {
     formatting = {
       -- control auto formatting on save
       format_on_save = {
-        enabled = true, -- enable or disable format on save globally
+        enabled = false, -- enable or disable format on save globally
         allow_filetypes = { -- enable format on save for specified filetypes only
           -- "go",
         },
@@ -39,13 +54,61 @@ return {
     },
     -- enable servers that you already have installed without mason
     servers = {
+      "ltex",
       -- "pyright"
+    },
+    config = {
+      -- ["*"] = { capabilities = {} }, -- modify default LSP client settings such as capabilities
+      ltex = {
+        settings = {
+          ltex = {
+            language = "auto",
+            dictionary = {
+              ["en-US"] = en_words,
+              ["ru-RU"] = ru_words,
+            },
+            languageToolHttpServerUri = vim.env.LANGUAGE_TOOLS or "http://lt.bme.local",
+            enabled = { "markdown", "text", "latex" },
+            additionalRules = {
+              motherTongue = "ru-RU",
+            },
+            checkFrequency = "save",
+            diagnosticSeverity = "information",
+          },
+        },
+      },
+      -- clangd = { capabilities = { offsetEncoding = "utf-8" } },
+      gopls = {
+        settings = {
+          gopls = {
+            analyses = {
+              unusedparams = true,
+              shadow = true,
+              nilness = true,
+              unusedwrite = true,
+              useany = true,
+            },
+            staticcheck = true,
+            gofumpt = true,
+            codelenses = {
+              generate = true,
+              gc_details = true,
+              run_govulncheck = true,
+              tidy = true,
+            },
+            hints = {
+              assignVariableTypes = true,
+              compositeLiteralFields = true,
+              functionTypeParameters = true,
+              parameterNames = true,
+              rangeVariableTypes = true,
+            },
+          },
+        },
+      },
     },
     -- customize language server configuration passed to `vim.lsp.config`
     -- client specific configuration can also go in `lsp/` in your configuration root (see `:h lsp-config`)
-    config = {
-      -- ["*"] = { capabilities = {} }, -- modify default LSP client settings such as capabilities
-    },
     -- customize how language servers are attached
     handlers = {
       -- a function with the key `*` modifies the default handler, functions takes the server name as the parameter

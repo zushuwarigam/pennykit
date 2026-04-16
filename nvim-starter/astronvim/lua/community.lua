@@ -8,7 +8,11 @@
 
 ---@type LazySpec
 return {
+  -- import/override with your plugins folder
   "AstroNvim/astrocommunity",
+  { import = "astrocommunity.colorscheme.gruvbox-nvim" },
+  { import = "astrocommunity.diagnostics.trouble-nvim" }, -- claude: better diagnostics list
+  { import = "astrocommunity.git.diffview-nvim" }, -- claude: rich git diff view
   { import = "astrocommunity.icon.mini-icons" },
   { import = "astrocommunity.pack.ansible" },
   { import = "astrocommunity.pack.bash" },
@@ -22,10 +26,6 @@ return {
   { import = "astrocommunity.pack.python" },
   { import = "astrocommunity.pack.toml" },
   { import = "astrocommunity.pack.yaml" },
+  { import = "astrocommunity.terminal-integration.toggleterm-manager-nvim" }, -- claude:
   { import = "astrocommunity.utility.hover-nvim" },
-  { import = "astrocommunity.colorscheme.gruvbox-nvim" },
-  { import = "astrocommunity.diagnostics.trouble-nvim" },   -- claude: better diagnostics list
-  { import = "astrocommunity.git.diffview-nvim" },  -- claude: rich git diff view
-  { import = "astrocommunity.terminal-integration.toggleterm-manager-nvim" },   -- claude:
-  -- import/override with your plugins folder
 }

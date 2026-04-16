@@ -2,7 +2,7 @@
 set -euo pipefail
 printf "### %s\n" "$(readlink -f "$0")"
 
-NVIM_CONFIG="${PENNYKIT_NVIM_CONIF:-astronvim}"
+NVIM_CONFIG="${PENNYKIT_NVIM_CONIF:-astronvim_v6}"
 
 NVIM_CONFIG_HOME="${HOME}/.config/nvim"
 

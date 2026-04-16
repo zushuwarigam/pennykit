@@ -1,4 +1,4 @@
-if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
+-- if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
 
 -- AstroCore provides a central place to modify mappings, vim options, autocommands, and more!
 -- Configuration documentation can be found with `:h astrocore`
@@ -42,9 +42,15 @@ return {
       opt = { -- vim.opt.<key>
         relativenumber = true, -- sets vim.opt.relativenumber
         number = true, -- sets vim.opt.number
-        spell = false, -- sets vim.opt.spell
+        spell = true, -- sets vim.opt.spell
+        spelllang = { "en_us", "ru_yo" },
+        spellsuggest = "best,9",
         signcolumn = "yes", -- sets vim.opt.signcolumn to yes
         wrap = false, -- sets vim.opt.wrap
+        langmap = {
+          "ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯ;ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+          "фисвуапршолдьтщзйкыегмцчня;abcdefghijklmnopqrstuvwxyz",
+        },
       },
       g = { -- vim.g.<key>
         -- configure global vim variables (vim.g)
@@ -79,6 +85,25 @@ return {
 
         -- setting a mapping to false will disable it
         -- ["<C-S>"] = false,
+        ["<leader>a"] = { name = "AI/CodeCompanion" },
+        ["<Leader>aa"] = { "<cmd>CodeCompanionChat Toggle<cr>", desc = "Toggle Chat" },
+        ["<Leader>ap"] = { "<cmd>CodeCompanionActions<cr>", desc = "Action Palette" },
+      },
+      v = {
+        ["<Leader>aa"] = { "<cmd>CodeCompanionChat<cr>", desc = "Add to Chat" },
+      },
+    },
+    mason = {
+      ensure_installed = {
+        "gopls",
+        "gofump",
+        "golangci-lint",
+        "golangci-lint-langserver",
+        "gomodifytags",
+        "impl",
+        "delve",
+        "ltex-ls",
+        "ltex-ls-plus",
       },
     },
   },
