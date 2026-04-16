@@ -5,7 +5,7 @@ return {
     "nvim-treesitter/nvim-treesitter",
   },
   config = function()
-    local cc_config = require("codecompanion_config")
-    require("codecompanion").setup(cc_config)
+    local ok, cc_config = pcall(require,"codecompanion_config")
+    require("codecompanion").setup(ok and cc_config or {})
   end,
 }
