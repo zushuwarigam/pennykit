@@ -88,4 +88,5 @@ return {
     end,
   },
   { "snacks.nvim", opts = { dashboard = { enabled = false } } }, -- disable entry dashboard by astronvim
+  { "rcarriga/nvim-dap-ui", dependencies = {"mfussenegger/nvim-dap", "nvim-neotest/nvim-nio", "theHamsta/nvim-dap-virtual-text", } },
 }
