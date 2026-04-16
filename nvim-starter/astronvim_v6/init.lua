@@ -23,5 +23,9 @@ if not pcall(require, "lazy") then
   vim.cmd.quit()
 end
 
+package.path = package.path .. ";" .. vim.env.HOME .. "/.pennykit_ai/configs/nvim/?.lua"
+
 require "lazy_setup"
+require "custom_commands"
+require "custom_settings"
 require "polish"
