@@ -1,4 +1,4 @@
-if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
+-- if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
 
 -- Customize Mason
 
@@ -13,15 +13,21 @@ return {
       ensure_installed = {
         -- install language servers
         "lua-language-server",
-
         -- install formatters
         "stylua",
-
         -- install debuggers
         "debugpy",
-
         -- install any other package
         "tree-sitter-cli",
+        -- docker
+        "docker-language-server",
+        "dockerfile-language-server",
+        -- "docker-compose-langserver", FIX: Don't installed
+        -- bash
+        "bash-language-server",
+        "beautysh",
+        -- c/cpp
+        "cpptools",
       },
     },
   },

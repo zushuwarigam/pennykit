@@ -1,4 +1,4 @@
-if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
+-- if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
 
 -- Customize Treesitter
 -- --------------------
@@ -16,12 +16,23 @@ return {
       auto_install = true, -- enable/disable automatic installation of detected languages
       ensure_installed = {
         "bash",
+        "css",
         "go",
         "gomod",
         "gosum",
         "gowork",
+        "html",
+        "javascript",
+        "latex",
         "lua",
+        "norg",
+        "regex",
+        "scss",
+        "svelte",
+        "tsx",
+        "typst",
         "vim",
+        "vue",
         -- add more arguments for adding more treesitter parsers
       },
     },
