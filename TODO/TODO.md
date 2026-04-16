@@ -10,8 +10,6 @@
 # sudo locale-gen
 # sudo update-locale LANG=ru_RU.UTF-8 LC_MESSAGES=POSIX
 
-# eval "$(fzf --bash)"
-
 # tmux tpm?
 # git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 #
@@ -30,13 +28,6 @@
 # set -g status-position top
 #
 # run '~/.tmux/plugins/tpm/tpm'
-
-# NVIM 12+
-# https://docs.astronvim.com/configuration/v6_migration/
-
-# Auto install lsp
-# +dockerfile-language-server
-# And other 
 
 # + For lang check
 # https://github.com/liba2k/languagetool.nvim
