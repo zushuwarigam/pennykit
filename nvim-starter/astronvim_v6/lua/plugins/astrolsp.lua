@@ -57,6 +57,7 @@ return {
       "ltex",
       -- "pyright"
     },
+    ---@diagnostic disable: missing-fields
     config = {
       -- ["*"] = { capabilities = {} }, -- modify default LSP client settings such as capabilities
       ltex = {
@@ -77,7 +78,7 @@ return {
           },
         },
       },
-      -- clangd = { capabilities = { offsetEncoding = "utf-8" } },
+      clangd = { capabilities = { offsetEncoding = "utf-8" } },
       gopls = {
         settings = {
           gopls = {
