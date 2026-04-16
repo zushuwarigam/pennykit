@@ -40,3 +40,6 @@
 
 # + For lang check
 # https://github.com/liba2k/languagetool.nvim
+
+
+# Update tree-sitter-cli: luarocks install tree-sitter-cli
