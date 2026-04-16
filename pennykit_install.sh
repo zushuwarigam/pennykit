@@ -66,7 +66,7 @@ detect_os() {
 }
 
 running_in_docker() {
-  if [ -f /.dockerenv ]; then
+  if [ -f /.dockerenv ] && [ "$(cat /proc/1/comm 2>/dev/null)" = "sh" ]; then
     PENNYKIT_ON_CONTAINER=true
     return
   fi
