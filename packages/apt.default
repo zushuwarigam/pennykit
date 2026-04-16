@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+set -euo pipefail
+printf "### apt.default %s\n" "$(readlink -f "$0")"
+
+if [ "$PENNYKIT_OS_VERSION_CODENAME" == "trixie" ]; then
+    PENNYKIT_APT_DEFAULT+=("eza")           # pkg: eza; desc: Modern ls replacement with colors, icons, and Git status
+    PENNYKIT_APT_DEFAULT+=("rustup")        # pkg: rustup; desc: Rust toolchain installer and version manager
+    PENNYKIT_APT_DEFAULT+=("tree-sitter-cli")   # pkg: tree-sitter-cli; desc: CLI for building and testing Tree-sitter grammars
+else
+    PENNYKIT_APT_DEFAULT+=("rust-all")      # pkg: rust-all; desc: Rust compiler, stdlib, and tools via apt (static install)
+fi
+
+PENNYKIT_APT_DEFAULT+=("7zip")          # pkg: 7zip; desc: Modern high-compression archive tool (successor to p7zip)
+PENNYKIT_APT_DEFAULT+=("bat")           # pkg: bat; desc: cat clone with syntax highlighting and Git integration
+PENNYKIT_APT_DEFAULT+=("dialog")        # pkg: dialog; desc: Shell script UI widgets (menus, forms, progress bars)
+PENNYKIT_APT_DEFAULT+=("fd-find")       # pkg: fd-find; desc: Fast, user-friendly alternative to find
+PENNYKIT_APT_DEFAULT+=("file")          # pkg: file; desc: Detect file types by content inspection
+PENNYKIT_APT_DEFAULT+=("gdu")           # pkg: gdu; desc: Fast terminal disk usage analyzer with TUI
+PENNYKIT_APT_DEFAULT+=("git-delta")     # pkg: git-delta; desc: Syntax-highlighting pager for git diffs
+PENNYKIT_APT_DEFAULT+=("glances")       # pkg: glances; desc: Cross-platform system monitor with rich TUI
+PENNYKIT_APT_DEFAULT+=("glow")          # pkg: glow; desc: Render Markdown beautifully in the terminal
+PENNYKIT_APT_DEFAULT+=("iftop")         # pkg: iftop; desc: Real-time network bandwidth usage per connection
+PENNYKIT_APT_DEFAULT+=("jq")            # pkg: jq; desc: Lightweight command-line JSON processor
+PENNYKIT_APT_DEFAULT+=("less")          # pkg: less; desc: Terminal pager for scrolling through file output
+PENNYKIT_APT_DEFAULT+=("lf")            # pkg: lf; desc: Terminal file manager inspired by ranger
+PENNYKIT_APT_DEFAULT+=("locales-all")   # pkg: locales-all; desc: Pre-compiled locale data for all supported languages
+PENNYKIT_APT_DEFAULT+=("lsd")           # pkg: lsd; desc: ls replacement with colors, icons, and tree view
+PENNYKIT_APT_DEFAULT+=("lua5.1")        # pkg: lua5.1; desc: Lightweight embeddable scripting language (v5.1)
+PENNYKIT_APT_DEFAULT+=("luarocks")      # pkg: luarocks; desc: Package manager for Lua modules
+PENNYKIT_APT_DEFAULT+=("make")          # pkg: make; desc: Build automation tool using Makefiles
+PENNYKIT_APT_DEFAULT+=("mc")            # pkg: mc; desc: Midnight Commander dual-pane terminal file manager
+PENNYKIT_APT_DEFAULT+=("mtr")           # pkg: mtr; desc: Network diagnostic combining ping and traceroute
+PENNYKIT_APT_DEFAULT+=("ncdu")          # pkg: ncdu; desc: Ncurses-based interactive disk usage explorer
+PENNYKIT_APT_DEFAULT+=("nethogs")       # pkg: nethogs; desc: Per-process network bandwidth monitor
+PENNYKIT_APT_DEFAULT+=("ngrep")         # pkg: ngrep; desc: Network packet analyzer with grep-like filtering
+PENNYKIT_APT_DEFAULT+=("nodejs")        # pkg: nodejs; desc: JavaScript runtime built on Chrome's V8 engine
+PENNYKIT_APT_DEFAULT+=("npm")           # pkg: npm; desc: Package manager for Node.js
+PENNYKIT_APT_DEFAULT+=("pipx")          # pkg: pipx; desc: Install Python CLI tools in isolated environments
+PENNYKIT_APT_DEFAULT+=("poppler-utils") # pkg: poppler-utils; desc: PDF utilities (pdftotext, pdfinfo, pdftoppm, etc.)
+PENNYKIT_APT_DEFAULT+=("procps")        # pkg: procps; desc: Process monitoring tools (ps, top, kill, free, etc.)
+PENNYKIT_APT_DEFAULT+=("python3")       # pkg: python3; desc: Python 3 interpreter
+PENNYKIT_APT_DEFAULT+=("python3-pip")   # pkg: python3-pip; desc: Python package installer
+PENNYKIT_APT_DEFAULT+=("ripgrep")       # pkg: ripgrep; desc: Extremely fast recursive grep with smart defaults
+PENNYKIT_APT_DEFAULT+=("tmux")          # pkg: tmux; desc: Terminal multiplexer with sessions, windows, and panes
+PENNYKIT_APT_DEFAULT+=("trash-cli")     # pkg: trash-cli; desc: Safe file deletion via FreeDesktop.org Trash spec
+PENNYKIT_APT_DEFAULT+=("unzip")         # pkg: unzip; desc: Extract ZIP archives
+PENNYKIT_APT_DEFAULT+=("vivid")         # pkg: vivid; desc: LS_COLORS generator with built-in theme support
+PENNYKIT_APT_DEFAULT+=("xclip")         # pkg: xclip; desc: X11 clipboard access from the command line
+PENNYKIT_APT_DEFAULT+=("xsel")          # pkg: xsel; desc: X11 clipboard/selection manipulation tool
+PENNYKIT_APT_DEFAULT+=("zoxide")        # pkg: zoxide; desc: Smarter cd that learns your most-used directories
+
+if [ "$PENNYKIT_ON_CONTAINER" == "false" ]; then
+    PENNYKIT_APT_DEFAULT+=("btm")           # pkg: btm; desc: Cross-platform graphical process/system monitor (bottom)
+    PENNYKIT_APT_DEFAULT+=("chafa")         # pkg: chafa; desc: Display images in the terminal using Unicode/ANSI art
+    PENNYKIT_APT_DEFAULT+=("composer")      # pkg: composer; desc: Dependency manager for PHP projects
+    PENNYKIT_APT_DEFAULT+=("ffmpeg")        # pkg: ffmpeg; desc: Audio/video conversion, streaming, and processing toolkit
+    PENNYKIT_APT_DEFAULT+=("ghostscript")   # pkg: ghostscript; desc: PostScript and PDF interpreter and renderer
+    PENNYKIT_APT_DEFAULT+=("imagemagick")   # pkg: imagemagick; desc: Image conversion, editing, and manipulation suite
+    PENNYKIT_APT_DEFAULT+=("pdftoipe")      # pkg: pdftoipe; desc: Convert PDF files to Ipe XML drawing format
+    PENNYKIT_APT_DEFAULT+=("resvg")         # pkg: resvg; desc: High-quality SVG rendering and conversion tool
+    PENNYKIT_APT_DEFAULT+=("tig")           # pkg: tig; desc: Ncurses-based text-mode Git repository browser
+    PENNYKIT_APT_DEFAULT+=("w3m")           # pkg: w3m; desc: Terminal web browser with image and table support
+fi

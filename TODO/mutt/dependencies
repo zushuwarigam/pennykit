@@ -1,0 +1,8 @@
+Neomutt - Email client +apt
+NeoVim - Email editor +appimage
+Mbsync - Email downloader +apt !isync
+Notmuch - Email indexer (for searching) +apt
+Msmtp - Email sender +apt
+Davmail - Bridge for MS Exchange +apt
+ImapFilter - Email filterer +apt
+Abook - Contact manager +apt

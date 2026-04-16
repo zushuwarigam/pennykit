@@ -1,0 +1,134 @@
+[manager]
+keymap = [
+  # ── Navigation ──────────────────────────────────────────
+  { on = "k",         run = "arrow -1",          desc = "Up" },
+  { on = "j",         run = "arrow 1",           desc = "Down" },
+  { on = "K",         run = "arrow -5",          desc = "Up 5" },
+  { on = "J",         run = "arrow 5",           desc = "Down 5" },
+  { on = "h",         run = "leave",             desc = "Parent dir" },
+  { on = "l",         run = "enter",             desc = "Enter dir / open" },
+  { on = "H",         run = "back",              desc = "History back" },
+  { on = "L",         run = "forward",           desc = "History forward" },
+  { on = "g g",       run = "arrow -99999999",   desc = "Top" },
+  { on = "G",         run = "arrow 99999999",    desc = "Bottom" },
+  { on = "<C-d>",     run = "arrow 50%",         desc = "Half page down" },
+  { on = "<C-u>",     run = "arrow -50%",        desc = "Half page up" },
+
+  # ── Tabs ────────────────────────────────────────────────
+  { on = "t",         run = "tab_create --current", desc = "New tab (cwd)" },
+  { on = "1",         run = "tab_switch 0",       desc = "Tab 1" },
+  { on = "2",         run = "tab_switch 1",       desc = "Tab 2" },
+  { on = "3",         run = "tab_switch 2",       desc = "Tab 3" },
+  { on = "[",         run = "tab_switch -1 --relative", desc = "Prev tab" },
+  { on = "]",         run = "tab_switch 1 --relative",  desc = "Next tab" },
+  { on = "{",         run = "tab_swap -1",        desc = "Move tab left" },
+  { on = "}",         run = "tab_swap 1",         desc = "Move tab right" },
+
+  # ── Selection ───────────────────────────────────────────
+  { on = "<Space>",   run = "select --state=none", desc = "Toggle select" },
+  { on = "v",         run = "visual_mode",         desc = "Visual mode" },
+  { on = "V",         run = "select_all --state=none", desc = "Select all" },
+  { on = "<Esc>",     run = "escape",              desc = "Escape" },
+
+  # ── File operations ──────────────────────────────────────
+  { on = "o",         run = "open",                desc = "Open" },
+  { on = "O",         run = "open --interactive",  desc = "Open with…" },
+  { on = "<Enter>",   run = "open",                desc = "Open" },
+  { on = "r",         run = "rename --cursor=before_ext", desc = "Rename" },
+  { on = "y",         run = "yank",                desc = "Yank (copy)" },
+  { on = "x",         run = "yank --cut",          desc = "Yank (cut)" },
+  { on = "p",         run = "paste",               desc = "Paste" },
+  { on = "P",         run = "paste --force",       desc = "Paste (overwrite)" },
+  { on = "d",         run = "remove --permanently=false", desc = "Trash" },
+  { on = "D",         run = "remove --permanently=true",  desc = "Delete (permanent)" },
+  { on = "a",         run = "create",              desc = "Create file/dir" },
+  { on = ";",         run = "shell --interactive", desc = "Shell command" },
+  { on = ":",         run = "shell --interactive --block", desc = "Shell (blocking)" },
+
+  # ── Copy helpers ─────────────────────────────────────────
+  { on = "c c",       run = "copy path",           desc = "Copy path" },
+  { on = "c d",       run = "copy dirname",        desc = "Copy dir" },
+  { on = "c f",       run = "copy filename",       desc = "Copy filename" },
+  { on = "c n",       run = "copy stem",           desc = "Copy stem" },
+
+  # ── Goto bookmarks ───────────────────────────────────────
+  { on = "g h",       run = "cd ~",                desc = "Home" },
+  { on = "g c",       run = "cd ~/.config",        desc = "Config" },
+  { on = "g d",       run = "cd ~/dev",            desc = "Dev" },
+  { on = "g D",       run = "cd ~/Downloads",      desc = "Downloads" },
+  { on = "g t",       run = "cd /tmp",             desc = "Tmp" },
+
+  # ── Sorting ──────────────────────────────────────────────
+  { on = "s n",       run = "sort natural  --dir-first", desc = "Sort natural" },
+  { on = "s m",       run = "sort modified --dir-first", desc = "Sort modified" },
+  { on = "s s",       run = "sort size     --dir-first", desc = "Sort size" },
+  { on = "s e",       run = "sort extension --dir-first", desc = "Sort extension" },
+  { on = "s r",       run = "sort --reverse=yes",         desc = "Toggle reverse" },
+
+  # ── Filtering / searching ────────────────────────────────
+  { on = "f",         run = "filter --smart",      desc = "Filter" },
+  { on = "/",         run = "find --smart",        desc = "Find next" },
+  { on = "?",         run = "find --previous --smart", desc = "Find prev" },
+  { on = "n",         run = "find_arrow",          desc = "Next match" },
+  { on = "N",         run = "find_arrow --previous", desc = "Prev match" },
+  { on = "z f",       run = "plugin fzf",          desc = "fzf jump" },
+  { on = "z g",       run = "plugin rg",           desc = "rg search" },
+
+  # ── Misc ─────────────────────────────────────────────────
+  { on = ".",         run = "hidden toggle",        desc = "Toggle hidden" },
+  { on = "R",         run = "refresh",              desc = "Refresh" },
+  { on = "~",         run = "help",                 desc = "Help" },
+  { on = "q",         run = "quit",                 desc = "Quit" },
+  { on = "Q",         run = "quit --no-cwd-file",  desc = "Quit (no cd)" },
+]
+
+[tasks]
+keymap = [
+  { on = "<Esc>", run = "close", desc = "Close" },
+  { on = "w",     run = "close", desc = "Close" },
+  { on = "k",     run = "arrow -1" },
+  { on = "j",     run = "arrow 1"  },
+  { on = "<Enter>", run = "inspect", desc = "Inspect task" },
+  { on = "x",       run = "cancel",  desc = "Cancel task"  },
+]
+
+[select]
+keymap = [
+  { on = "<Esc>",   run = "close",          desc = "Cancel" },
+  { on = "<Enter>", run = "close --submit", desc = "Submit" },
+  { on = "k",       run = "arrow -1" },
+  { on = "j",       run = "arrow 1"  },
+]
+
+[input]
+keymap = [
+  { on = "<Esc>",   run = "close",          desc = "Cancel" },
+  { on = "<Enter>", run = "close --submit", desc = "Submit" },
+  { on = "<Left>",  run = "move -1" },
+  { on = "<Right>", run = "move 1"  },
+  { on = "<C-a>",   run = "move -999" },
+  { on = "<C-e>",   run = "move 999"  },
+  { on = "<C-u>",   run = "kill-line-before" },
+  { on = "<C-k>",   run = "kill-line-after"  },
+  { on = "<BS>",    run = "backspace" },
+  { on = "<C-w>",   run = "backspace --word" },
+]
+
+[completion]
+keymap = [
+  { on = "<Esc>",   run = "close",          desc = "Cancel" },
+  { on = "<Tab>",   run = "close --submit", desc = "Submit" },
+  { on = "<Enter>", run = "close --submit", desc = "Submit" },
+  { on = "k",       run = "arrow -1" },
+  { on = "j",       run = "arrow 1"  },
+]
+
+[help]
+keymap = [
+  { on = "<Esc>", run = "escape", desc = "Close / clear" },
+  { on = "q",     run = "close",  desc = "Close" },
+  { on = "k",     run = "arrow -1" },
+  { on = "j",     run = "arrow 1"  },
+  { on = "/",     run = "filter",  desc = "Filter" },
+]
+

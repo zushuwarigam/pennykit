@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+
+oss_workflow() {
+    # Function to safely restore PATH and clean up variables
+    cleanup_oss_workflow() {
+        if [[ -v OSS_PATH_BACKUP ]]; then
+            export PATH="$OSS_PATH_BACKUP"
+            unset OSS_PATH_BACKUP
+        fi
+        unset OSS_WORKFLOW_PATH
+        return 0
+    }
+
+    # Check if we're in a git repository
+    local git_dir
+    if ! git_dir="$(git rev-parse --git-dir 2>/dev/null)"; then
+        # Not in a git repository, clean up and exit
+        cleanup_oss_workflow
+        return 0
+    fi
+
+    # Resolve to absolute path and validate
+    local git_path
+    if ! git_path="$(readlink -f "$git_dir" 2>/dev/null)" || [[ ! -d "$git_path" ]]; then
+        cleanup_oss_workflow
+        return 1
+    fi
+
+    # Construct workflow path
+    local workflow_path="${git_path%/\.git*}/.gitea/workflows"
+
+    # Validate workflow directory exists
+    if [[ ! -d "$workflow_path" ]]; then
+        cleanup_oss_workflow
+        return 0
+    fi
+
+    # Check if workflow path is already in PATH
+    if [[ ":$PATH:" == *":$workflow_path:"* ]]; then
+        # Already set up, but update the path variable for consistency
+        export OSS_WORKFLOW_PATH="$workflow_path"
+        return 0
+    fi
+
+    # Set up the workflow environment
+    export OSS_WORKFLOW_PATH="$workflow_path"
+    export OSS_PATH_BACKUP="$PATH"
+    export PATH="$workflow_path:$PATH"
+
+    return 0
+}
+
+wrapper_cd() {
+    local args=("$@")
+
+    # Use HOME if no arguments provided
+    if [[ ${#args[@]} -eq 0 ]]; then
+        args=("$HOME")
+    fi
+
+    # Change directory and handle errors
+    if ! builtin cd "${args[@]}"; then
+        return 1
+    fi
+
+    # Update OSS workflow environment
+    oss_workflow
+}
+
+# Create alias only if we're in an interactive shell
+if [[ $- == *i* ]]; then
+    alias cd='wrapper_cd'
+fi
+
+# Initialize the workflow for the current directory
+oss_workflow
+
+# Key improvements:
+# 1. Better error handling:
+#   - Proper validation of paths and directories
+#   - Separate cleanup function for consistent state management
+#   - More robust error checking with proper return codes
+# 2. Improved path handling:
+#   - Better pattern matching for PATH manipulation (:$PATH: format)
+#   - kSafer path construction with proper directory validation
+#   - More reliable git directory resolution
+# 3. Enhanced wrapper_cd function:
+#   - Proper array handling of arguments
+#   - Better error propagation
+#   - More robust argument processing
+# 4. Performance optimizations:
+#   - Avoid redundant PATH modifications
+#   - Early exits when conditions aren't met
+#   - Cleaner logic flow
+# 5. Safety improvements:
+#   - Only create alias in interactive shells
+#   - Proper variable scoping with local
+#   - Initialize workflow on script load
+# 6. Code quality:
+#   - Consistent formatting and indentation
+#   - Better function organization
+#   - More descriptive variable names
+#   - Proper array handling

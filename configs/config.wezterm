@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+printf "### %s\n" "$(readlink -f "$0")"
+
+if command -v wezterm >/dev/null; then
+    if [[ ! -f "${HOME}/.wezterm.lua" ]]; then
+        ln -s "${PENNYKIT_HOME}/configs/wezterm/wezterm.lua" "${HOME}/.wezterm.lua"
+    fi
+fi

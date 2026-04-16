@@ -1,0 +1,247 @@
+
+" Prevent compatibility issues with old vi
+set nocompatible
+
+" Enable modern features like syntax highlighting and plugins
+filetype plugin indent on
+syntax on
+
+" Set default encoding to UTF-8
+set encoding=utf-8
+
+" Use the system clipboard by default
+set clipboard=unnamedplus
+
+" Increase history size for commands and search
+set history=1000
+
+" Allow local .vim files per project (use cautiously)
+set exrc secure
+
+" Show line numbers and relative line numbers
+set number
+set relativenumber
+
+" Enable mouse support in all modes
+set mouse=a
+
+" Display current mode manually in statusline
+set showmode
+set noshowcmd " Hide command-line preview unless needed
+
+" Always show statusline
+set laststatus=2
+
+" Tab and indentation settings (general defaults)
+set tabstop=4       " Number of spaces a tab counts for
+set shiftwidth=4    " Width for auto-indentation
+set expandtab       " Use spaces instead of tabs
+set autoindent      " Copy indent from current line when starting new one
+set smartindent     " Smart auto-indentation for code
+set smarttab        " Make tab key smarter (respect 'expandtab')
+set backspace=indent,eol,start " Allow backspace to delete indent/eol/start
+
+" Enable persistent undo across sessions (if supported)
+if v:version >= 703
+  set undodir=~/.vim/undo
+  set undofile
+  set undolevels=1000   " Maximum number of changes that can be undone
+  set undoreload=10000  " Lines saved in memory for undo
+endif
+
+" Don't create backup/writebackup/swap files
+set nobackup
+set nowritebackup
+set noswapfile
+
+" Search settings
+set incsearch         " Highlight as you type
+set hlsearch          " Highlight matches
+set ignorecase        " Case-insensitive search
+set smartcase         " Override ignorecase if uppercase present
+set showmatch         " Briefly jump to matching bracket
+set magic             " Enable extended regex patterns
+
+" Split window behavior
+set splitbelow        " New horizontal splits go below
+set splitright        " New vertical splits go to the right
+
+" Completion options
+set completeopt=menuone,noinsert,noselect
+set omnifunc=syntaxcomplete#Complete
+set wildmenu          " Visual autocomplete for :cmd
+set path+=**          " Search subdirectories recursively
+set wildignore=*.docx,*.jpg,*.png,*.gif,*.pdf,*.pyc,*.exe,*.flv,*.img,*.xlsx
+
+" Window navigation with Ctrl + hjkl
+nnoremap <C-J> <C-W>j
+nnoremap <C-K> <C-W>k
+nnoremap <C-H> <C-W>h
+nnoremap <C-L> <C-W>l
+
+" Resize splits with Alt + Arrow keys
+noremap <A-Up> <C-W>+
+noremap <A-Down> <C-W>-
+noremap <A-Left> <C-W>>
+noremap <A-Right> <C-W><
+
+" Toggle Netrw file browser
+let g:netrw_banner = 0
+let g:netrw_liststyle = 3
+let g:netrw_showhide = 1
+let g:netrw_winsize = 20
+
+" Status Line Configuration
+set statusline=
+set statusline+=%2*[%n]%*                  " Buffer number
+"set statusline+=%{StatuslineMode()}        " Current mode
+set statusline+=%1*\ %f%h%m%r%w\           " Filename flags
+set statusline+=%=%3*%{&ff}/%Y            " File format and type
+set statusline+=%1*:%4*%l/%L\ (%P)        " Line number / total lines and percent
+
+" Mode display function
+function! StatuslineMode()
+  let l:mode = mode()
+  if l:mode == 'n' | return "[NORMAL]"
+  elseif l:mode == 'i' | return "[INSERT]"
+  elseif l:mode == 'R' | return "[REPLACE]"
+  elseif l:mode == 'V' | return "[VISUAL LINE]"
+  elseif l:mode == 'v' | return "[VISUAL]"
+  elseif l:mode == "\x16" | return "[BLOCK VIS]"
+  elseif l:mode == 's' | return "[SELECT]"
+  elseif l:mode == 'c' | return "[CMD]"
+  else | return "[UNKNOWN]"
+  endif
+endfunction
+
+" Auto Completion Enhancements
+inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : TabComplete()
+inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
+inoremap <expr> <CR>    pumvisible() ? "\<C-y>" : "\<CR>"
+
+fun! TabComplete()
+  let line = getline('.')[:col('.')-2]
+  if \ line =~# '\.\w*$' || line =~# '::\w*$' || line =~# '->\w*$'
+    return "\<C-x>\<C-o>"  " Trigger omni-completion
+  elseif col('.') > 1 && getline('.')[col('.') - 2] !~# '\k'
+    return "\<Tab>"        " Normal tab
+  else
+    return "\<C-x>\<C-n>"  " Keyword completion
+  endif
+endfun
+
+" Smart Pairs in Insert Mode
+inoremap ( ()<left>
+inoremap [ []<left>
+inoremap { {}<left>
+inoremap {<CR>} {<CR>}<ESC>O
+inoremap /* /**/<left><left>
+
+" Leader key
+let mapleader = " "
+
+" Key Bindings
+
+" File Explorer
+nnoremap <leader>e :Lex<CR>
+nnoremap <leader>o :Explore<CR>
+
+" Tabs
+nnoremap <leader>t gt
+nnoremap <leader>c :tabedit<space>
+
+" Splits
+nnoremap <leader>y :split<space>
+nnoremap <leader>x :vsplit<space>
+
+" Replace word under cursor
+nnoremap <leader>rw :%s/\<<C-R><C-W>\>//g<left><left>
+
+" Surround word with character
+nnoremap <leader>sw <cmd>echo "Press a character: " \| let c = nr2char(getchar()) \| exec "normal viwo\ei" . c . "\eea" . c . "\e" \| redraw<CR>
+
+" Paste/Copy with clipboard
+map <C-V> "+P
+vnoremap <C-C> "+y
+
+" Registers viewer
+nnoremap <leader>r <cmd>registers<CR>
+
+" Move selected lines up/down
+vnoremap J :m '>+1<CR>gv=gv
+vnoremap K :m '>-2<CR>gv=gv
+
+" Block selection toggle
+noremap <leader>v <C-v>
+
+" Clear search highlight with two Esc presses in normal mode
+nnoremap <Esc><Esc> :nohlsearch<CR>
+
+" Optionally: Clear highlight and exit insert mode with two Escs
+inoremap <Esc><Esc> <Esc>:nohlsearch<CR>
+
+" FileType Specific Settings
+
+" HTML
+autocmd FileType html setlocal tabstop=2 shiftwidth=2 expandtab
+
+" C / C++
+autocmd FileType c,cpp setlocal tabstop=8 softtabstop=4 shiftwidth=4 noexpandtab
+autocmd FileType c,cpp setlocal cinoptions=(0,:0,l1,g0,t0,s0 formatoptions=croql
+autocmd FileType c,cpp setlocal cindent smartindent
+
+" Python
+autocmd FileType python setlocal tabstop=4 softtabstop=4 shiftwidth=4 expandtab
+autocmd FileType python setlocal autoindent smartindent
+autocmd FileType python setlocal formatoptions+=t formatoptions-=r formatoptions-=o
+
+" YAML
+autocmd FileType yaml setlocal tabstop=2 softtabstop=2 shiftwidth=2 expandtab
+autocmd FileType yaml setlocal autoindent
+
+" Shell scripts
+autocmd FileType sh,zsh setlocal tabstop=4 softtabstop=4 shiftwidth=4 expandtab
+autocmd FileType sh,zsh setlocal smartindent
+
+" Generic formatting cleanup
+autocmd FileType * setlocal formatoptions-=c formatoptions-=r formatoptions-=o
+
+" Color Scheme
+function! MyHighlightsVim() abort
+  " Soothe Desert colors
+  highlight Normal         cterm=NONE ctermbg=235 guibg=#1c1c1c
+  highlight CursorLine     cterm=NONE ctermbg=236 guibg=#262626
+  highlight CursorColumn   cterm=NONE ctermbg=236 guibg=#262626
+  highlight NonText        cterm=NONE ctermfg=244 guifg=#586e75
+  highlight Comment        cterm=NONE ctermfg=245 guifg=#657b83
+  highlight Constant       cterm=NONE ctermfg=136 guifg=#b58900
+  highlight Identifier     cterm=NONE ctermfg=39  guifg=#2aa198
+  highlight Statement      cterm=NONE ctermfg=168 guifg=#d33682
+  highlight PreProc        cterm=NONE ctermfg=67  guifg=#6c71c4
+  highlight Type           cterm=NONE ctermfg=125 guifg=#dc322f
+  highlight Special        cterm=NONE ctermfg=30  guifg=#268bd2
+  highlight Underlined     cterm=NONE ctermfg=30  guifg=#268bd2 gui=underline
+  highlight Todo           cterm=NONE ctermfg=136 ctermbg=236 guifg=#b58900 guibg=#262626
+
+  " Status line improvements
+  highlight StatusLine     cterm=NONE ctermfg=250 ctermbg=238 guifg=#839496 guibg=#3a3a3a gui=bold
+  highlight StatusLineNC   cterm=NONE ctermfg=244 ctermbg=235 guifg=#586e75 guibg=#1c1c1c
+endfunction
+
+augroup MyColors
+  autocmd!
+  autocmd colorscheme * call MyHighlightsVim()
+augroup END
+
+colorscheme desert
+
+" Enable spell checking toggle
+nnoremap <F2> :set spell! spelllang=en_us<CR>
+function! SpellCheckStatus()
+  return &spell ? " [SPELL]" : ''
+endfunction
+
+" Optional: Load user-local config (for machine-specific overrides)
+if filereadable($HOME . "/.vim/local.vim")
+  source $HOME/.vim/local.vim
+endif

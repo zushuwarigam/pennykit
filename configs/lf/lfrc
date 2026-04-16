@@ -1,0 +1,151 @@
+# Settings
+set hidden false    # show dotfiles
+set icons true      # requires a Nerd Font
+set ratios 1:2:3    # pane width ratios
+set scrolloff 5
+set tabstop 4
+set info size
+set sortby natural
+set ignorecase true
+
+set previewer ~/.config/lf/preview
+set cleaner   ~/.config/lf/cleaner
+
+# Navigation
+map g. set hidden!  # toggle dotfiles
+
+map gh cd ~
+map gc cd ~/.config
+map gt cd /tmp
+
+map gn cd ~/notes
+
+# Opening files
+cmd open &{{
+    case $(file --mime-type -b "$f") in
+        text/*|application/json|application/javascript|inode/x-empty)
+            lf -remote "send $id \$$EDITOR '$f'";;
+        image/*)
+            sxiv "$fx" &;;
+        application/pdf)
+            zathura "$fx" &;;
+        video/*|audio/*)
+            mpv "$fx" &;;
+        *)
+            xdg-open "$fx" &;;
+    esac
+}}
+
+# Git integration
+cmd git-status ${{
+    git -C "$PWD" status --short | less -R
+}}
+cmd git-log ${{
+    git -C "$PWD" log --oneline --graph --color | less -R
+}}
+map gs git-status
+map gl git-log
+
+# Fuzzy find (fzf)
+cmd fzf-jump ${{
+    res=$(find . -maxdepth 6 -type f \( -name '.git' -o -name 'node_modules' \) \
+          -prune -o -print 2>/dev/null \
+          | fzf --preview 'batcat --color=always --style=plain {}' \
+                --preview-window=right:60% \
+                --bind='ctrl-/:toggle-preview')
+    [ -n "$res" ] && lf -remote "send $id select '$res'"
+}}
+map <c-f> fzf-jump
+
+# ripgrep → fzf → open
+cmd rg-open ${{
+    res=$(rg --color=always --line-number '' \
+          | fzf --ansi --delimiter=: \
+                --preview 'batcat --color=always --highlight-line {2} {1}' \
+                --preview-window=right:60%:+{2}+3/3)
+    file=$(echo "$res" | cut -d: -f1)
+    line=$(echo "$res" | cut -d: -f2)
+    [ -n "$file" ] && lf -remote "send $id select '$file'" \
+                   && lf -remote "send $id \$$EDITOR +$line '$file'"
+}}
+map <c-g> rg-open
+
+# Quick mkdir + cd
+cmd mkdir-cd ${{
+    printf 'Directory name: '
+    read ans
+    mkdir -p "$ans"
+    lf -remote "send $id cd '$ans'"
+}}
+map md mkdir-cd
+
+# Bulk rename with $EDITOR
+cmd bulk-rename ${{
+    old=$(mktemp)
+    new=$(mktemp)
+    printf '%s\n' $fx > "$old"
+    cp "$old" "$new"
+    $EDITOR "$new"
+    paste "$old" "$new" | while IFS=$'\t' read -r src dst; do
+        [ "$src" != "$dst" ] && mv -- "$src" "$dst"
+    done
+    rm -f "$old" "$new"
+}}
+map R bulk-rename
+
+# Copy path helpers
+cmd yank-path  $printf '%s' "$f"  | xclip -selection clipboard
+cmd yank-dir   $printf '%s' "$PWD" | xclip -selection clipboard
+cmd yank-name  $printf '%s' "$(basename $f)" | xclip -selection clipboard
+map yp yank-path
+map yd yank-dir
+map yn yank-name
+
+# Archive helpers
+cmd tar-create ${{
+    name=$(basename "$PWD")
+    tar -czf "../$name.tar.gz" .
+    echo "Created ../$name.tar.gz"
+}}
+cmd zip-create ${{
+    name=$(basename "$PWD")
+    zip -r "../$name.zip" .
+    echo "Created ../$name.zip"
+}}
+cmd extract ${{
+    case "$f" in
+        *.tar.gz|*.tgz) tar -xzf "$f" ;;
+        *.tar.bz2)      tar -xjf "$f" ;;
+        *.zip)          unzip "$f"     ;;
+        *.7z)           7z x "$f"      ;;
+        *)              echo "Unrecognised archive: $f" ;;
+    esac
+}}
+map ae extract
+map at tar-create
+map az zip-create
+
+# Run file as script
+cmd run ${{
+    chmod +x "$f"
+    "$f"
+}}
+map x run
+
+# Docker/compose shortcuts
+# cmd docker-ps  $docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | less
+# cmd dc-up      $docker compose up -d
+# cmd dc-down    $docker compose down
+# map <a-d>p docker-ps
+# map <a-d>u dc-up
+# map <a-d>d dc-down
+
+# Map 'i' to open with a markdown-aware pager
+cmd open-pager ${{
+    case "$f" in
+        *.md) glow -p "$f" ;;   # or: bat "$f"
+        *) batcat --color=always --style=plain --paging=always "$f" ;;
+    esac
+}}
+
+map i open-pager

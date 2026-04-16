@@ -1,0 +1,12 @@
+**/.DS_Store
+**/lazy-lock.json
+
+.envrc
+.netrc
+
+*.log
+
+/logs/*
+!/logs/.gitkeep
+
+/tmp/

@@ -1,0 +1,24 @@
+-- Autocmds are automatically loaded on the VeryLazy event
+-- Default autocmds that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/autocmds.lua
+--
+-- Add any additional autocmds here
+-- with `vim.api.nvim_create_autocmd`
+--
+-- Or remove existing autocmds by their group name (which is prefixed with `lazyvim_` for the defaults)
+-- e.g. vim.api.nvim_del_augroup_by_name("lazyvim_wrap_spell")
+
+
+-- TODO: Add if needed
+-- vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
+--   pattern = "Dockerfile.*",
+--   callback = function()
+--     vim.bo.filetype = "dockerfile"
+--   end,
+-- })
+-- ```
+--
+-- **`vim.filetype.add` is preferred** — it runs earlier in the startup sequence (before plugins), so Treesitter and LSP pick up the filetype correctly from the start, whereas an autocmd fires slightly later and can occasionally cause a flicker or missed LSP attach.
+--
+-- To verify it's working after saving:
+-- ```
+-- :lua print(vim.bo.filetype)

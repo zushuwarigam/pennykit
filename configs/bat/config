@@ -1,0 +1,3 @@
+# "batcat --help" for more options
+--theme="gruvbox-dark"
+--style="plain,numbers"
