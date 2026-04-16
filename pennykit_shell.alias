@@ -4,6 +4,10 @@ alias v="nvim"
 alias vi="nvim"
 alias vim="nvim"
 
+alias vz="nvim -c 'ZenMode'"
+alias viz="nvim -c 'ZenMode'"
+alias vimz="nvim -c 'ZenMode'"
+
 # Git
 alias gs="git status"
 alias gl="git log"
