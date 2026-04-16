@@ -28,6 +28,7 @@ return {
         "beautysh",
         -- c/cpp
         "cpptools",
+        "codelldb",
       },
     },
   },
