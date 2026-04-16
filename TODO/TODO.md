@@ -33,3 +33,10 @@
 
 # NVIM 12+
 # https://docs.astronvim.com/configuration/v6_migration/
+
+# Auto install lsp
+# +dockerfile-language-server
+# And other 
+
+# + For lang check
+# https://github.com/liba2k/languagetool.nvim
