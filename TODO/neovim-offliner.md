@@ -1,7 +1,8 @@
 : <<"EOC"
 
 # Get repo list
-# :lua for _, p in pairs(require("lazy").plugins()) do print(p.url) end
+#:redir @a | :lua for _, p in pairs(require("lazy").plugins()) do print(p.url) end
+#:put a
 
 # Mirror repos
 #!/bin/bash
