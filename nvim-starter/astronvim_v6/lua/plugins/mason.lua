@@ -29,9 +29,6 @@ return {
         -- c/cpp
         "cpptools",
         "codelldb",
-        -- lang
-        "ltex",
-        "ltex_plus",
       },
     },
   },

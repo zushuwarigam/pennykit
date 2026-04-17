@@ -55,6 +55,7 @@ return {
     -- enable servers that you already have installed without mason
     servers = {
       "ltex",
+      "ltex_plus",
       -- "pyright"
     },
     ---@diagnostic disable: missing-fields
