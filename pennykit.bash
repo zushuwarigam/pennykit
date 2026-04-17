@@ -3,4 +3,4 @@ source "${HOME}/.pennykit/pennykit_shell.alias"
 source "${HOME}/.pennykit/pennykit_shell.functions"
 
 bind '"\el": clear-screen'
-bind '"\ee": edit-command-line'
+bind '"\ee": edit-and-execute-command'
