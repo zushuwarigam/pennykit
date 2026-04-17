@@ -35,10 +35,7 @@
 
 # Update tree-sitter-cli: luarocks install tree-sitter-cli
 
-# Resize panels in vim and tmux
-
 # Check errors:
-
 # sudo dmesg | grep -iE "error|fail|bad|reset|ata|nvme|sda" | tail -30
 # sudo journalctl -k | grep -iE "error|io|disk|sda|nvme" | tail -30
 
