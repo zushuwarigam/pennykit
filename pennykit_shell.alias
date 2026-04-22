@@ -12,6 +12,7 @@ alias vimz="nvim -c 'ZenMode'"
 alias gs="git status"
 alias gl="git log"
 alias glg="git log --oneline --graph --all"
+alias glga="git log --graph --all --format='%C(yellow)%h%C(reset) %C(blue)%<(15)%an%C(reset) %s'"
 alias gds="git diff --staged"
 
 alias gpl="git pull"
