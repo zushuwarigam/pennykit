@@ -3,6 +3,8 @@ set -euo pipefail
 printf "### pipx.admin %s\n" "$(readlink -f "$0")"
 
 if [ "$PENNYKIT_OS_VERSION_CODENAME" == "trixie" ]; then
+    # TODO: need add postgres support via:
+    # pipx inject harlequin harlequin-postgres
     PENNYKIT_PIPX_ADMIN+=("harlequin")      # pkg: harlequin; desc: Terminal SQL IDE with schema browser and query results
 else
     :

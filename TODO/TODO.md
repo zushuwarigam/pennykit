@@ -33,7 +33,7 @@
 # https://github.com/liba2k/languagetool.nvim
 
 
-# Update tree-sitter-cli: luarocks install tree-sitter-cli
+# TODO: Update tree-sitter-cli: luarocks install tree-sitter-cli
 
 # Check errors:
 # sudo dmesg | grep -iE "error|fail|bad|reset|ata|nvme|sda" | tail -30
