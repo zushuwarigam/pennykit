@@ -1,5 +1,3 @@
--- if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
-
 -- Customize Mason
 
 ---@type LazySpec
@@ -15,6 +13,7 @@ return {
         "lua-language-server",
         -- install formatters
         "stylua",
+        "ruff",
         -- install debuggers
         "debugpy",
         -- install any other package
@@ -29,6 +28,17 @@ return {
         -- c/cpp
         "cpptools",
         "codelldb",
+        -- go
+        "gopls",
+        "gofump",
+        "golangci-lint",
+        "golangci-lint-langserver",
+        "gomodifytags",
+        "impl",
+        "delve",
+        -- ltex
+        "ltex-ls",
+        "ltex-ls-plus",
       },
     },
   },

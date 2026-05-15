@@ -1,5 +1,3 @@
--- if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
-
 -- ~/.config/astronvim/lua/plugins/go.lua
 return {
   "ray-x/go.nvim",

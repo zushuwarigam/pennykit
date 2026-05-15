@@ -1,5 +1,3 @@
--- if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
-
 -- Customize Treesitter
 -- --------------------
 -- Treesitter customizations are handled with AstroCore
@@ -25,13 +23,15 @@ return {
         "javascript",
         "latex",
         "lua",
-        "norg",
         "regex",
         "scss",
         "svelte",
         "tsx",
         "typst",
         "vim",
+        "c",
+        "cpp",
+        "python",
         -- "vue",
         -- add more arguments for adding more treesitter parsers
       },

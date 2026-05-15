@@ -1,5 +1,3 @@
--- if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
-
 -- AstroCore provides a central place to modify mappings, vim options, autocommands, and more!
 -- Configuration documentation can be found with `:h astrocore`
 -- NOTE: We highly recommend setting up the Lua Language Server (`:LspInstall lua_ls`)
@@ -47,15 +45,15 @@ return {
         spellsuggest = "best,9",
         signcolumn = "yes", -- sets vim.opt.signcolumn to yes
         wrap = false, -- sets vim.opt.wrap
+        mouse = 'a',
         langmap = {
           "ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯ;ABCDEFGHIJKLMNOPQRSTUVWXYZ",
           "фисвуапршолдьтщзйкыегмцчня;abcdefghijklmnopqrstuvwxyz",
         },
       },
-      g = { -- vim.g.<key>
-        -- configure global vim variables (vim.g)
-        -- NOTE: `mapleader` and `maplocalleader` must be set in the AstroNvim opts or before `lazy.setup`
-        -- This can be found in the `lua/lazy_setup.lua` file
+      g = {
+        clipboard = "osc52",
+        editorconfig = true,
       },
     },
     -- Mappings can be configured through AstroCore as well.
@@ -88,23 +86,17 @@ return {
         ["<leader>a"] = { name = "AI/CodeCompanion" },
         ["<Leader>aa"] = { "<cmd>CodeCompanionChat Toggle<cr>", desc = "Toggle Chat" },
         ["<Leader>ap"] = { "<cmd>CodeCompanionActions<cr>", desc = "Action Palette" },
+        ["<Tab>"] = { "<cmd>bnext<CR>", desc = "Next buffer" },
+        ["<S-Tab>"] = { "<cmd>bprev<CR>", desc = "Previous buffer" },
+        ["<M-Up>"] = { function() vim.cmd("resize +2") end, desc = "Increase window height" },
+        ["<M-Down>"] = { function() vim.cmd("resize -2") end, desc = "Decrease window height" },
+        ["<M-Left>"] = { function() vim.cmd("vertical resize -2") end, desc = "Decrease window width" },
+        ["<M-Right>"] = { function() vim.cmd("vertical resize +2") end, desc = "Increase window width" },
       },
       v = {
         ["<Leader>aa"] = { "<cmd>CodeCompanionChat<cr>", desc = "Add to Chat" },
       },
     },
-    mason = {
-      ensure_installed = {
-        "gopls",
-        "gofump",
-        "golangci-lint",
-        "golangci-lint-langserver",
-        "gomodifytags",
-        "impl",
-        "delve",
-        "ltex-ls",
-        "ltex-ls-plus",
-      },
-    },
+
   },
 }
