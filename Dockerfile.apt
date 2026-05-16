@@ -49,7 +49,7 @@ RUN "./scripts/package_installer.sh" apt
 RUN "./scripts/package_configure.sh"
 
 RUN mkdir -p "${HOME}/.config" && \
-  ln -s "${HOME}/.pennykit/nvim-starter/astronvim_v5" "${HOME}/.config/nvim"
+  ln -s "${HOME}/.pennykit/nvim-starter/astronvim_v6" "${HOME}/.config/nvim"
 
 RUN nvim --headless -c 'Lazy install' -c 'qa'
 # RUN nvim --headless -c 'TSInstall css html javascript latex norg scss svelte tsx typst vue regex' -c 'qa'

@@ -1,0 +1,14 @@
+**/.git
+**/.git/**
+logs/
+**/*.log
+**/lazy-lock.json
+**/.DS_Store
+Dockerfile*
+.dockerignore
+.gitignore
+.gitmodules
+README.md
+LICENSE
+TODO/
+nvim-starter/*.git/

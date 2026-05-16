@@ -54,7 +54,7 @@ WORKDIR ${PENNYKIT_HOME}
 RUN "${PENNYKIT_HOME}/scripts/package_installer.sh" brew.on_linux
 
 RUN mkdir -p "${HOME}/.config" && \
-  ln -s "${HOME}/.pennykit/nvim-starter/astronvim_v5" "${HOME}/.config/nvim"
+  ln -s "${HOME}/.pennykit/nvim-starter/astronvim_v6" "${HOME}/.config/nvim"
 
 RUN nvim --headless -c 'Lazy install' -c 'qa'
 # RUN nvim --headless -c 'TSInstall css html javascript latex norg scss svelte tsx typst vue regex' -c 'qa'

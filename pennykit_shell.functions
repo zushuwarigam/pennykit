@@ -39,7 +39,7 @@ function orig() { cp "$1"{,.orig}; echo "Backed up: $1.orig"; }
 function penny-update-extern() {
     case "${1:-}" in
         deactivate|activate|list-deactivated)
-            bash "$PENNYKIT_HOME/bin/pennykit.sh" extern "$@"
+            bash "$PENNYKIT_HOME/bin/pennykit" extern "$@"
             ;;
         help|--help|-h)
             echo "Usage: penny-update-extern [set|subcommand]"
@@ -58,7 +58,7 @@ function penny-update-extern() {
             echo "  list-deactivated     List all deactivated packages"
             ;;
         *)
-            bash "$PENNYKIT_HOME/bin/pennykit.sh" extern "${1:-default}"
+            bash "$PENNYKIT_HOME/bin/pennykit" extern "${1:-default}"
             ;;
     esac
 }
@@ -66,7 +66,7 @@ function penny-update-extern() {
 function penny-theme() {
     case "${1:-}" in
         list)
-            bash "$PENNYKIT_HOME/bin/pennykit.sh" theme list
+            bash "$PENNYKIT_HOME/bin/pennykit" theme list
             ;;
         set)
             if [[ -z "${2:-}" ]]; then
@@ -74,11 +74,11 @@ function penny-theme() {
                 return 1
             fi
             echo "PENNYKIT_THEME=\"${2}\"" > "$PENNYKIT_HOME/configs/theme.conf"
-            bash "$PENNYKIT_HOME/bin/pennykit.sh" theme "$2"
+            bash "$PENNYKIT_HOME/bin/pennykit" theme "$2"
             echo "Run 'source ~/.bashrc' (or restart shell) to apply prompt changes."
             ;;
         apply)
-            bash "$PENNYKIT_HOME/bin/pennykit.sh" theme
+            bash "$PENNYKIT_HOME/bin/pennykit" theme
             ;;
         *)
             echo "Usage: penny-theme [list|set|apply]"

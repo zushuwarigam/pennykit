@@ -2,4 +2,4 @@
 set -euo pipefail
 
 PENNYKIT_HOME="${PENNYKIT_HOME:-$HOME/.pennykit}"
-exec "$PENNYKIT_HOME/bin/pennykit.sh" extern "$@"
+exec "$PENNYKIT_HOME/bin/pennykit" extern "$@"
