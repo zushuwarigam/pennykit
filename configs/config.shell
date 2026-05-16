@@ -19,11 +19,14 @@ if [[ -f "${HOME}/.bashrc" ]]; then
     fi
     sed -i 's/^OSH_THEME.*/OSH_THEME="duru"/g' "${HOME}/.bashrc"
 
-    # Fix: add exports to .bash (oh-my-bash create custom .bashrc)
-    echo -e "\nexport PENNYKIT_HOME=\"\$HOME/.pennykit\"" >> "${HOME}/.bashrc"
-    echo -e "\n[[ -f ~/.pennykit/pennykit.bash ]] && source \${HOME}/.pennykit/pennykit.bash" >> "${HOME}/.bashrc"
-
-    if [[ -f "${HOME}/.fzf.bash" ]]; then
+    # Re-ensure after oh-my-bash may have recreated .bashrc
+    if ! grep -q "export PENNYKIT_HOME" "${HOME}/.bashrc"; then
+        echo -e "\nexport PENNYKIT_HOME=\"\$HOME/.pennykit\"" >> "${HOME}/.bashrc"
+    fi
+    if ! grep -q "source.*pennykit" "${HOME}/.bashrc"; then
+        echo -e "\n[[ -f ~/.pennykit/pennykit.bash ]] && source \${HOME}/.pennykit/pennykit.bash" >> "${HOME}/.bashrc"
+    fi
+    if [[ -f "${HOME}/.fzf.bash" ]] && ! grep -q "source.*fzf.bash" "${HOME}/.bashrc"; then
         echo -e "\n[ -f ~/.fzf.bash ] && source ~/.fzf.bash" >> "${HOME}/.bashrc"
     fi
 fi
