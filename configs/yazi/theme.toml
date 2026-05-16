@@ -1,6 +1,6 @@
 # ── Gruvbox Dark ─────────────────────────────────────────────
 [flavor]
-use = "bennyyip/gruvbox-dark"               # requires the flavor installed (see below)
+use = "yazi-rs/flavors:tokyonight"               # requires the flavor installed (see below)
 
 [manager]
 cwd = { fg = "#83a598" }
