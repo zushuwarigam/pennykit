@@ -39,3 +39,8 @@
 # sudo dmesg | grep -iE "error|fail|bad|reset|ata|nvme|sda" | tail -30
 # sudo journalctl -k | grep -iE "error|io|disk|sda|nvme" | tail -30
 
+
+# ? luarocks install xml2lua
+# wget https://raw.githubusercontent.com/rocks-moonscript-org/moonrocks-mirror/master/xml2lua-1.6-2.src.rock
+# luarocks --tree ~/.local/share/nvim/lazy-rocks/rest.nvim install ./xml2lua-1.6-2.src.rock
+
