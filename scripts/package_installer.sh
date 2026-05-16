@@ -17,6 +17,27 @@ sleep 2
 
 cd "$PENNYKIT_HOME"
 
+_is_deactivated() {
+    local pkg="$1"
+    local skip_file="$PENNYKIT_HOME/configs/extern.skip"
+    [[ ! -f "$skip_file" ]] && return 1
+    while IFS= read -r line; do
+        [[ "$line" =~ ^# ]] && continue
+        [[ -z "$line" ]] && continue
+        [[ "$line" == "$pkg" ]] && return 0
+    done < "$skip_file"
+    return 1
+}
+
+_add_or_skip() {
+    local pkg="$1"
+    if _is_deactivated "$pkg"; then
+        echo "  Skipping $pkg (deactivated)"
+        return
+    fi
+    "add_$pkg"
+}
+
 # shellcheck source=./packages/apt.default
 source "./packages/${package_sets}"
 # shellcheck source=./packages/extern.packages
@@ -34,9 +55,8 @@ if [[ -v PENNYKIT_APT_DEFAULT ]]; then
   # shellcheck source=./packages/apt.default.postinst
   source "./packages/${package_sets}.postinst"
 
-  # shellcheck source=./packages/extern.nvim
   [[ -v PENNYKIT_EXTERN_DEFAULT ]] \
-    && for p in "${PENNYKIT_EXTERN_DEFAULT[@]}"; do "add_$p"; done
+    && for p in "${PENNYKIT_EXTERN_DEFAULT[@]}"; do _add_or_skip "$p"; done
 
   case "$PENNYKIT_PACKAGE_SET" in
     ADMIN) # admin package set
@@ -58,7 +78,7 @@ if [[ -v PENNYKIT_APT_DEFAULT ]]; then
         && npm install "${PENNYKIT_NPM_ADMIN[@]}"
 
       [[ -v PENNYKIT_EXTERN_ADMIN ]] \
-        && for p in "${PENNYKIT_EXTERN_ADMIN[@]}"; do "add_$p"; done
+        && for p in "${PENNYKIT_EXTERN_ADMIN[@]}"; do _add_or_skip "$p"; done
       ;;
     DEV) # dev package set
       source "./packages/apt.dev"
@@ -78,9 +98,8 @@ if [[ -v PENNYKIT_APT_DEFAULT ]]; then
       [[ -v PENNYKIT_NPM_DEV ]] \
         && npm install "${PENNYKIT_NPM_DEV[@]}"
 
-      # shellcheck source=./packages/extern.nvim
       [[ -v PENNYKIT_EXTERN_DEV ]] \
-        && for p in "${PENNYKIT_EXTERN_DEV[@]}"; do "add_$p"; done
+        && for p in "${PENNYKIT_EXTERN_DEV[@]}"; do _add_or_skip "$p"; done
       ;;
     PENTEST) # pentest package set
       source "./packages/apt.pentest"
@@ -100,9 +119,8 @@ if [[ -v PENNYKIT_APT_DEFAULT ]]; then
       [[ -v PENNYKIT_NPM_PENTEST ]] \
         && npm install "${PENNYKIT_NPM_PENTEST[@]}"
 
-      # shellcheck source=./packages/extern.nvim
       [[ -v PENNYKIT_EXTERN_PENTEST ]] \
-        && for p in "${PENNYKIT_EXTERN_PENTEST[@]}"; do "add_$p"; done
+        && for p in "${PENNYKIT_EXTERN_PENTEST[@]}"; do _add_or_skip "$p"; done
       ;;
     ALL) # all package sets
       source "./packages/apt.admin"
@@ -141,11 +159,11 @@ if [[ -v PENNYKIT_APT_DEFAULT ]]; then
       # npm install "${PENNYKIT_NPM_uniq[@]}"
 
       [[ -v PENNYKIT_EXTERN_ADMIN ]] \
-        && for p in "${PENNYKIT_EXTERN_ADMIN[@]}"; do "add_$p"; done
+        && for p in "${PENNYKIT_EXTERN_ADMIN[@]}"; do _add_or_skip "$p"; done
       [[ -v PENNYKIT_EXTERN_DEV ]] \
-        && for p in "${PENNYKIT_EXTERN_DEV[@]}"; do "add_$p"; done
+        && for p in "${PENNYKIT_EXTERN_DEV[@]}"; do _add_or_skip "$p"; done
       [[ -v PENNYKIT_EXTERN_PENTEST ]] \
-        && for p in "${PENNYKIT_EXTERN_PENTEST[@]}"; do "add_$p"; done
+        && for p in "${PENNYKIT_EXTERN_PENTEST[@]}"; do _add_or_skip "$p"; done
       ;;
   esac
 

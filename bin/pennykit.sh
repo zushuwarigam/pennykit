@@ -21,6 +21,9 @@ Commands:
   theme              Show current theme and available themes
   theme <name>       Apply a theme (e.g. $(basename "$0") theme catppuccin)
   extern [set]       Update external packages (set: default|admin|dev|pentest|all)
+  extern deactivate <pkg>  Deactivate a package (skip install/update)
+  extern activate <pkg>    Reactivate a deactivated package
+  extern list-deactivated  List all deactivated packages
   update             Update pennykit itself (git pull --rebase)
   branch             Show current git branch
   branch <name>      Switch to a different git branch
@@ -34,6 +37,18 @@ EOF
 
 status() { echo "  $*"; }
 die() { echo "Error: $*" >&2; exit 1; }
+
+_is_deactivated() {
+    local pkg="$1"
+    local skip_file="$PENNYKIT_HOME/configs/extern.skip"
+    [[ ! -f "$skip_file" ]] && return 1
+    while IFS= read -r line; do
+        [[ "$line" =~ ^# ]] && continue
+        [[ -z "$line" ]] && continue
+        [[ "$line" == "$pkg" ]] && return 0
+    done < "$skip_file"
+    return 1
+}
 
 # ── Status dashboard ───────────────────────────────────────────
 
@@ -72,6 +87,16 @@ cmd_status() {
     [[ -v PENNYKIT_EXTERN_DEV ]]     && count_dev=${#PENNYKIT_EXTERN_DEV[@]}
     [[ -v PENNYKIT_EXTERN_PENTEST ]] && count_pentest=${#PENNYKIT_EXTERN_PENTEST[@]}
     status "Extern:    $count_default default, $count_admin admin, $count_dev dev, $count_pentest pentest"
+
+    local deactivated=0
+    if [[ -f "$PENNYKIT_HOME/configs/extern.skip" ]]; then
+        while IFS= read -r line; do
+            [[ "$line" =~ ^# ]] && continue
+            [[ -z "$line" ]] && continue
+            ((++deactivated))
+        done < "$PENNYKIT_HOME/configs/extern.skip"
+    fi
+    [[ $deactivated -gt 0 ]] && status "Deactivated: $deactivated packages"
 
     echo ""
 }
@@ -278,42 +303,84 @@ TMUXEOF
 
 # ── Extern update ──────────────────────────────────────────────
 
+_update_or_skip() {
+    local pkg="$1"
+    if _is_deactivated "$pkg"; then
+        echo "  Skipping $pkg (deactivated)"
+        return
+    fi
+    "update_$pkg"
+}
+
 cmd_extern() {
     cd "$PENNYKIT_HOME"
+    local skip_file="configs/extern.skip"
+    local cmd="${1:-}"
+
+    case "$cmd" in
+        deactivate)
+            [[ -z "${2:-}" ]] && { echo "Usage: $(basename "$0") extern deactivate <package>"; exit 1; }
+            if ! grep -qxF "$2" "$skip_file" 2>/dev/null; then
+                echo "$2" >> "$skip_file"
+                echo "Deactivated: $2"
+            else
+                echo "Already deactivated: $2"
+            fi
+            return
+            ;;
+        activate)
+            [[ -z "${2:-}" ]] && { echo "Usage: $(basename "$0") extern activate <package>"; exit 1; }
+            if [[ -f "$skip_file" ]]; then
+                grep -vxF "$2" "$skip_file" > "$skip_file.tmp" && mv "$skip_file.tmp" "$skip_file"
+                [[ ! -s "$skip_file" ]] && rm -f "$skip_file"
+                echo "Activated: $2"
+            fi
+            return
+            ;;
+        list-deactivated)
+            if [[ -f "$skip_file" ]]; then
+                echo "Deactivated packages:"
+                cat "$skip_file" | grep -v '^#'
+            else
+                echo "No deactivated packages."
+            fi
+            return
+            ;;
+    esac
+
+    local set="${cmd:-default}"
     PENNYKIT_ON_CONTAINER=false
     source "./packages/extern.packages"
-
-    local set="${1:-default}"
 
     case "$set" in
         default)
             [[ -v PENNYKIT_EXTERN_DEFAULT ]] \
-                && for p in "${PENNYKIT_EXTERN_DEFAULT[@]}"; do "update_$p"; done
+                && for p in "${PENNYKIT_EXTERN_DEFAULT[@]}"; do _update_or_skip "$p"; done
             ;;
         admin)
             [[ -v PENNYKIT_EXTERN_ADMIN ]] \
-                && for p in "${PENNYKIT_EXTERN_ADMIN[@]}"; do "update_$p"; done
+                && for p in "${PENNYKIT_EXTERN_ADMIN[@]}"; do _update_or_skip "$p"; done
             ;;
         dev)
             [[ -v PENNYKIT_EXTERN_DEV ]] \
-                && for p in "${PENNYKIT_EXTERN_DEV[@]}"; do "update_$p"; done
+                && for p in "${PENNYKIT_EXTERN_DEV[@]}"; do _update_or_skip "$p"; done
             ;;
         pentest)
             [[ -v PENNYKIT_EXTERN_PENTEST ]] \
-                && for p in "${PENNYKIT_EXTERN_PENTEST[@]}"; do "update_$p"; done
+                && for p in "${PENNYKIT_EXTERN_PENTEST[@]}"; do _update_or_skip "$p"; done
             ;;
         all)
             [[ -v PENNYKIT_EXTERN_DEFAULT ]] \
-                && for p in "${PENNYKIT_EXTERN_DEFAULT[@]}"; do "update_$p"; done
+                && for p in "${PENNYKIT_EXTERN_DEFAULT[@]}"; do _update_or_skip "$p"; done
             [[ -v PENNYKIT_EXTERN_ADMIN ]] \
-                && for p in "${PENNYKIT_EXTERN_ADMIN[@]}"; do "update_$p"; done
+                && for p in "${PENNYKIT_EXTERN_ADMIN[@]}"; do _update_or_skip "$p"; done
             [[ -v PENNYKIT_EXTERN_DEV ]] \
-                && for p in "${PENNYKIT_EXTERN_DEV[@]}"; do "update_$p"; done
+                && for p in "${PENNYKIT_EXTERN_DEV[@]}"; do _update_or_skip "$p"; done
             [[ -v PENNYKIT_EXTERN_PENTEST ]] \
-                && for p in "${PENNYKIT_EXTERN_PENTEST[@]}"; do "update_$p"; done
+                && for p in "${PENNYKIT_EXTERN_PENTEST[@]}"; do _update_or_skip "$p"; done
             ;;
         *)
-            echo "Usage: $(basename "$0") extern [default|admin|dev|pentest|all]"
+            echo "Usage: $(basename "$0") extern [default|admin|dev|pentest|all|deactivate|activate|list-deactivated]"
             exit 1
             ;;
     esac

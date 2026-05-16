@@ -37,7 +37,30 @@ function bak() { cp "$1"{,.bak}; echo "Backed up: $1.bak"; }
 function orig() { cp "$1"{,.orig}; echo "Backed up: $1.orig"; }
 
 function penny-update-extern() {
-    bash "$PENNYKIT_HOME/bin/pennykit.sh" extern "${1:-default}"
+    case "${1:-}" in
+        deactivate|activate|list-deactivated)
+            bash "$PENNYKIT_HOME/bin/pennykit.sh" extern "$@"
+            ;;
+        help|--help|-h)
+            echo "Usage: penny-update-extern [set|subcommand]"
+            echo ""
+            echo "Sets:"
+            echo "  (no arg)         Update default external packages"
+            echo "  default          Update default set"
+            echo "  admin            Update admin set"
+            echo "  dev              Update dev set"
+            echo "  pentest          Update pentest set"
+            echo "  all              Update all sets"
+            echo ""
+            echo "Subcommands:"
+            echo "  deactivate <pkg>     Deactivate a package (skip install/update)"
+            echo "  activate <pkg>       Reactivate a deactivated package"
+            echo "  list-deactivated     List all deactivated packages"
+            ;;
+        *)
+            bash "$PENNYKIT_HOME/bin/pennykit.sh" extern "${1:-default}"
+            ;;
+    esac
 }
 
 function penny-theme() {
