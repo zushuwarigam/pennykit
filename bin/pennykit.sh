@@ -202,7 +202,7 @@ cmd_theme() {
 
     # vivid
     if grep -q 'vivid generate' pennykit_shell.exports 2>/dev/null; then
-        sed -i "s/vivid generate .*/vivid generate ${PENNYKIT_THEME_VIVID}/" pennykit_shell.exports
+        sed -i "s/vivid generate .*/vivid generate ${PENNYKIT_THEME_VIVID})\"/" pennykit_shell.exports
         echo "  LS_COLORS (vivid): $PENNYKIT_THEME_VIVID"
     fi
 
