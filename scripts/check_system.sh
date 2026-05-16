@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 printf "### %s\n" "$(readlink -f "$0")"
 
 PENNYKIT_OS_VERSION_CODENAME=trixie

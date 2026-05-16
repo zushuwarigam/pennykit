@@ -319,7 +319,11 @@ _update_or_skip() {
         echo "  Skipping $pkg (deactivated)"
         return
     fi
-    "update_$pkg"
+    if declare -F "update_$pkg" >/dev/null 2>&1; then
+        "update_$pkg"
+    else
+        echo "  Warning: update_$pkg not found, skipping"
+    fi
 }
 
 cmd_extern() {

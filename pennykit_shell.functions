@@ -91,7 +91,7 @@ function penny-theme() {
 
 function fzf_rg_nvim() {
     local result file line
-    result=$(rg --. --line-number --color=never "" \
+    result=$(rg --line-number --color=never "" \
         | fzf --delimiter=: \
         --preview='batcat --color=always --highlight-line {2} --color=always {1}' \
         --preview-window='right:60%')

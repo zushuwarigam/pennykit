@@ -92,7 +92,7 @@ case "$PENNYKIT_OS_ID" in
   "macos")
     ./scripts/package_installer.sh brew
     ;;
-  *) echo "Skiping other os..." && exit 1 ;;
+  *) echo "Skipping other os..." && exit 1 ;;
 esac
 
 # Config package

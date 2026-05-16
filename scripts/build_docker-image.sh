@@ -2,11 +2,12 @@
 set -euo pipefail
 printf "### %s\n" "$(readlink -f "$0")"
 
+[[ ! -f "./config" ]] && { echo "Error: ./config not found" >&2; exit 1; }
 source "./config"
 
 mapfile -t dockerfile < <(find . -maxdepth 1 -type f -name "Dockerfile.*" | sed 's/\.\///g')
 
-PS3="Enter you choice: "
+PS3="Enter your choice: "
 select i in "${dockerfile[@]}"; do
   if [ -n "$i" ]; then
     DOCKERFILE="$i"
