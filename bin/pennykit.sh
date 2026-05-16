@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-PENNYKIT_HOME="${PENNYKIT_HOME:-$HOME/.pennykti}"
+PENNYKIT_HOME="${PENNYKIT_HOME:-$HOME/.pennykit}"
 
 mapfile -t configs < <(find "${PENNYKIT_HOME}/nvim-starter" -maxdepth 1 -mindepth 1 -type d )
 

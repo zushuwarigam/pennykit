@@ -36,6 +36,11 @@ function serve() { python3 -m http.server "${1:-8000}"; }
 function bak() { cp "$1"{,.bak}; echo "Backed up: $1.bak"; }
 function orig() { cp "$1"{,.orig}; echo "Backed up: $1.orig"; }
 
+function penny-update-extern() {
+    local PENNYKIT_HOME="${PENNYKIT_HOME:-$HOME/.pennykit}"
+    bash "$PENNYKIT_HOME/bin/pennykit-update-extern.sh" "${1:-all}"
+}
+
 function fzf_rg_nvim() {
     local result file line
     result=$(rg --. --line-number --color=never "" \
