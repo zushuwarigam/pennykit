@@ -27,7 +27,7 @@ Built on AstroNvim v6 — leader key: `<Space>`
 │       ├── hex.lua            # Hex viewer (binary analysis)
 │       ├── rest.lua           # REST API client
 │       ├── logreview.lua      # Log file highlighting
-│       ├── glow.lua           # Markdown terminal renderer
+│       ├── glow.lua           # Inline markdown rendering via render-markdown.nvim
 │       ├── oil.lua            # File system as buffer
 │       ├── neotest.lua        # Interactive test runner
 │       ├── markdown-preview.lua # Live markdown preview
@@ -133,7 +133,7 @@ Built on AstroNvim v6 — leader key: `<Space>`
 |-----|--------|
 | `:MarkdownPreview` | Open live browser preview |
 | `:MarkdownPreviewStop` | Stop preview |
-| `:Glow` | Render markdown in terminal |
+| `:RenderMarkdown toggle` | Toggle inline markdown rendering |
 
 ### Testing (neotest)
 | Key | Action |
@@ -387,7 +387,7 @@ Tools auto-installed by `mason-tool-installer`:
 ### Writing & Research
 - **Zen mode**: `:ZenMode` — focused writing (centered, 120-width, no UI clutter)
 - **Markdown Preview**: `:MarkdownPreview` — live browser preview for report writing
-- **Markdown Render**: `:Glow` — render markdown in terminal for quick reading
+- **Markdown Render**: `:RenderMarkdown toggle` — toggle inline markdown rendering via render-markdown.nvim
 - **LanguageTool** grammar check for Markdown/LaTeX via `ltex-ls`
 - Custom dictionaries in `spell/` — add domain-specific terminology
 - `:PKhello` — custom command (defined in `lua/custom_commands.lua`)
@@ -444,7 +444,7 @@ init.lua → lazy_setup.lua
 | `hex.lua` | Hex viewer for binary analysis |
 | `rest.lua` | REST API client |
 | `logreview.lua` | Log file highlighting |
-| `glow.lua` | Markdown terminal rendering |
+| `glow.lua` | Inline markdown rendering via render-markdown.nvim |
 | `oil.lua` | File system as buffer navigation |
 | `neotest.lua` | Interactive test runner |
 | `markdown-preview.lua` | Live markdown browser preview |
