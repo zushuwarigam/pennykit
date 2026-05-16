@@ -85,7 +85,7 @@ if command -v lazygit >/dev/null 2>&1; then
 fi
 
 if command -v harlequin >/dev/null 2>&1; then
-  alias harlequin="harlequin --theme gruvbox"
+  alias harlequin="harlequin --theme catppuccin-mocha"
 fi
 
 alias pk-update="penny-update-extern"

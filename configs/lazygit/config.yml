@@ -9,7 +9,7 @@ gui:
   nerdFontsVersion: "3"
   border: rounded
   theme:
-    activeBorderColor: [yellow, bold] # gruvbox yellow
+    activeBorderColor: [blue, bold] # gruvbox yellow
     inactiveBorderColor: [white]
     selectedLineBgColor: [default]
     cherryPickedCommitBgColor: [cyan]

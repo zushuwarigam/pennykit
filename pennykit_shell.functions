@@ -37,39 +37,25 @@ function bak() { cp "$1"{,.bak}; echo "Backed up: $1.bak"; }
 function orig() { cp "$1"{,.orig}; echo "Backed up: $1.orig"; }
 
 function penny-update-extern() {
-    local PENNYKIT_HOME="${PENNYKIT_HOME:-$HOME/.pennykit}"
-    bash "$PENNYKIT_HOME/bin/pennykit-update-extern.sh" "${1:-all}"
+    bash "$PENNYKIT_HOME/bin/pennykit.sh" extern "${1:-default}"
 }
 
 function penny-theme() {
-    local PENNYKIT_HOME="${PENNYKIT_HOME:-$HOME/.pennykit}"
     case "${1:-}" in
         list)
-            echo "Available themes:"
-            for f in "$PENNYKIT_HOME/configs/themes/"*.conf; do
-                local name
-                name=$(basename "$f" .conf)
-                local active=""
-                [[ "$name" == "$(grep '^PENNYKIT_THEME=' "$PENNYKIT_HOME/configs/theme.conf" 2>/dev/null | cut -d= -f2 | tr -d '"')" ]] && active=" (active)"
-                echo "  $name$active"
-            done
+            bash "$PENNYKIT_HOME/bin/pennykit.sh" theme list
             ;;
         set)
             if [[ -z "${2:-}" ]]; then
                 echo "Usage: penny-theme set <theme-name>"
                 return 1
             fi
-            if [[ ! -f "$PENNYKIT_HOME/configs/themes/${2}.conf" ]]; then
-                echo "Error: theme '${2}' not found"
-                penny-theme list
-                return 1
-            fi
             echo "PENNYKIT_THEME=\"${2}\"" > "$PENNYKIT_HOME/configs/theme.conf"
-            bash "$PENNYKIT_HOME/bin/pennykit-apply-theme.sh" "$2"
+            bash "$PENNYKIT_HOME/bin/pennykit.sh" theme "$2"
             echo "Run 'source ~/.bashrc' (or restart shell) to apply prompt changes."
             ;;
         apply)
-            bash "$PENNYKIT_HOME/bin/pennykit-apply-theme.sh"
+            bash "$PENNYKIT_HOME/bin/pennykit.sh" theme
             ;;
         *)
             echo "Usage: penny-theme [list|set|apply]"
