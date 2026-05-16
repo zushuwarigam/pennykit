@@ -150,14 +150,16 @@ cmd_theme() {
 
     local theme_name="${1:-}"
     if [[ -z "$theme_name" ]]; then
-        if [[ -f configs/theme.conf ]]; then
-            theme_name=$(grep '^PENNYKIT_THEME=' configs/theme.conf | cut -d= -f2 | tr -d '"')
-        fi
-        if [[ -z "$theme_name" ]]; then
-            echo "No active theme. Available themes:"
-            for f in configs/themes/*.conf; do echo "  $(basename "$f" .conf)"; done
-            return
-        fi
+        local active=""
+        [[ -f configs/theme.conf ]] && active=$(grep '^PENNYKIT_THEME=' configs/theme.conf | cut -d= -f2 | tr -d '"')
+        echo "Current theme: ${active:-none}"
+        echo "Available themes:"
+        for f in configs/themes/*.conf; do
+            local name
+            name=$(basename "$f" .conf)
+            [[ "$name" == "$active" ]] && echo "  $name (active)" || echo "  $name"
+        done
+        return
     fi
 
     local theme_file="configs/themes/${theme_name}.conf"
