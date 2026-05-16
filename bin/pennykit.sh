@@ -284,6 +284,14 @@ TMUXEOF
         esac
     fi
 
+    # lf
+    local lf_rc="configs/lf/lfrc"
+    if [[ -f "$lf_rc" ]] && grep -q 'set promptfmt' "$lf_rc" 2>/dev/null; then
+        sed -i "/set promptfmt/ s/\\\\033\\[[1-9][0-9]*m/\\\\033[${PENNYKIT_THEME_LF}m/g" "$lf_rc"
+        sed -i "/set promptfmt/ s/\\\\033\\[1;[1-9][0-9]*m/\\\\033[1;${PENNYKIT_THEME_LF}m/g" "$lf_rc"
+        echo "  lf prompt: color ${PENNYKIT_THEME_LF}"
+    fi
+
     # Shell themes
     if [[ -f "${HOME}/.bashrc" ]]; then
         sed -i "s/^OSH_THEME=\".*\"/OSH_THEME=\"${PENNYKIT_THEME_OMB}\"/" "${HOME}/.bashrc" 2>/dev/null || true
