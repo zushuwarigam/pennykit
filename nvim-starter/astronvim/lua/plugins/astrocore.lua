@@ -109,7 +109,7 @@ return {
     mason = {
       ensure_installed = {
         "gopls",
-        "gofump",
+        "gofumpt",
         "golangci-lint",
         "golangci-lint-langserver",
         "gomodifytags",
