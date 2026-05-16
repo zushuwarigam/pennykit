@@ -30,7 +30,7 @@ return {
         "codelldb",
         -- go
         "gopls",
-        "gofump",
+        "gofumpt",
         "golangci-lint",
         "golangci-lint-langserver",
         "gomodifytags",
