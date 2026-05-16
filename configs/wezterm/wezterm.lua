@@ -4,7 +4,7 @@ local config = {
 	window_decorations = "NONE",
 }
 
--- config.color_scheme = "Tokyo Night"
-config.color_scheme = "Tokyo Night"
+local ok, local_theme = pcall(dofile, wezterm.config_dir .. "/_local_theme.lua")
+config.color_scheme = ok and local_theme.linux or "GruvboxDark"
 
 return config

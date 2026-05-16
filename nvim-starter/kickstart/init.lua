@@ -93,6 +93,9 @@ vim.g.maplocalleader = ' '
 -- Set to true if you have a Nerd Font installed and selected in the terminal
 vim.g.have_nerd_font = false
 
+local ok, theme = pcall(require, "_local_theme")
+local colorscheme = ok and theme.colorscheme or "tokyonight"
+
 -- [[ Setting options ]]
 -- See `:help vim.o`
 -- NOTE: You can change these options as you wish!
@@ -894,7 +897,7 @@ require('lazy').setup({
       -- Load the colorscheme here.
       -- Like many other themes, this one has different styles, and you could load
       -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
+      pcall(vim.cmd.colorscheme, colorscheme)
     end,
   },
 
@@ -1014,7 +1017,7 @@ require('lazy').setup({
 
 -- bme
 vim.o.background = 'dark' -- or "light" for light mode
-vim.cmd [[colorscheme tokyonight-night]]
+pcall(vim.cmd.colorscheme, colorscheme)
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et

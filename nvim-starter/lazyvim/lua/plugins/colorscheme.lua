@@ -1,3 +1,5 @@
+local ok, theme = pcall(require, "_local_theme")
+
 return {
   -- add gruvbox
   { "ellisonleao/gruvbox.nvim" },
@@ -6,7 +8,7 @@ return {
   {
     "LazyVim/LazyVim",
     opts = {
-      colorscheme = "tokyonight-night",
+      colorscheme = ok and theme.colorscheme or "tokyonight",
     },
   },
 }

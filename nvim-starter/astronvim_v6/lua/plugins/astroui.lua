@@ -3,13 +3,15 @@
 -- NOTE: We highly recommend setting up the Lua Language Server (`:LspInstall lua_ls`)
 --       as this provides autocomplete and documentation while editing
 
+local ok, theme = pcall(require, "_local_theme")
+
 ---@type LazySpec
 return {
   "AstroNvim/astroui",
   ---@type AstroUIOpts
   opts = {
     -- change colorscheme
-    colorscheme = "tokyonight-night",
+    colorscheme = ok and theme.colorscheme or "tokyonight-night",
     -- AstroUI allows you to easily modify highlight groups easily for any and all colorschemes
     highlights = {
       init = { -- this table overrides highlights in all themes

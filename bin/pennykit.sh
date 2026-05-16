@@ -173,15 +173,12 @@ cmd_theme() {
     source "$theme_file"
     echo "Applying theme: $PENNYKIT_THEME_NAME"
 
-    # WezTerm (Linux)
-    if grep -q 'config.color_scheme' configs/wezterm/wezterm.lua 2>/dev/null; then
-        sed -i "s/config.color_scheme = \".*\"/config.color_scheme = \"${PENNYKIT_THEME_WEZTERM_LINUX}\"/" configs/wezterm/wezterm.lua
+    # WezTerm
+    if cat > configs/wezterm/_local_theme.lua << THEME
+return { linux = "${PENNYKIT_THEME_WEZTERM_LINUX}", macos = "${PENNYKIT_THEME_WEZTERM_MACOS}" }
+THEME
+    then
         echo "  WezTerm (Linux): $PENNYKIT_THEME_WEZTERM_LINUX"
-    fi
-
-    # WezTerm (macOS)
-    if grep -q 'config.color_scheme' configs/wezterm/wezterm_macos.lua 2>/dev/null; then
-        sed -i "s/config.color_scheme = \".*\"/config.color_scheme = \"${PENNYKIT_THEME_WEZTERM_MACOS}\"/" configs/wezterm/wezterm_macos.lua
         echo "  WezTerm (macOS): $PENNYKIT_THEME_WEZTERM_MACOS"
     fi
 
@@ -219,26 +216,26 @@ cmd_theme() {
     fi
 
     # nvim astronvim_v6
-    if [[ -f nvim-starter/astronvim_v6/lua/plugins/astroui.lua ]]; then
-        sed -i "s/colorscheme = \".*\"/colorscheme = \"${PENNYKIT_THEME_NVIM}\"/" nvim-starter/astronvim_v6/lua/plugins/astroui.lua
+    if cat > nvim-starter/astronvim_v6/lua/_local_theme.lua << THEME
+return { colorscheme = "${PENNYKIT_THEME_NVIM}" }
+THEME
+    then
         echo "  Neovim (astronvim_v6): $PENNYKIT_THEME_NVIM"
     fi
 
     # nvim lazyvim
-    if [[ -f nvim-starter/lazyvim/lua/plugins/colorscheme.lua ]]; then
-        sed -i "s/colorscheme = \".*\"/colorscheme = \"${PENNYKIT_THEME_NVIM}\"/" nvim-starter/lazyvim/lua/plugins/colorscheme.lua
+    if cat > nvim-starter/lazyvim/lua/_local_theme.lua << THEME
+return { colorscheme = "${PENNYKIT_THEME_NVIM}" }
+THEME
+    then
         echo "  Neovim (lazyvim): $PENNYKIT_THEME_NVIM"
     fi
 
     # nvim kickstart
-    local ks_init="nvim-starter/kickstart/init.lua"
-    if [[ -f "$ks_init" ]]; then
-        if grep -q "vim.cmd.colorscheme '" "$ks_init" 2>/dev/null; then
-            sed -i "s/vim.cmd.colorscheme '.*'/vim.cmd.colorscheme '${PENNYKIT_THEME_NVIM}'/" "$ks_init"
-        fi
-        if grep -q 'vim.cmd.*colorscheme' "$ks_init" 2>/dev/null; then
-            sed -i "s/vim.cmd \[\[colorscheme .*\]\]/vim.cmd [[colorscheme ${PENNYKIT_THEME_NVIM}]]/" "$ks_init"
-        fi
+    if cat > nvim-starter/kickstart/lua/_local_theme.lua << THEME
+return { colorscheme = "${PENNYKIT_THEME_NVIM}" }
+THEME
+    then
         echo "  Neovim (kickstart): $PENNYKIT_THEME_NVIM"
     fi
 

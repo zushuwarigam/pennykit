@@ -13,7 +13,9 @@ config.initial_rows = 25
 -- or, changing the font size and color scheme.
 config.font = wezterm.font("MesloLGS NF")
 config.font_size = 16
-config.color_scheme = "Tokyo Night"
+
+local ok, local_theme = pcall(dofile, wezterm.config_dir .. "/_local_theme.lua")
+config.color_scheme = ok and local_theme.macos or "Gruvbox Dark (Gogh)"
 
 config.default_cursor_style = "BlinkingBar"
 
