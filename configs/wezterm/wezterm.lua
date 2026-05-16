@@ -4,7 +4,7 @@ local config = {
 	window_decorations = "NONE",
 }
 
--- config.color_scheme = "Gruvbox Dark (Gogh)"
+-- config.color_scheme = "GruvboxDark"
 config.color_scheme = "GruvboxDark"
 
 return config

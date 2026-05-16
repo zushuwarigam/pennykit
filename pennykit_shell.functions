@@ -41,6 +41,45 @@ function penny-update-extern() {
     bash "$PENNYKIT_HOME/bin/pennykit-update-extern.sh" "${1:-all}"
 }
 
+function penny-theme() {
+    local PENNYKIT_HOME="${PENNYKIT_HOME:-$HOME/.pennykit}"
+    case "${1:-}" in
+        list)
+            echo "Available themes:"
+            for f in "$PENNYKIT_HOME/configs/themes/"*.conf; do
+                local name
+                name=$(basename "$f" .conf)
+                local active=""
+                [[ "$name" == "$(grep '^PENNYKIT_THEME=' "$PENNYKIT_HOME/configs/theme.conf" 2>/dev/null | cut -d= -f2 | tr -d '"')" ]] && active=" (active)"
+                echo "  $name$active"
+            done
+            ;;
+        set)
+            if [[ -z "${2:-}" ]]; then
+                echo "Usage: penny-theme set <theme-name>"
+                return 1
+            fi
+            if [[ ! -f "$PENNYKIT_HOME/configs/themes/${2}.conf" ]]; then
+                echo "Error: theme '${2}' not found"
+                penny-theme list
+                return 1
+            fi
+            echo "PENNYKIT_THEME=\"${2}\"" > "$PENNYKIT_HOME/configs/theme.conf"
+            bash "$PENNYKIT_HOME/bin/pennykit-apply-theme.sh" "$2"
+            echo "Run 'source ~/.bashrc' (or restart shell) to apply prompt changes."
+            ;;
+        apply)
+            bash "$PENNYKIT_HOME/bin/pennykit-apply-theme.sh"
+            ;;
+        *)
+            echo "Usage: penny-theme [list|set|apply]"
+            echo "  list   - Show available themes"
+            echo "  set    - Activate and apply a theme"
+            echo "  apply  - Re-apply the current theme"
+            ;;
+    esac
+}
+
 function fzf_rg_nvim() {
     local result file line
     result=$(rg --. --line-number --color=never "" \
