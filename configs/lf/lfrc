@@ -8,7 +8,7 @@ set info size
 set sortby natural
 set ignorecase true
 
-set promptfmt "\033[34m%u@%h\033[0m:\033[1;34m%w/%d\033[0m>"
+set promptfmt "\033[32m%u@%h\033[0m:\033[1;32m%w/%d\033[0m>"
 
 set previewer ~/.config/lf/preview
 set cleaner   ~/.config/lf/cleaner
