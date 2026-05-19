@@ -333,6 +333,7 @@ TMUXEOF
         echo "  Oh My Zsh: $PENNYKIT_THEME_OMZ"
     fi
 
+    echo "PENNYKIT_THEME=\"${theme_name}\"" > configs/theme.conf
     echo "Theme '$PENNYKIT_THEME_NAME' applied. Restart your apps to see changes."
 }
 
