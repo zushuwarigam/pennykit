@@ -44,7 +44,6 @@ PENNYKIT_APT_DEFAULT+=("ripgrep")       # pkg: ripgrep; desc: Extremely fast rec
 PENNYKIT_APT_DEFAULT+=("tmux")          # pkg: tmux; desc: Terminal multiplexer with sessions, windows, and panes
 PENNYKIT_APT_DEFAULT+=("trash-cli")     # pkg: trash-cli; desc: Safe file deletion via FreeDesktop.org Trash spec
 PENNYKIT_APT_DEFAULT+=("unzip")         # pkg: unzip; desc: Extract ZIP archives
-PENNYKIT_APT_DEFAULT+=("vivid")         # pkg: vivid; desc: LS_COLORS generator with built-in theme support
 PENNYKIT_APT_DEFAULT+=("xclip")         # pkg: xclip; desc: X11 clipboard access from the command line
 PENNYKIT_APT_DEFAULT+=("xsel")          # pkg: xsel; desc: X11 clipboard/selection manipulation tool
 PENNYKIT_APT_DEFAULT+=("zoxide")        # pkg: zoxide; desc: Smarter cd that learns your most-used directories

@@ -300,3 +300,25 @@ function update_jqp() {
         go install github.com/noahgorstein/jqp@latest
     fi
 }
+
+# pkg: vivid; desc: LS_COLORS generator with built-in theme support
+PENNYKIT_EXTERN_DEFAULT+=("vivid")
+function add_vivid() {
+	echo "Add external package: vivid"
+    if ! command -v vivid >/dev/null; then
+        VIVID_VERSION=$(_curl -sL "https://api.github.com/repos/sharkdp/vivid/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+        _curl --output-dir "/tmp" -fOL "https://github.com/sharkdp/vivid/releases/download/v${VIVID_VERSION}/vivid_${VIVID_VERSION}_amd64.deb"
+        $SUDO apt install -y "/tmp/vivid_${VIVID_VERSION}_amd64.deb"
+        rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb"
+    fi
+}
+
+function update_vivid() {
+	echo "Update external package: vivid"
+    if command -v vivid >/dev/null; then
+        VIVID_VERSION=$(_curl -sL "https://api.github.com/repos/sharkdp/vivid/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+        _curl --output-dir "/tmp" -fOL "https://github.com/sharkdp/vivid/releases/download/v${VIVID_VERSION}/vivid_${VIVID_VERSION}_amd64.deb"
+        $SUDO apt install -y "/tmp/vivid_${VIVID_VERSION}_amd64.deb"
+        rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb"
+    fi
+}
