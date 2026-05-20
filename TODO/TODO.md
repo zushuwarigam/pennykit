@@ -45,3 +45,7 @@
 # luarocks --tree ~/.local/share/nvim/lazy-rocks/rest.nvim install ./xml2lua-1.6-2.src.rock
 # luarocks install mimetypes
 
+
+# luarocks install --local tree-sitter-cli
+# luarocks install --local xml2lua
+# luarocks install --local mimetypes
