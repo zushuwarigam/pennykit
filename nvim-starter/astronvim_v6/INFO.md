@@ -118,8 +118,9 @@ Built on AstroNvim v6 — leader key: `<Space>`
 ### Hex & Binary
 | Key | Action |
 |-----|--------|
-| `:Hex` | Toggle hex view on current buffer |
-| `:HexAscii` | Toggle ASCII sidebar in hex view |
+| `:HexToggle` / `<Leader>H` | Toggle hex view on current buffer |
+| `:HexDump` | Dump buffer as hex |
+| `:HexAssemble` | Assemble hex back to binary |
 
 ### REST API
 | Key | Action |

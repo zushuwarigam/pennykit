@@ -4,7 +4,7 @@ return {
   "liba2k/languagetool.nvim",
   opts = {
     server_url = vim.env.LANGUAGE_TOOLS or "http://lt.bme.local",
-    language = "en-US", "ru-RU"
+    language = "en-US"
   },
   keys = {
     { "<leader>lc", "<cmd>LTCheck<cr>", desc = "Check line" },

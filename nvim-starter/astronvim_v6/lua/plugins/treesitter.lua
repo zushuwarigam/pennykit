@@ -32,8 +32,9 @@ return {
         "c",
         "cpp",
         "python",
-        -- "vue",
-        -- add more arguments for adding more treesitter parsers
+        "vimdoc",
+        "query",
+        "luadoc",
       },
     },
   },

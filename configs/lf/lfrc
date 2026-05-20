@@ -142,6 +142,13 @@ map x run
 # map <a-d>u dc-up
 # map <a-d>d dc-down
 
+# Open terminal in current directory (saves CWD, quits lf, nvim opens toggleterm)
+cmd open-terminal ${{
+    printf '%s' "$PWD" > /tmp/.lf_cwd
+    lf -remote "send $id q"
+}}
+map t open-terminal
+
 # Map 'i' to open with a markdown-aware pager
 cmd open-pager ${{
     case "$f" in

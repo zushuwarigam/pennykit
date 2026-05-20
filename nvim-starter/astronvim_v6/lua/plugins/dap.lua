@@ -5,10 +5,11 @@ return {
 
     local dap = require "dap"
     local dapui = require "dapui"
+    local python3_bin = vim.fn.executable("python3") == 1 and vim.fn.exepath("python3") or "/usr/bin/python3"
 
     dap.adapters.python = {
       type = "executable",
-      command = "/usr/bin/python3",
+      command = python3_bin,
       args = { "-m", "debugpy.adapter" },
     }
     dap.configurations.python = {
@@ -23,7 +24,7 @@ return {
             local path = cwd .. "/" .. dir .. "/bin/python"
             if vim.fn.executable(path) == 1 then return path end
           end
-          return "/usr/bin/python3"
+          return python3_bin
         end,
       },
     }
