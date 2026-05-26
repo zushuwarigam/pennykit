@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1090,SC1091
 set -euo pipefail
 printf "### extern.packages %s\n" "$(readlink -f "$0")"
 
@@ -105,7 +106,7 @@ function add_hadolint() {
         HADOLINT_VERSION=$(_curl -sL "https://api.github.com/repos/hadolint/hadolint/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
         _curl --output-dir "/tmp" -fOL "https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-linux-x86_64"
         _curl --output-dir "/tmp" -fOL "https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-linux-x86_64.sha256"
-        if [[ "$(sha256sum /tmp/hadolint-linux-x86_64 | awk '{print $1}')" != "$(cat /tmp/hadolint-linux-x86_64.sha256 | awk '{print $1}')" ]]; then
+        if [[ "$(sha256sum /tmp/hadolint-linux-x86_64 | awk '{print $1}')" != "$(awk '{print $1}' /tmp/hadolint-linux-x86_64.sha256)" ]]; then
             echo "Wrong sha!"
             exit 1
         fi
@@ -121,7 +122,7 @@ function update_hadolint() {
         HADOLINT_VERSION=$(_curl -sL "https://api.github.com/repos/hadolint/hadolint/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
         _curl --output-dir "/tmp" -fOL "https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-linux-x86_64"
         _curl --output-dir "/tmp" -fOL "https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-linux-x86_64.sha256"
-        if [[ "$(sha256sum /tmp/hadolint-linux-x86_64 | awk '{print $1}')" != "$(cat /tmp/hadolint-linux-x86_64.sha256 | awk '{print $1}')" ]]; then
+        if [[ "$(sha256sum /tmp/hadolint-linux-x86_64 | awk '{print $1}')" != "$(awk '{print $1}' /tmp/hadolint-linux-x86_64.sha256)" ]]; then
             echo "Wrong sha!"
             exit 1
         fi
@@ -163,11 +164,12 @@ PENNYKIT_EXTERN_DEFAULT+=("lazygit")
 function add_lazygit() {
 	echo "Add external package: lazygit"
     if ! command -v lazygit >/dev/null; then
-        _curl -LO https://github.com/jesseduffield/lazygit/releases/download/v0.60.0/lazygit_0.60.0_linux_x86_64.tar.gz
-        tar -xzf lazygit_0.60.0_linux_x86_64.tar.gz lazygit
+        LG_VERSION=$(_curl -sL "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+        _curl -LO "https://github.com/jesseduffield/lazygit/releases/download/v${LG_VERSION}/lazygit_${LG_VERSION}_linux_x86_64.tar.gz"
+        tar -xzf "lazygit_${LG_VERSION}_linux_x86_64.tar.gz" lazygit
         mkdir -p "${HOME}/.local/bin"
         mv lazygit "$HOME/.local/bin/"
-        rm lazygit_0.60.0_linux_x86_64.tar.gz
+        rm "lazygit_${LG_VERSION}_linux_x86_64.tar.gz"
     fi
 }
 
@@ -234,21 +236,39 @@ function update_ueberzugpp() {
 
 # pkg: yazi; desc: Blazing-fast terminal file manager with image preview
 PENNYKIT_EXTERN_DEFAULT+=("yazi")
+_install_yazi_prebuilt() {
+    local version
+    version=$(_curl -sL "https://api.github.com/repos/sxyazi/yazi/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+    local archive="yazi-x86_64-unknown-linux-gnu.zip"
+    _curl -LO "https://github.com/sxyazi/yazi/releases/download/v${version}/${archive}"
+    unzip -o "$archive" -d /tmp/yazi_prebuilt
+    mkdir -p "${HOME}/.local/bin"
+    mv /tmp/yazi_prebuilt/yazi-x86_64-unknown-linux-gnu/yazi "${HOME}/.local/bin/"
+    mv /tmp/yazi_prebuilt/yazi-x86_64-unknown-linux-gnu/ya "${HOME}/.local/bin/"
+    rm -rf "$archive" /tmp/yazi_prebuilt
+    echo "  Installed yazi v${version} (prebuilt)"
+}
+
+_install_yazi_source() {
+    echo "  Prebuilt unavailable, building from source..."
+    local tmp_dir
+    tmp_dir=$(mktemp -d /tmp/pennykit.XXX)
+    git clone --depth 1 https://github.com/sxyazi/yazi.git "$tmp_dir"
+    (
+        cd "$tmp_dir"
+        cargo build --release --locked
+        mkdir -p "${HOME}/.local/bin"
+        mv target/release/ya "${HOME}/.local/bin/"
+        mv target/release/yazi "${HOME}/.local/bin/"
+    )
+    rm -rf "$tmp_dir"
+}
+
 function add_yazi() {
 	echo "Add external package: yazi"
     if ! command -v yazi >/dev/null; then
         if [ "$PENNYKIT_ON_CONTAINER" == "false" ]; then
-            TMP_DIR=$(mktemp -d /tmp/pennykit.XXX)
-            git clone https://github.com/sxyazi/yazi.git "$TMP_DIR"
-            (
-                cd "$TMP_DIR"
-                cargo build --release --locked
-                # mv target/release/yazi target/release/ya "${HOME}/.local/bin/"
-                mkdir -p "${HOME}/.local/bin"
-                mv target/release/ya "${HOME}/.local/bin/"
-                mv target/release/yazi "${HOME}/.local/bin/"
-            )
-            rm -rf "$TMP_DIR"
+            _install_yazi_prebuilt || _install_yazi_source
         fi
     fi
 }
@@ -256,16 +276,7 @@ function add_yazi() {
 function update_yazi() {
 	echo "Update external package: yazi"
     if command -v yazi >/dev/null && [ "$PENNYKIT_ON_CONTAINER" == "false" ]; then
-        TMP_DIR=$(mktemp -d /tmp/pennykit.XXX)
-        git clone https://github.com/sxyazi/yazi.git "$TMP_DIR"
-        (
-            cd "$TMP_DIR"
-            cargo build --release --locked
-            mkdir -p "${HOME}/.local/bin"
-            mv target/release/ya "${HOME}/.local/bin/"
-            mv target/release/yazi "${HOME}/.local/bin/"
-        )
-        rm -rf "$TMP_DIR"
+        _install_yazi_prebuilt || _install_yazi_source
     fi
 }
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1090,SC1091
 set -euo pipefail
 
 PENNYKIT_HOME="${PENNYKIT_HOME:-$HOME/.pennykit}"
@@ -25,6 +26,7 @@ Commands:
   extern activate <pkg>    Reactivate a deactivated package
   extern list-deactivated  List all deactivated packages
   update             Update pennykit itself (git pull --rebase)
+  doctor             Run health checks on the environment
   branch             Show current git branch
   branch <name>      Switch to a different git branch
   help               Show this help message
@@ -35,8 +37,21 @@ EOF
 
 # ── Helpers ────────────────────────────────────────────────────
 
-status() { echo "  $*"; }
-die() { echo "Error: $*" >&2; exit 1; }
+if [[ -t 1 ]]; then
+    BOLD=$(tput bold)
+    GREEN=$(tput setaf 2)
+    YELLOW=$(tput setaf 3)
+    RED=$(tput setaf 1)
+    CYAN=$(tput setaf 6)
+    RESET=$(tput sgr0)
+else
+    BOLD=""; GREEN=""; YELLOW=""; RED=""; CYAN=""; RESET=""
+fi
+
+status() { echo "  ${CYAN}$*${RESET}"; }
+status_green() { echo "  ${GREEN}$*${RESET}"; }
+status_yellow() { echo "  ${YELLOW}$*${RESET}"; }
+die() { echo "${RED}Error: $*${RESET}" >&2; exit 1; }
 
 _is_deactivated() {
     local pkg="$1"
@@ -54,8 +69,8 @@ _is_deactivated() {
 
 cmd_status() {
     echo ""
-    echo "PennyKit status"
-    echo "━━━━━━━━━━━━━━━━━━━"
+    echo "${BOLD}PennyKit status${RESET}"
+    echo "${CYAN}━━━━━━━━━━━━━━━━━━━${RESET}"
 
     local branch
     branch=$(git -C "$PENNYKIT_HOME" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
@@ -63,8 +78,8 @@ cmd_status() {
     commit=$(git -C "$PENNYKIT_HOME" rev-parse --short HEAD 2>/dev/null || echo "unknown")
     local remote
     remote=$(git -C "$PENNYKIT_HOME" remote get-url origin 2>/dev/null || echo "unknown")
-    status "Repo:      $remote"
-    status "Branch:    $branch ($commit)"
+    status "${BOLD}Repo:${RESET}      $remote"
+    status "${BOLD}Branch:${RESET}    $branch (${GREEN}$commit${RESET})"
 
     local nvim_config="none"
     if [[ -L "$HOME/.config/nvim" ]]; then
@@ -72,13 +87,21 @@ cmd_status() {
     elif [[ -d "$HOME/.config/nvim" ]]; then
         nvim_config="custom dir"
     fi
-    status "Nvim:      $nvim_config"
+    if [[ "$nvim_config" == "none" ]]; then
+        status_yellow "${BOLD}Nvim:${RESET}      $nvim_config"
+    else
+        status_green "${BOLD}Nvim:${RESET}      $nvim_config"
+    fi
 
     local theme="none"
     if [[ -f "$PENNYKIT_HOME/configs/theme.conf" ]]; then
         theme=$(grep '^PENNYKIT_THEME=' "$PENNYKIT_HOME/configs/theme.conf" 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "none")
     fi
-    status "Theme:     $theme"
+    if [[ "$theme" == "none" ]]; then
+        status_yellow "${BOLD}Theme:${RESET}     $theme"
+    else
+        status_green "${BOLD}Theme:${RESET}     $theme"
+    fi
 
     source "$PENNYKIT_HOME/packages/extern.packages" >/dev/null 2>&1 || true
     local count_default=0 count_admin=0 count_dev=0 count_pentest=0
@@ -152,12 +175,12 @@ cmd_theme() {
     if [[ -z "$theme_name" ]]; then
         local active=""
         [[ -f configs/theme.conf ]] && active=$(grep '^PENNYKIT_THEME=' configs/theme.conf | cut -d= -f2 | tr -d '"')
-        echo "Current theme: ${active:-none}"
+        echo "Current theme: ${GREEN}${active:-none}${RESET}"
         echo "Available themes:"
         for f in configs/themes/*.conf; do
             local name
             name=$(basename "$f" .conf)
-            [[ "$name" == "$active" ]] && echo "  $name (active)" || echo "  $name"
+            [[ "$name" == "$active" ]] && echo "  ${GREEN}$name (active)${RESET}" || echo "  $name"
         done
         return
     fi
@@ -199,7 +222,7 @@ cmd_theme() {
         die "Theme file is incomplete: ${theme_file}"
     fi
 
-    echo "Applying theme: $PENNYKIT_THEME_NAME"
+    echo "${GREEN}Applying theme:${RESET} $PENNYKIT_THEME_NAME"
 
     # WezTerm
     if cat > configs/wezterm/_local_theme.lua << THEME
@@ -268,23 +291,17 @@ THEME
     fi
 
     # tmux
-    local tmux_conf="configs/tmux/tmux.conf"
-    if [[ -f "$tmux_conf" ]]; then
+    local tmux_theme="configs/tmux/tmux_theme.conf"
+    if [[ -f "$tmux_theme" ]]; then
         case "${PENNYKIT_THEME_TMUX:-minimal}" in
             minimal)
-                sed -i '/^set -g @plugin/d' "$tmux_conf"
-                sed -i '/^run .*tpm\/tpm$/d' "$tmux_conf"
-                sed -i '/^set -g @dracula/d' "$tmux_conf"
-                sed -i '/^set -g status-position/d' "$tmux_conf"
+                cat > "$tmux_theme" << 'TMUXEOF'
+# minimal theme (no status bar plugins)
+TMUXEOF
                 echo "  tmux: minimal"
                 ;;
             catppuccin)
-                sed -i '/^set -g @plugin/d' "$tmux_conf"
-                sed -i '/^run .*tpm\/tpm$/d' "$tmux_conf"
-                sed -i '/^set -g @dracula/d' "$tmux_conf"
-                sed -i '/^set -g status-position/d' "$tmux_conf"
-                cat >> "$tmux_conf" << 'TMUXEOF'
-
+                cat > "$tmux_theme" << 'TMUXEOF'
 set -g @plugin 'tmux-plugins/tpm'
 set -g @plugin 'catppuccin/tmux#v2.1.3'
 run '~/.tmux/plugins/tpm/tpm'
@@ -292,12 +309,7 @@ TMUXEOF
                 echo "  tmux: catppuccin"
                 ;;
             dracula)
-                sed -i '/^set -g @plugin/d' "$tmux_conf"
-                sed -i '/^run .*tpm\/tpm$/d' "$tmux_conf"
-                sed -i '/^set -g @dracula/d' "$tmux_conf"
-                sed -i '/^set -g status-position/d' "$tmux_conf"
-                cat >> "$tmux_conf" << 'TMUXEOF'
-
+                cat > "$tmux_theme" << 'TMUXEOF'
 set -g @plugin 'tmux-plugins/tpm'
 set -g @plugin 'dracula/tmux'
 set -g @dracula-show-powerline true
@@ -380,7 +392,7 @@ cmd_extern() {
         list-deactivated)
             if [[ -f "$skip_file" ]]; then
                 echo "Deactivated packages:"
-                cat "$skip_file" | grep -v '^#'
+                grep -v '^#' "$skip_file"
             else
                 echo "No deactivated packages."
             fi
@@ -389,7 +401,9 @@ cmd_extern() {
     esac
 
     local set="${cmd:-default}"
-    PENNYKIT_ON_CONTAINER=false
+    # shellcheck source=./scripts/check_system.sh
+    source "$PENNYKIT_HOME/scripts/check_system.sh" 2>/dev/null || true
+    # shellcheck source=./packages/extern.packages
     source "./packages/extern.packages"
 
     case "$set" in
@@ -426,6 +440,94 @@ cmd_extern() {
     esac
 }
 
+# ── Doctor ─────────────────────────────────────────────────────
+
+cmd_doctor() {
+    echo "${BOLD}PennyKit doctor${RESET}"
+    echo "${CYAN}━━━━━━━━━━━━━━━━━━━${RESET}"
+    local errors=0 warnings=0
+
+    # Repo check
+    if git -C "$PENNYKIT_HOME" rev-parse --git-dir >/dev/null 2>&1; then
+        echo "  ${GREEN}✓${RESET} Repository: valid"
+    else
+        echo "  ${RED}✗${RESET} Repository: not a git repo"
+        ((errors++))
+    fi
+
+    # Symlinks
+    local symlinks=(
+        "Neovim:$HOME/.config/nvim"
+        "tmux:$HOME/.tmux.conf"
+        "tmux theme:$HOME/.tmux_theme.conf"
+    )
+    if [[ -f "$HOME/.bashrc" ]]; then
+        symlinks+=("bat:$HOME/.config/bat/config")
+        symlinks+=("lazygit:$HOME/.config/lazygit/config.yml")
+        symlinks+=("lf:$HOME/.config/lf")
+        symlinks+=("yazi:$HOME/.config/yazi")
+    fi
+    for entry in "${symlinks[@]}"; do
+        local label="${entry%%:*}"
+        local path="${entry#*:}"
+        if [[ -e "$path" ]]; then
+            echo "  ${GREEN}✓${RESET} Symlink: $label"
+        else
+            echo "  ${YELLOW}⚠${RESET} Symlink: $label (not found)"
+            ((warnings++))
+        fi
+    done
+
+    # Required binaries
+    local binaries=("nvim" "git" "rg" "fzf" "tmux" "lazygit" "bat" "lf" "fd" "jq" "zoxide")
+    for bin in "${binaries[@]}"; do
+        if command -v "$bin" >/dev/null 2>&1; then
+            echo "  ${GREEN}✓${RESET} Binary: $bin"
+        else
+            echo "  ${YELLOW}⚠${RESET} Binary: $bin (not found)"
+            ((warnings++))
+        fi
+    done
+
+    # Theme
+    if [[ -f "$PENNYKIT_HOME/configs/theme.conf" ]]; then
+        local active
+        active=$(grep '^PENNYKIT_THEME=' "$PENNYKIT_HOME/configs/theme.conf" 2>/dev/null | cut -d= -f2 | tr -d '"')
+        if [[ -f "$PENNYKIT_HOME/configs/themes/${active}.conf" ]]; then
+            echo "  ${GREEN}✓${RESET} Theme: $active"
+        else
+            echo "  ${RED}✗${RESET} Theme: $active config missing"
+            ((errors++))
+        fi
+    else
+        echo "  ${YELLOW}⚠${RESET} Theme: not configured"
+        ((warnings++))
+    fi
+
+    # Nerd Font
+    if command -v fc-list >/dev/null 2>&1 && fc-list | grep -qi "nerd font" 2>/dev/null; then
+        echo "  ${GREEN}✓${RESET} Nerd Font: found"
+    else
+        echo "  ${YELLOW}⚠${RESET} Nerd Font: not detected (icons may not render)"
+        ((warnings++))
+    fi
+
+    # EditorConfig
+    if [[ -f "$PENNYKIT_HOME/configs/editorconfig/editorconfig" ]]; then
+        echo "  ${GREEN}✓${RESET} EditorConfig: present"
+    fi
+
+    echo ""
+    if [[ $errors -eq 0 && $warnings -eq 0 ]]; then
+        echo "  ${GREEN}All checks passed.${RESET}"
+    elif [[ $errors -eq 0 ]]; then
+        echo "  ${YELLOW}$warnings warnings, no errors.${RESET}"
+    else
+        echo "  ${RED}$errors errors, $warnings warnings.${RESET}"
+    fi
+    echo ""
+}
+
 # ── Self-update ────────────────────────────────────────────────
 
 cmd_update() {
@@ -452,6 +554,7 @@ case "${1:-}" in
     nvim)          cmd_nvim ;;
     theme)         shift; cmd_theme "$@" ;;
     extern)        shift; cmd_extern "$@" ;;
+    doctor)        cmd_doctor ;;
     update)        cmd_update ;;
     branch)        shift; cmd_branch "$@" ;;
     help|-h|--help) usage ;;

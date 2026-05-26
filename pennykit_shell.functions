@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 function note() {
+    mkdir -p ~/notes/05_timesheets ~/notes/01_inbox
     local opt
     while getopts ":dl" opt; do
         case $opt in

@@ -1,5 +1,6 @@
 **/.DS_Store
-**/lazy-lock.json
+# Pin lazy-lock.json for deterministic installs
+# Generate with `:Lazy lock` in each starter config
 
 .envrc
 .netrc

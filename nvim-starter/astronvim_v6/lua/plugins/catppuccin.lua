@@ -1,4 +1,5 @@
--- if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
+local ok, theme = pcall(require, "_local_theme")
+if ok and theme.colorscheme ~= "catppuccin" then return {} end
 return {
   {
     "catppuccin/nvim",

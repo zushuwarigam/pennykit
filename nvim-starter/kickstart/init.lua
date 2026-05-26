@@ -92,6 +92,7 @@ vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
 vim.g.have_nerd_font = false
+vim.g.editorconfig = true
 
 local ok, theme = pcall(require, "_local_theme")
 local colorscheme = ok and theme.colorscheme or "tokyonight"

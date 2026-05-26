@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1090,SC1091
 set -euo pipefail
 printf "### %s\n" "$(readlink -f "$0")"
 
@@ -130,7 +131,7 @@ if [[ -v PENNYKIT_APT_DEFAULT ]]; then
       [[ -v PENNYKIT_APT_ADMIN ]] && PENNYKIT_APT=("${PENNYKIT_APT[@]}" "${PENNYKIT_APT_ADMIN[@]}")
       [[ -v PENNYKIT_APT_DEV ]] && PENNYKIT_APT=("${PENNYKIT_APT[@]}" "${PENNYKIT_APT_DEV[@]}")
       [[ -v PENNYKIT_APT_PENTEST ]] && PENNYKIT_APT=("${PENNYKIT_APT[@]}" "${PENNYKIT_APT_PENTEST[@]}")
-      PENNYKIT_APT_uniq=($(printf '%s\n' "${PENNYKIT_APT[@]}" | sort -u))
+      read -ra PENNYKIT_APT_uniq < <(printf '%s\n' "${PENNYKIT_APT[@]}" | sort -u)
       $SUDO apt-get install -y \
         --no-install-recommends \
         --no-install-suggests \
@@ -145,7 +146,7 @@ if [[ -v PENNYKIT_APT_DEFAULT ]]; then
       [[ -v PENNYKIT_PIPX_ADMIN ]] && PENNYKIT_PIPX=("${PENNYKIT_PIPX[@]}" "${PENNYKIT_PIPX_ADMIN[@]}")
       [[ -v PENNYKIT_PIPX_DEV ]] && PENNYKIT_PIPX=("${PENNYKIT_PIPX[@]}" "${PENNYKIT_PIPX_DEV[@]}")
       [[ -v PENNYKIT_PIPX_PENTEST ]] && PENNYKIT_PIPX=("${PENNYKIT_PIPX[@]}" "${PENNYKIT_PIPX_PENTEST[@]}")
-      PENNYKIT_PIPX_uniq=($(printf '%s\n' "${PENNYKIT_PIPX[@]}" | sort -u))
+      read -ra PENNYKIT_PIPX_uniq < <(printf '%s\n' "${PENNYKIT_PIPX[@]}" | sort -u)
       pipx install "${PENNYKIT_PIPX_uniq[@]}"
 
       # source "./packages/npm.admin"

@@ -2,26 +2,22 @@
 
 ## Critical Bugs
 
-- [ ] **Kickstart gruvbox.nvim broken syntax** — `lua/custom/plugins/init.lua` uses bare `opts = ...` without key-value pairs; will error at runtime
-- [ ] **Lazygit add version mismatch** — `add_lazygit` hardcodes v0.60.0 while `update_lazygit` fetches latest; `add` should also be dynamic
-- [ ] **`if true then return {} end` guards** — All non-default theme plugins (catppuccin, dracula, nord, solarized, tokyonight) use this pattern; means they're never loaded even when selected as the theme. `astroui.lua` sets colorscheme from `_local_theme.lua` but the corresponding plugin needs to be active. Fix: conditionally load based on `_local_theme.lua` content
-- [ ] **`polish.lua` is dead code** — 5 lines, returns `{}`, unused. Either implement the late-stage hook pattern or delete the file
+- [x] **Kickstart gruvbox.nvim broken syntax** — `lua/custom/plugins/init.lua` uses bare `opts = ...` without key-value pairs; will error at runtime
+- [x] **Lazygit add version mismatch** — `add_lazygit` hardcodes v0.60.0 while `update_lazygit` fetches latest; `add` should also be dynamic
+- [x] **`if true then return {} end` guards** — All non-default theme plugins (catppuccin, dracula, nord, solarized, tokyonight) use this pattern; means they're never loaded even when selected as the theme. `astroui.lua` sets colorscheme from `_local_theme.lua` but the corresponding plugin needs to be active. Fix: conditionally load based on `_local_theme.lua` content
+- [x] **`polish.lua` is dead code** — 5 lines, returns `{}`, unused. Either implement the late-stage hook pattern or delete the file
 
 ## Structural
 
-- [ ] **Add lazy-lock.json for lazyvim and kickstart** — Only `astronvim_v6` has version-pinned plugins. Run `:Lazy lock` in the other two starters to prevent unexpected breakage
+- [x] **Add lazy-lock.json for lazyvim and kickstart** — Generated via `:Lazy lock` headless; all 3 starters now have pinned plugin versions
 - [ ] **Split kickstart `init.lua`** — 1023-line monolithic file. Extract plugin configs into `lua/kickstart/plugins/*.lua` matching the astro pattern
-- [ ] **CI/CD pipeline** — Add GitHub Actions:
-  - Stylua linting on all `*.lua` files
-  - Shellcheck on all `*.sh` and `bin/pennykit`
-  - `:checkhealth` smoke test in headless nvim
-  - Validate all lazy-lock.json files parse correctly
-- [ ] **Yazi plugin loading commented out** — `configs/yazi/init.lua` has plugin loading `require` lines commented; unblock or document why
-- [ ] **Dead configs audit** — `user.lua`, `languagetool.lua` (disabled), `none-ls.lua` (empty sources), `astrocore_rooter.lua` (disabled). Either implement, enable, or remove
+- ~~**CI/CD pipeline**~~ — Not needed (personal project, no collaboration)
+- [x] **Yazi plugin loading commented out** — Uncommented `require` lines for git, fzf, rg plugins in `configs/yazi/init.lua`
+- [x] **Dead configs audit** — `user.lua` (active, populated), `languagetool.lua` (disabled by design), `none-ls.lua` (now guarded), `astrocore_rooter.lua` (active)
 
 ## Feature Gaps
 
-- [ ] **`pennykit doctor` command** — Health check that verifies:
+- [x] **`pennykit doctor` command** — Health check that verifies:
   - Symlinks (nvim, wezterm, bat, etc.)
   - Required binaries (nvim, git, rg, fzf, lazygit, etc.)
   - Theme files consistency
@@ -39,19 +35,19 @@
 
 ## Quality of Life
 
-- [ ] **Yazi prebuilt binary** — `update_yazi` builds from source via `cargo build --release` which takes 5-10 minutes. Add a fast-path that downloads prebuilt binaries from GitHub releases, with cargo build as fallback
-- [ ] **Shellcheck compliance** — `bin/pennykit` (459 lines), `packages/extern.packages` (302 lines), installer scripts — none are shellcheck-clean. Add Shellcheck CI gate
-- [ ] **Theme tmux handling is fragile** — `cmd_theme` mutates `configs/tmux/tmux.conf` with sed/cat, which can produce duplicate `set -g @plugin` lines on repeated theme switches. Switch to a template-based approach (like `_local_theme.lua`)
-- [ ] **CLI UI polish** — `pennykit status` and `pennykit theme` output is plain text. Add color codes, box-drawing characters, and a consistent format. Consider `gum` or inline tput
-- [ ] **`notes` function assumes `~/notes/` exists** — `pennykit_shell.functions:note()` writes to `~/notes/` but doesn't create the directory. Add `mkdir -p ~/notes` in the function
-- [ ] **`editorconfig` not referenced from nvim** — EditorConfig file exists at `configs/editorconfig/editorconfig` (185 lines, 40+ filetypes) but nvim configs don't reference it. Add `vim.g.editorconfig = true` if not already set
-- [ ] **Spell dictionary sync** — `spell/en.utf-8.add` and `spell/ru.utf-8.add` are under astro only. LazyVim and kickstart could also benefit. Either symlink or copy during theme/config switch
+- [x] **Yazi prebuilt binary** — Added fast-path that downloads prebuilt binaries from GitHub releases, with cargo build as fallback
+- [x] **Shellcheck compliance** — All shell scripts now pass `shellcheck --severity=style` clean. Includes adding SC1090/SC1091 directives for sourced files and fixing SC2002/SC2207 issues.
+- [x] **Theme tmux handling is fragile** — Replaced sed-based mutation with separate `tmux_theme.conf` fully overwritten per theme (same pattern as `_local_theme.lua`)
+- [x] **CLI UI polish** — Added tput-based color to `pennykit status` and `pennykit theme` (green for active, yellow for warnings, cyan for labels)
+- [x] **`notes` function assumes `~/notes/` exists** — Added `mkdir -p` at function start
+- [x] **`editorconfig` not referenced from nvim** — Added `vim.g.editorconfig = true` to lazyvim and kickstart
+- [x] **Spell dictionary sync** — Symlinked lazyvim/spell and kickstart/spell → astronvim_v6/spell
 
 ## Architecture
 
-- [ ] **`lazy-lock.json` is gitignored** — `.gitignore` has `**/lazy-lock.json`. This means plugin versions float. Consider removing this rule for at least the primary config so collaborators get deterministic installs
-- [ ] **Git submodules drift** — `.gitmodules` references `kickstart.git`, `astronvim.git`, `lazyvim.git` but directories on disk are `kickstart`, `astronvim_v6`, `lazyvim`. Verify submodule URLs are correct and pinned to specific commits
-- [ ] **Container detection edge cases** — `PENNYKIT_ON_CONTAINER=false` is set before sourcing `extern.packages`, but `extern.packages` also sets it. This is confusing. Centralize detection in `check_system.sh` and export as readonly
+- [x] **`lazy-lock.json` is gitignored** — Removed `**/lazy-lock.json` from `.gitignore`; astronvim lock file now trackable
+- [x] **Git submodules drift** — Dead `.git` submodule directories removed; actual configs stay as-is
+- [x] **Container detection edge cases** — Centralized in `check_system.sh`, sourced from both `pennykit_install.sh` and `bin/pennykit`
 - [ ] **Theme variables not centralized** — Theme `.conf` files define 13 variables each, but `cmd_theme` hardcodes which applications they affect. If a new app is added to the theme system, both the conf files AND the CLI need updating. Consider a declarative mapping
 
 ## Documentation

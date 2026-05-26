@@ -1,7 +1,7 @@
 -- Load plugins
--- require("git"):setup()           -- git status in manager
--- require("fzf"):setup()           -- fzf jump  (z f)
--- require("rg"):setup()            -- ripgrep   (z g)
+require("git"):setup()           -- git status in manager
+require("fzf"):setup()           -- fzf jump  (z f)
+require("rg"):setup()            -- ripgrep   (z g)
 
 -- Smart enter: open files, enter dirs
 -- (already handled by keymap "enter" but kept for reference)
