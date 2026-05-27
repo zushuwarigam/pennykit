@@ -27,6 +27,8 @@ alias gstp="git stash pop"
 
 alias gundo="git reset --soft HEAD~1"
 
+alias gg="git log -i --all --grep"
+
 # Docker
 alias dsp="docker system prune"
 alias di="docker images"
