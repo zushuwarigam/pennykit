@@ -267,15 +267,13 @@ _install_yazi_source() {
 function add_yazi() {
 	echo "Add external package: yazi"
     if ! command -v yazi >/dev/null; then
-        if [ "$PENNYKIT_ON_CONTAINER" == "false" ]; then
-            _install_yazi_prebuilt || _install_yazi_source
-        fi
+        _install_yazi_prebuilt || _install_yazi_source
     fi
 }
 
 function update_yazi() {
 	echo "Update external package: yazi"
-    if command -v yazi >/dev/null && [ "$PENNYKIT_ON_CONTAINER" == "false" ]; then
+    if command -v yazi >/dev/null; then
         _install_yazi_prebuilt || _install_yazi_source
     fi
 }

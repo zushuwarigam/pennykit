@@ -378,7 +378,7 @@ Git blame + review        → gitsigns + diffview
 6. Theme works inside     → pennykit theme <name>
 ```
 
-Pennykit detects Docker containers (`PENNYKIT_ON_CONTAINER`) and adjusts package installation accordingly (skips Homebrew, skips cargo builds if unavailable).
+Pennykit adjusts package installation based on OS detection (skips Homebrew on Linux, skips cargo builds if unavailable).
 
 ### Theme Switching
 

@@ -6,7 +6,6 @@ printf "### %s\n" "$(readlink -f "$0")"
 export DEBIAN_FRONTEND=noninteractive
 export LC_ALL=C.UTF-8
 
-export PENNYKIT_ON_CONTAINER
 export PENNYKIT_OS_ID
 export PENNYKIT_OS_VERSION_CODENAME
 

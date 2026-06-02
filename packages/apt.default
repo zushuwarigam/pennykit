@@ -48,15 +48,13 @@ PENNYKIT_APT_DEFAULT+=("xclip")         # pkg: xclip; desc: X11 clipboard access
 PENNYKIT_APT_DEFAULT+=("xsel")          # pkg: xsel; desc: X11 clipboard/selection manipulation tool
 PENNYKIT_APT_DEFAULT+=("zoxide")        # pkg: zoxide; desc: Smarter cd that learns your most-used directories
 
-if [ "$PENNYKIT_ON_CONTAINER" == "false" ]; then
-    PENNYKIT_APT_DEFAULT+=("btm")           # pkg: btm; desc: Cross-platform graphical process/system monitor (bottom)
-    PENNYKIT_APT_DEFAULT+=("chafa")         # pkg: chafa; desc: Display images in the terminal using Unicode/ANSI art
-    PENNYKIT_APT_DEFAULT+=("composer")      # pkg: composer; desc: Dependency manager for PHP projects
-    PENNYKIT_APT_DEFAULT+=("ffmpeg")        # pkg: ffmpeg; desc: Audio/video conversion, streaming, and processing toolkit
-    PENNYKIT_APT_DEFAULT+=("ghostscript")   # pkg: ghostscript; desc: PostScript and PDF interpreter and renderer
-    PENNYKIT_APT_DEFAULT+=("imagemagick")   # pkg: imagemagick; desc: Image conversion, editing, and manipulation suite
-    PENNYKIT_APT_DEFAULT+=("pdftoipe")      # pkg: pdftoipe; desc: Convert PDF files to Ipe XML drawing format
-    PENNYKIT_APT_DEFAULT+=("resvg")         # pkg: resvg; desc: High-quality SVG rendering and conversion tool
-    PENNYKIT_APT_DEFAULT+=("tig")           # pkg: tig; desc: Ncurses-based text-mode Git repository browser
-    PENNYKIT_APT_DEFAULT+=("w3m")           # pkg: w3m; desc: Terminal web browser with image and table support
-fi
+PENNYKIT_APT_DEFAULT+=("btm")           # pkg: btm; desc: Cross-platform graphical process/system monitor (bottom)
+PENNYKIT_APT_DEFAULT+=("chafa")         # pkg: chafa; desc: Display images in the terminal using Unicode/ANSI art
+PENNYKIT_APT_DEFAULT+=("composer")      # pkg: composer; desc: Dependency manager for PHP projects
+PENNYKIT_APT_DEFAULT+=("ffmpeg")        # pkg: ffmpeg; desc: Audio/video conversion, streaming, and processing toolkit
+PENNYKIT_APT_DEFAULT+=("ghostscript")   # pkg: ghostscript; desc: PostScript and PDF interpreter and renderer
+PENNYKIT_APT_DEFAULT+=("imagemagick")   # pkg: imagemagick; desc: Image conversion, editing, and manipulation suite
+PENNYKIT_APT_DEFAULT+=("pdftoipe")      # pkg: pdftoipe; desc: Convert PDF files to Ipe XML drawing format
+PENNYKIT_APT_DEFAULT+=("resvg")         # pkg: resvg; desc: High-quality SVG rendering and conversion tool
+PENNYKIT_APT_DEFAULT+=("tig")           # pkg: tig; desc: Ncurses-based text-mode Git repository browser
+PENNYKIT_APT_DEFAULT+=("w3m")           # pkg: w3m; desc: Terminal web browser with image and table support
