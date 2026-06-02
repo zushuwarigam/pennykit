@@ -336,10 +336,11 @@ function add_strace-ui() {
         echo "Missing opam — run 'pennykit extern' first to install system deps"
         return 1
     fi
+    export OPAMYES=1
     if [[ ! -f "$HOME/.opam/config" ]]; then
         echo "Initializing opam..."
-        opam init --bare --yes 2>/dev/null || \
-            opam init --bare --disable-sandboxing --yes 2>/dev/null || {
+        opam init --bare 2>/dev/null || \
+            opam init --bare --disable-sandboxing 2>/dev/null || {
             echo "Failed to initialize opam"
             return 1
         }
@@ -347,16 +348,17 @@ function add_strace-ui() {
     if ! opam switch list 2>/dev/null | grep -q "$OCAML_SWITCH"; then
         echo "Creating $OCAML_SWITCH switch (compiles custom OCaml — may take a while)..."
         opam switch create "$OCAML_SWITCH" \
-            --repos ox=git+https://github.com/oxcaml/opam-repository.git#dev,default
+            --repos ox=git+https://github.com/oxcaml/opam-repository.git#dev,default 2>&1 | tail -20
     fi
     if ! opam list --switch="$OCAML_SWITCH" --installed strace_ui 2>/dev/null | grep -q strace_ui; then
-        opam install strace_ui --switch="$OCAML_SWITCH"
+        opam install strace_ui --switch="$OCAML_SWITCH" 2>&1 | tail -20
     fi
     echo "strace-ui installed at $(opam exec --switch="$OCAML_SWITCH" -- which strace_ui 2>/dev/null)"
 }
 
 function update_strace-ui() {
     echo "Update external package: strace-ui"
+    export OPAMYES=1
     if opam switch list 2>/dev/null | grep -q "$OCAML_SWITCH"; then
         opam update --switch="$OCAML_SWITCH"
         opam upgrade strace_ui --switch="$OCAML_SWITCH"
