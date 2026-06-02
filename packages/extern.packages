@@ -312,6 +312,22 @@ function update_jqp() {
     fi
 }
 
+# pkg: strace-tui; desc: Terminal UI for visualizing and exploring strace output
+PENNYKIT_EXTERN_DEV+=("strace-tui")
+function add_strace-tui() {
+    echo "Add external package: strace-tui"
+    if ! command -v strace-tui >/dev/null; then
+        cargo install strace-tui
+    fi
+}
+
+function update_strace-tui() {
+    echo "Update external package: strace-tui"
+    if command -v strace-tui >/dev/null; then
+        cargo install strace-tui --force
+    fi
+}
+
 # pkg: vivid; desc: LS_COLORS generator with built-in theme support
 PENNYKIT_EXTERN_DEFAULT+=("vivid")
 function add_vivid() {
