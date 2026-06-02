@@ -326,6 +326,41 @@ function update_strace-tui() {
     fi
 }
 
+# pkg: strace-ui; desc: Interactive OCaml-based strace viewer with TUI (janestreet/oxcaml)
+PENNYKIT_EXTERN_DEV+=("strace-ui")
+function add_strace-ui() {
+    echo "Add external package: strace-ui"
+    if ! command -v opam >/dev/null; then
+        echo "Missing opam — run 'pennykit extern' first to install system deps"
+        return 1
+    fi
+    if [[ ! -f "$HOME/.opam/config" ]]; then
+        echo "Initializing opam..."
+        opam init --bare --yes 2>/dev/null || \
+            opam init --bare --disable-sandboxing --yes 2>/dev/null || {
+            echo "Failed to initialize opam"
+            return 1
+        }
+    fi
+    if ! opam switch list 2>/dev/null | grep -q oxcaml-dev; then
+        echo "Creating oxcaml-dev switch (compiles custom OCaml — may take a while)..."
+        opam switch create oxcaml-dev \
+            --repos=oxcaml-dev=git+https://github.com/oxcaml/opam-repository.git#dev,default
+    fi
+    if ! opam list --switch=oxcaml-dev --installed strace-ui 2>/dev/null | grep -q strace-ui; then
+        opam install strace-ui --switch=oxcaml-dev
+    fi
+    echo "strace-ui installed at $(opam exec --switch=oxcaml-dev -- which strace-ui 2>/dev/null)"
+}
+
+function update_strace-ui() {
+    echo "Update external package: strace-ui"
+    if [[ -x "$HOME/.opam/oxcaml-dev/bin/strace-ui" ]]; then
+        opam update --switch=oxcaml-dev
+        opam upgrade strace-ui --switch=oxcaml-dev
+    fi
+}
+
 # pkg: vivid; desc: LS_COLORS generator with built-in theme support
 PENNYKIT_EXTERN_DEFAULT+=("vivid")
 function add_vivid() {
