@@ -10,7 +10,6 @@
 ## Structural
 
 - [x] **Add lazy-lock.json for lazyvim and kickstart** — Generated via `:Lazy lock` headless; all 3 starters now have pinned plugin versions
-- [ ] **Split kickstart `init.lua`** — 1023-line monolithic file. Extract plugin configs into `lua/kickstart/plugins/*.lua` matching the astro pattern
 - ~~**CI/CD pipeline**~~ — Not needed (personal project, no collaboration)
 - [x] **Yazi plugin loading commented out** — Uncommented `require` lines for git, fzf, rg plugins in `configs/yazi/init.lua`
 - [x] **Dead configs audit** — `user.lua` (active, populated), `languagetool.lua` (disabled by design), `none-ls.lua` (now guarded), `astrocore_rooter.lua` (active)
@@ -24,14 +23,7 @@
   - Git submodule status
   - Mason tool installation status
   - Nerd Font detection
-- [ ] **Startup profiling baseline** — Document expected startup times per starter:
-  ```bash
-  nvim --startuptime /tmp/startup.log -c 'quit'
-  ```
-  Include in README or USE.md with `:Lazy profile` results
-- [ ] **Auto-session for LazyVim** — Only AstroNvim has `resession.nvim`. LazyVim starter has zero session management
-- [ ] **Standardize fuzzy picker** — Project uses fzf-lua (astro default), telescope (configs present), and snacks.picker (lazy-lock.json includes snacks). Pick one primary and document the migration
-- [ ] **New language onboarding doc** — Steps to add a new language (LSP, formatter, treesitter parser, test adapter, debug adapter) in a single documented workflow
+
 
 ## Quality of Life
 
@@ -52,6 +44,6 @@
 
 ## Documentation
 
-- [ ] **Generate keymap reference from config** — The keymap table in USE.md is hand-maintained. Consider a script that parses `lua/plugins/*.lua` for `desc` fields and generates the table automatically
+- [x] **Generate keymap reference from config** — Added `scripts/gen_keymap_ref.py` that scans `lua/plugins/*.lua` for `desc` fields and outputs a markdown table; documented in USE.md
 - [ ] **Cross-starter compatibility matrix** — Document which plugins/keymaps/features work in all 3 starters vs astro-only vs lazyvim-only vs kickstart-only
 - [ ] **Docker workflow docs** — Add a dedicated section for the 4 Dockerfiles: which to use when, build args, volume mounts, how themes work inside containers

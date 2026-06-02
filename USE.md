@@ -503,6 +503,14 @@ pennykit update             # git pull --rebase self-update
 | **Custom** | `:PKhello` | Hello command |
 | **Which-key** | `<Leader>wK` | Interactive menu explorer |
 
+This table includes framework-provided defaults (AstroNvim/LazyVim) plus custom overlays. To regenerate the **custom-only** keymap table from config files:
+
+```bash
+python3 "$PENNYKIT_HOME/scripts/gen_keymap_ref.py"
+```
+
+The script scans `lua/plugins/*.lua` across all starters for keymap definitions with `desc` fields.
+
 ---
 
 ## Performance Checklist
