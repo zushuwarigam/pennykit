@@ -328,6 +328,8 @@ function update_strace-tui() {
 
 # pkg: strace-ui; desc: Interactive OCaml-based strace viewer with TUI (janestreet/oxcaml)
 PENNYKIT_EXTERN_DEV+=("strace-ui")
+OCAML_SWITCH="5.2.0+ox"
+
 function add_strace-ui() {
     echo "Add external package: strace-ui"
     if ! command -v opam >/dev/null; then
@@ -342,22 +344,22 @@ function add_strace-ui() {
             return 1
         }
     fi
-    if ! opam switch list 2>/dev/null | grep -q oxcaml-dev; then
-        echo "Creating oxcaml-dev switch (compiles custom OCaml — may take a while)..."
-        opam switch create oxcaml-dev \
-            --repos=oxcaml-dev=git+https://github.com/oxcaml/opam-repository.git#dev,default
+    if ! opam switch list 2>/dev/null | grep -q "$OCAML_SWITCH"; then
+        echo "Creating $OCAML_SWITCH switch (compiles custom OCaml — may take a while)..."
+        opam switch create "$OCAML_SWITCH" \
+            --repos ox=git+https://github.com/oxcaml/opam-repository.git#dev,default
     fi
-    if ! opam list --switch=oxcaml-dev --installed strace-ui 2>/dev/null | grep -q strace-ui; then
-        opam install strace-ui --switch=oxcaml-dev
+    if ! opam list --switch="$OCAML_SWITCH" --installed strace_ui 2>/dev/null | grep -q strace_ui; then
+        opam install strace_ui --switch="$OCAML_SWITCH"
     fi
-    echo "strace-ui installed at $(opam exec --switch=oxcaml-dev -- which strace-ui 2>/dev/null)"
+    echo "strace-ui installed at $(opam exec --switch="$OCAML_SWITCH" -- which strace_ui 2>/dev/null)"
 }
 
 function update_strace-ui() {
     echo "Update external package: strace-ui"
-    if [[ -x "$HOME/.opam/oxcaml-dev/bin/strace-ui" ]]; then
-        opam update --switch=oxcaml-dev
-        opam upgrade strace-ui --switch=oxcaml-dev
+    if opam switch list 2>/dev/null | grep -q "$OCAML_SWITCH"; then
+        opam update --switch="$OCAML_SWITCH"
+        opam upgrade strace_ui --switch="$OCAML_SWITCH"
     fi
 }
 
