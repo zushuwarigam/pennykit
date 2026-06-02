@@ -20,6 +20,7 @@ PENNYKIT_APT_DEV+=("gdb")               # pkg: gdb; desc: GNU debugger for C, C+
 PENNYKIT_APT_DEV+=("glibc-source")      # pkg: glibc-source; desc: GNU C library source code for reference and debugging
 PENNYKIT_APT_DEV+=("gopls")             # pkg: gopls; desc: Official Go Language Server Protocol implementation
 PENNYKIT_APT_DEV+=("libc6-dbg")         # pkg: libc6-dbg; desc: glibc debug symbols for stepping through libc in GDB
+PENNYKIT_APT_DEV+=("libgmp-dev")        # pkg: libgmp-dev; desc: GMP multiprecision library dev (opam depext for zarith)
 PENNYKIT_APT_DEV+=("shellcheck")        # pkg: shellcheck; desc: Static analysis and linting tool for shell scripts
 PENNYKIT_APT_DEV+=("shfmt")             # pkg: shfmt; desc: Shell script formatter supporting bash, sh, and mksh
 PENNYKIT_APT_DEV+=("strace")            # pkg: strace; desc: Trace system calls and signals for debugging

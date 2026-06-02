@@ -351,9 +351,16 @@ function add_strace-ui() {
             --repos ox=git+https://github.com/oxcaml/opam-repository.git#dev,default 2>&1 | tail -20
     fi
     if ! opam list --switch="$OCAML_SWITCH" --installed strace_ui 2>/dev/null | grep -q strace_ui; then
-        opam install strace_ui --switch="$OCAML_SWITCH" 2>&1 | tail -20
+        opam install strace_ui --switch="$OCAML_SWITCH" --assume-depexts 2>&1 | tail -20
     fi
-    echo "strace-ui installed at $(opam exec --switch="$OCAML_SWITCH" -- which strace_ui 2>/dev/null)"
+    local strace_bin
+    strace_bin="$(opam exec --switch="$OCAML_SWITCH" -- which strace_ui 2>/dev/null)"
+    if [[ -n "$strace_bin" ]] && [[ ! -x "$HOME/.local/bin/strace-ui" ]]; then
+        mkdir -p "$HOME/.local/bin"
+        ln -sf "$strace_bin" "$HOME/.local/bin/strace-ui"
+        echo "Symlinked strace-ui to ~/.local/bin/strace-ui"
+    fi
+    echo "strace-ui installed at $strace_bin"
 }
 
 function update_strace-ui() {
@@ -361,7 +368,7 @@ function update_strace-ui() {
     export OPAMYES=1
     if opam switch list 2>/dev/null | grep -q "$OCAML_SWITCH"; then
         opam update --switch="$OCAML_SWITCH"
-        opam upgrade strace_ui --switch="$OCAML_SWITCH"
+        opam upgrade strace_ui --switch="$OCAML_SWITCH" --assume-depexts
     fi
 }
 

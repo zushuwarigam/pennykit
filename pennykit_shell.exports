@@ -10,7 +10,7 @@ export PATH="/usr/local/go/bin:${PATH}"
 export PATH="${HOME}/go/bin:${PATH}"
 export PATH="${HOME}/.local/bin:${PATH}"
 export PATH="${HOME}/.cargo/bin:${PATH}"
-export PATH="${HOME}/.opam/oxcaml-dev/bin:${PATH}"
+export PATH="${HOME}/.opam/5.2.0+ox/bin:${PATH}"
 export PATH="${HOME}/.pennykit/bin:${PATH}"
 
 # https://github.com/sharkdp/vivid/tree/master/themes
