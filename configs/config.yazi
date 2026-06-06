@@ -8,7 +8,9 @@ fi
 
 export PATH="$HOME/.local/bin:$PATH"
 
-ya pkg add yazi-rs/plugins:git
-ya pkg add yazi-rs/plugins:fzf
-ya pkg add yazi-rs/plugins:rg
-ya pkg add bennyyip/gruvbox-dark
+if command -v ya >/dev/null 2>&1; then
+  ya pkg add yazi-rs/plugins:git 2>/dev/null || true
+  ya pkg add yazi-rs/plugins:fzf 2>/dev/null || true
+  ya pkg add yazi-rs/plugins:rg 2>/dev/null || true
+  ya pkg add bennyyip/gruvbox-dark 2>/dev/null || true
+fi

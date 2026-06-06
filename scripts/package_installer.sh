@@ -3,6 +3,9 @@
 set -euo pipefail
 printf "### %s\n" "$(readlink -f "$0")"
 
+# Ensure OS detection is loaded
+[[ -v PENNYKIT_OS_ID ]] || source "$(dirname "$(readlink -f "$0")")/check_system.sh"
+
 if [[ $(id -u) != 0 ]]; then
   SUDO="sudo"
 else

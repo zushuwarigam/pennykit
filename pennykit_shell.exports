@@ -14,8 +14,10 @@ export PATH="${HOME}/.opam/5.2.0+ox/bin:${PATH}"
 export PATH="${HOME}/.pennykit/bin:${PATH}"
 
 # https://github.com/sharkdp/vivid/tree/master/themes
-export LS_COLORS
-LS_COLORS="$(vivid generate gruvbox-dark-soft)"
+if command -v vivid >/dev/null 2>&1; then
+  export LS_COLORS
+  LS_COLORS="$(vivid generate gruvbox-dark-soft)"
+fi
 
 export LANG=ru_RU.UTF-8
 # export LC_ALL=C.UTF-8

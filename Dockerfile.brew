@@ -51,7 +51,10 @@ ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}
 
 WORKDIR ${PENNYKIT_HOME}
 
-RUN "${PENNYKIT_HOME}/scripts/package_installer.sh" brew.on_linux
+# Install apt packages from default set + brew.on_linux additions
+RUN bash -c "source ./scripts/check_system.sh && \
+  source ./packages/_brew.on_linux && \
+  ./scripts/package_installer.sh apt"
 
 RUN mkdir -p "${HOME}/.config" && \
   ln -s "${HOME}/.pennykit/nvim-starter/astronvim_v6" "${HOME}/.config/nvim"

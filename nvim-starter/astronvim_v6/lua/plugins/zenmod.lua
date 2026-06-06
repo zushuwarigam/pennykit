@@ -18,7 +18,7 @@ return {
           -- statusline will be shown only if 'laststatus' == 3
           laststatus = 0, -- turn off the statusline in zen mode
         },
-        gitsings = { enabled = false },
+        gitsigns = { enabled = false },
         tmux = { enabled = false }, -- disables the tmux statusline
         todo = { enabled = false }, -- if set to "true", todo-comments.nvim highlights will be disabled
         wezterm = {

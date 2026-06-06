@@ -4,7 +4,9 @@ RUN apt-get update && \
 apt-get upgrade -y && \
 apt-get install \
   -y --no-install-recommends \
-  curl wget git ca-certificates netselect-apt
+  curl wget git ca-certificates netselect-apt && \
+apt-get clean && \
+rm -rf /var/lib/apt/lists/*
 
 # RUN netselect-apt -c ru -t 15 -a amd64 -n trixie && \
 #     mv -v sources.list /etc/apt/sources.list && \

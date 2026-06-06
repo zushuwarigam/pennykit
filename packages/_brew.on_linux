@@ -1,6 +1,6 @@
 printf "### %s\n" "$(readlink -f "$0")"
 
-source ./packages/brew
+source ./packages/_brew
 
 PENNYKIT_APT_DEFAULT+=("lua5.1")
 

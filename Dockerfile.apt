@@ -45,7 +45,7 @@ WORKDIR "${HOME}/.pennykit"
 
 ENV PENNYKIT_HOME="${HOME}/.pennykit"
 
-RUN "./scripts/package_installer.sh" apt
+RUN bash -c "source ./scripts/check_system.sh && ./scripts/package_installer.sh apt"
 RUN "./scripts/package_configure.sh"
 
 RUN mkdir -p "${HOME}/.config" && \
