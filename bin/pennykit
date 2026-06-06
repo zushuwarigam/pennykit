@@ -4,13 +4,7 @@ set -euo pipefail
 
 PENNYKIT_HOME="${PENNYKIT_HOME:-$HOME/.pennykit}"
 
-function _curl() {
-  curl --retry 5 --retry-all-errors --retry-delay 2 --connect-timeout 10 --max-time 60 "$@"
-}
-function _wget() {
-  wget -c --tries=0 --waitretry=15 --timeout=60 --read-timeout=60 "$@"
-}
-export -f _curl _wget
+source "$PENNYKIT_HOME/lib/helpers.sh"
 
 usage() {
     cat <<EOF
@@ -29,40 +23,11 @@ Commands:
   doctor             Run health checks on the environment
   branch             Show current git branch
   branch <name>      Switch to a different git branch
+  clean              Remove all pennykit-managed symlinks and nvim data
   help               Show this help message
 
 EOF
     exit 0
-}
-
-# ── Helpers ────────────────────────────────────────────────────
-
-if [[ -t 1 ]]; then
-    BOLD=$(tput bold)
-    GREEN=$(tput setaf 2)
-    YELLOW=$(tput setaf 3)
-    RED=$(tput setaf 1)
-    CYAN=$(tput setaf 6)
-    RESET=$(tput sgr0)
-else
-    BOLD=""; GREEN=""; YELLOW=""; RED=""; CYAN=""; RESET=""
-fi
-
-status() { echo "  ${CYAN}$*${RESET}"; }
-status_green() { echo "  ${GREEN}$*${RESET}"; }
-status_yellow() { echo "  ${YELLOW}$*${RESET}"; }
-die() { echo "${RED}Error: $*${RESET}" >&2; exit 1; }
-
-_is_deactivated() {
-    local pkg="$1"
-    local skip_file="$PENNYKIT_HOME/configs/extern.skip"
-    [[ ! -f "$skip_file" ]] && return 1
-    while IFS= read -r line; do
-        [[ "$line" =~ ^# ]] && continue
-        [[ -z "$line" ]] && continue
-        [[ "$line" == "$pkg" ]] && return 0
-    done < "$skip_file"
-    return 1
 }
 
 # ── Status dashboard ───────────────────────────────────────────
@@ -333,16 +298,21 @@ TMUXEOF
 
     # Shell themes
     if [[ -f "${HOME}/.bashrc" ]]; then
-        sed -i "s/^OSH_THEME=\".*\"/OSH_THEME=\"${PENNYKIT_THEME_OMB}\"/" "${HOME}/.bashrc" 2>/dev/null || true
-        echo "  Oh My Bash: $PENNYKIT_THEME_OMB"
+        if grep -q '^OSH_THEME=' "${HOME}/.bashrc" 2>/dev/null; then
+            sed -i "s/^OSH_THEME=\".*\"/OSH_THEME=\"${PENNYKIT_THEME_OMB}\"/" "${HOME}/.bashrc"
+            echo "  Oh My Bash: $PENNYKIT_THEME_OMB"
+        else
+            echo "  Oh My Bash: ${YELLOW}no OSH_THEME found in ~/.bashrc${RESET}"
+        fi
     fi
     if [[ -f "${HOME}/.zshrc" ]]; then
         if grep -q '^ZSH_THEME=' "${HOME}/.zshrc" 2>/dev/null; then
             sed -i "s/^ZSH_THEME=\".*\"/ZSH_THEME=\"${PENNYKIT_THEME_OMZ}\"/" "${HOME}/.zshrc"
+            echo "  Oh My Zsh: $PENNYKIT_THEME_OMZ"
         else
             echo "ZSH_THEME=\"${PENNYKIT_THEME_OMZ}\"" >> "${HOME}/.zshrc"
+            echo "  Oh My Zsh: $PENNYKIT_THEME_OMZ (appended)"
         fi
-        echo "  Oh My Zsh: $PENNYKIT_THEME_OMZ"
     fi
 
     echo "PENNYKIT_THEME=\"${theme_name}\"" > configs/theme.conf
@@ -547,6 +517,42 @@ cmd_branch() {
     fi
 }
 
+# ── Clean (remove symlinks pointing to pennykit) ───────────────
+
+cmd_clean() {
+    echo "${BOLD}PennyKit clean${RESET}"
+    echo "${CYAN}━━━━━━━━━━━━━━━━━━━${RESET}"
+
+    local targets=(
+        "$HOME/.config/nvim"
+        "$HOME/.tmux.conf"
+        "$HOME/.tmux_theme.conf"
+    )
+    if [[ -f "$HOME/.bashrc" ]]; then
+        targets+=("$HOME/.config/bat/config")
+        targets+=("$HOME/.config/lazygit/config.yml")
+        targets+=("$HOME/.config/lf")
+        targets+=("$HOME/.config/yazi")
+    fi
+
+    for path in "${targets[@]}"; do
+        if [[ -L "$path" ]] && [[ "$(readlink -f "$path")" == "$PENNYKIT_HOME"* ]]; then
+            status "Removing symlink: $path"
+            unlink "$path"
+        fi
+    done
+
+    local nvim_dirs=("$HOME/.local/share/nvim" "$HOME/.local/state/nvim" "$HOME/.cache/nvim")
+    for dir in "${nvim_dirs[@]}"; do
+        if [[ -d "$dir" ]]; then
+            status "Removing nvim data: $dir"
+            rm -rf "$dir"
+        fi
+    done
+
+    echo ""
+}
+
 # ── Main dispatch ──────────────────────────────────────────────
 
 case "${1:-}" in
@@ -557,6 +563,7 @@ case "${1:-}" in
     doctor)        cmd_doctor ;;
     update)        cmd_update ;;
     branch)        shift; cmd_branch "$@" ;;
+    clean)         cmd_clean ;;
     help|-h|--help) usage ;;
     *)             echo "Error: unknown command '$1'"; usage ;;
 esac

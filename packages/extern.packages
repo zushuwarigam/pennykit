@@ -213,24 +213,37 @@ function update_nvim() {
 }
 
 # pkg: ueberzugpp; desc: Display images in terminal file managers via X11/Wayland
+#
+# NOTE: ueberzugpp is only available on Debian via the home:justkidding OBS repo.
+# The OBS repo uses fixed filenames per version, so we fetch the latest tag from
+# GitHub (like all other extern packages) and derive the OBS URL accordingly.
 PENNYKIT_EXTERN_DEFAULT+=("ueberzugpp")
+function _ueberzugpp_version() {
+    _curl -sL "https://api.github.com/repos/jstkdng/ueberzugpp/releases/latest" \
+        | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/'
+}
+
 function add_ueberzugpp() {
 	echo "Add external package: ueberzugpp"
     if ! command -v ueberzugpp >/dev/null; then
-        _wget -O /tmp/ueberzugpp_2.9.8_amd64.deb \
-            https://download.opensuse.org/repositories/home:/justkidding/Debian_13/amd64/ueberzugpp_2.9.8_amd64.deb
-        $SUDO apt install -y /tmp/ueberzugpp_2.9.8_amd64.deb
-        rm -vf /tmp/ueberzugpp_2.9.8_amd64.deb
+        local ver
+        ver=$(_ueberzugpp_version)
+        _wget -O "/tmp/ueberzugpp_${ver}_amd64.deb" \
+            "https://download.opensuse.org/repositories/home:/justkidding/Debian_13/amd64/ueberzugpp_${ver}_amd64.deb"
+        $SUDO apt install -y "/tmp/ueberzugpp_${ver}_amd64.deb"
+        rm -vf "/tmp/ueberzugpp_${ver}_amd64.deb"
     fi
 }
 
 function update_ueberzugpp() {
 	echo "Update external package: ueberzugpp"
     if command -v ueberzugpp >/dev/null; then
-        _wget -O /tmp/ueberzugpp_2.9.8_amd64.deb \
-            https://download.opensuse.org/repositories/home:/justkidding/Debian_13/amd64/ueberzugpp_2.9.8_amd64.deb
-        $SUDO apt install -y /tmp/ueberzugpp_2.9.8_amd64.deb
-        rm -vf /tmp/ueberzugpp_2.9.8_amd64.deb
+        local ver
+        ver=$(_ueberzugpp_version)
+        _wget -O "/tmp/ueberzugpp_${ver}_amd64.deb" \
+            "https://download.opensuse.org/repositories/home:/justkidding/Debian_13/amd64/ueberzugpp_${ver}_amd64.deb"
+        $SUDO apt install -y "/tmp/ueberzugpp_${ver}_amd64.deb"
+        rm -vf "/tmp/ueberzugpp_${ver}_amd64.deb"
     fi
 }
 

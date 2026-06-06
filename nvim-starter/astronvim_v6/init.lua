@@ -27,4 +27,3 @@ package.path = package.path .. ";" .. vim.env.HOME .. "/.pennykit_ai/configs/nvi
 
 require "lazy_setup"
 require "custom_commands"
-require "polish"
