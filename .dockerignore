@@ -1,17 +1,49 @@
+# Version control
 **/.git
 **/.git/**
-logs/
-**/*.log
-**/lazy-lock.json
-**/.DS_Store
-Dockerfile*
-.dockerignore
 .gitignore
 .gitmodules
+
+# Logs
+logs/
+**/*.log
+
+# Temporary & cache
+tmp/
+**/__pycache__/
+**/*.pyc
+**/.cache/
+
+# OS files
+**/.DS_Store
+
+# Docker
+Dockerfile*
+.dockerignore
+docker-compose*
+docker/
+
+# Docs & meta
 README.md
 LICENSE
+TODO.md
 TODO/
+
+# Neovim submodule artifacts
 nvim-starter/*/.git/
 nvim-starter/*/spell/
 nvim-starter/*/doc/
 nvim-starter/*/lazy-lock.json
+
+# Build artifacts and large excludes
+**/node_modules/
+**/target/
+**/.next/
+*.deb
+*.tar.gz
+*.iso
+*.img
+**.db
+**.sqlite
+.env
+health_check/

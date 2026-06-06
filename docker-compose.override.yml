@@ -1,0 +1,6 @@
+services:
+  pennykit:
+    build:
+      target: dev
+    container_name: pennykit-dev
+    command: /bin/bash

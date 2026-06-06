@@ -1,68 +1,113 @@
 ARG PK_BASE_IMAGE_NAME=debian
 ARG PK_BASE_IMAGE_TAG=trixie
 
-FROM ${PK_BASE_IMAGE_NAME}:${PK_BASE_IMAGE_TAG}
+# ═══════════════════════════════════════════════════════════════════
+# Stage 1: os — system deps + non-root user + locale
+# ═══════════════════════════════════════════════════════════════════
+FROM ${PK_BASE_IMAGE_NAME}:${PK_BASE_IMAGE_TAG} AS os
 
 ARG UID=1000
 ARG USER=user
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Base deps
 RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update && \
   apt-get upgrade -y && \
   apt-get install -y --no-install-recommends \
-  build-essential  \
-  ca-certificates \
-  curl \
-  dialog \
-  file \
-  git \
-  locales-all \
-  procps \
-  sudo \
-  wget && \
-  apt-get clean && \
-  rm -rf /var/lib/apt/lists/*
+    build-essential \
+    ca-certificates \
+    curl \
+    dialog \
+    file \
+    git \
+    locales-all \
+    procps \
+    sudo \
+    wget \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
-# Add non-root user
-RUN groupadd --gid "${UID}" "${USER}" && \
-  useradd --uid "${UID}" --gid "${UID}" --shell /bin/bash --create-home "${USER}" && \
-  echo "${USER} ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers
-
-USER ${USER}
-ARG HOME=/home/${USER}
-WORKDIR ${HOME}
+RUN groupadd --gid "${UID}" "${USER}" \
+  && useradd --uid "${UID}" --gid "${UID}" --shell /bin/bash --create-home "${USER}" \
+  && echo "${USER} ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 ENV LANG=ru_RU.UTF-8 \
   LANGUAGE=ru_RU:ru \
   LC_ALL=ru_RU.UTF-8
 
+ARG HOME=/home/${USER}
 ARG NONINTERACTIVE=true
-RUN /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && \
-  echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> "${HOME}/.bashrc"
 
-COPY --chown="${USER}:${USER}" . "${HOME}/.pennykit"
+# ═══════════════════════════════════════════════════════════════════
+# Stage 2: brew — Homebrew installation (Linuxbrew)
+# ═══════════════════════════════════════════════════════════════════
+FROM os AS brew
 
-ENV PENNYKIT_HOME="${HOME}/.pennykit"
+ARG USER=user
+ARG HOME=/home/${USER}
+
+RUN mkdir -p /home/linuxbrew/.linuxbrew \
+  && chown -R ${USER}:${USER} /home/linuxbrew/.linuxbrew
+
+USER ${USER}
+RUN /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" \
+  && echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> "${HOME}/.bashrc"
+USER root
 
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
 
-WORKDIR ${PENNYKIT_HOME}
+# ═══════════════════════════════════════════════════════════════════
+# Stage 3: pkgs — pennykit packages (apt + brew)
+# ═══════════════════════════════════════════════════════════════════
+FROM brew AS pkgs
 
-# Install apt packages from default set + brew.on_linux additions
-RUN bash -c "source ./scripts/check_system.sh && \
-  source ./packages/brew.on_linux && \
-  ./scripts/package_installer.sh apt"
+ARG USER=user
+ARG HOME=/home/${USER}
+WORKDIR ${HOME}/.pennykit
 
-RUN mkdir -p "${HOME}/.config" && \
-  ln -s "${HOME}/.pennykit/nvim-starter/astronvim_v6" "${HOME}/.config/nvim"
+ENV PENNYKIT_HOME="${HOME}/.pennykit"
 
+COPY scripts/check_system.sh scripts/package_installer.sh ./scripts/
+COPY lib/ ./lib/
+COPY packages/ ./packages/
+
+RUN chown -R ${USER}:${USER} ${HOME}/.pennykit
+
+USER ${USER}
+RUN bash -c "source ./scripts/check_system.sh && source ./packages/brew.on_linux && ./scripts/package_installer.sh apt"
+USER root
+
+# ═══════════════════════════════════════════════════════════════════
+# Stage 4: nvim — configs + nvim-starter + Lazy install
+# ═══════════════════════════════════════════════════════════════════
+FROM pkgs AS nvim
+
+ARG USER=user
+ARG HOME=/home/${USER}
+WORKDIR ${HOME}/.pennykit
+
+COPY scripts/package_configure.sh ./scripts/
+COPY configs/ ./configs/
+COPY nvim-starter/ ./nvim-starter/
+
+RUN chown -R ${USER}:${USER} ${HOME}/.pennykit
+
+USER ${USER}
+RUN ./scripts/package_configure.sh
 RUN nvim --headless -c 'Lazy install' -c 'qa'
-# RUN nvim --headless -c 'TSInstall css html javascript latex norg scss svelte tsx typst vue regex' -c 'qa'
-# RUN nvim --headless -c 'MasonToolsUpdateSync' -c 'qa'
+USER root
 
-# RUN echo "source ${HOME}/.pennykit/pennykit.bash" >> "${HOME}/.bashrc"
+# ═══════════════════════════════════════════════════════════════════
+# Stage 5: runtime — overlay all source files
+# ═══════════════════════════════════════════════════════════════════
+FROM nvim AS runtime
+
+ARG UID=1000
+ARG USER=user
+ARG HOME=/home/${USER}
 
 WORKDIR ${HOME}
+COPY --chown=${USER}:${USER} . ${HOME}/.pennykit
+
+FROM runtime AS dev

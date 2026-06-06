@@ -1,0 +1,26 @@
+services:
+  pennykit:
+    build:
+      context: .
+      dockerfile: Dockerfile.apt
+      target: runtime
+      args:
+        USER: ${USER:-user}
+        UID: ${UID:-1000}
+        PK_BASE_IMAGE_NAME: debian
+        PK_BASE_IMAGE_TAG: trixie
+    image: pennykit:trixie
+    container_name: pennykit-dev
+    stdin_open: true
+    tty: true
+    working_dir: /workdir
+    volumes:
+      - .:/workdir
+    environment:
+      - PENNYKIT_THEME=${PENNYKIT_THEME:-gruvbox}
+    healthcheck:
+      test: ["CMD", "bash", "-c", "command -v nvim && nvim --version >/dev/null 2>&1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

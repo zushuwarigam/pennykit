@@ -1,0 +1,6 @@
+# Docker build configuration
+# Sourced by scripts/build_docker-image.sh
+
+PROJECT_NAME="pennykit"
+PK_BASE_IMAGE_NAME="debian"
+PK_BASE_IMAGE_TAG="trixie"
