@@ -1,6 +1,4 @@
-#!/usr/bin/env bash
-set -euo pipefail
-printf "### apt.admin %s\n" "$(readlink -f "$0")"
+[[ -v _APT_ADMIN ]] && return || readonly _APT_ADMIN=1
 
 PENNYKIT_APT_ADMIN+=("bind9-dnsutils")  # pkg: bind9-dnsutils; desc: DNS lookup utilities (dig, nslookup, nsupdate)
 PENNYKIT_APT_ADMIN+=("httpie")          # pkg: httpie; desc: User-friendly HTTP client for APIs and web testing

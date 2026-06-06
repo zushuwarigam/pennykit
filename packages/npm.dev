@@ -1,6 +1,4 @@
-#!/usr/bin/env bash
-set -euo pipefail
-printf "### npm.dev %s\n" "$(readlink -f "$0")"
+[[ -v _NPM_DEV ]] && return || readonly _NPM_DEV=1
 
 if [ "$PENNYKIT_OS_VERSION_CODENAME" == "trixie" ]; then
     :

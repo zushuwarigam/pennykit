@@ -1,6 +1,4 @@
-#!/usr/bin/env bash
-set -euo pipefail
-printf "### pipx.admin %s\n" "$(readlink -f "$0")"
+[[ -v _PIPX_ADMIN ]] && return || readonly _PIPX_ADMIN=1
 
 if [ "$PENNYKIT_OS_VERSION_CODENAME" == "trixie" ]; then
     # TODO: need add postgres support via:

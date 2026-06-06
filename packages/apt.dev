@@ -1,6 +1,4 @@
-#!/usr/bin/env bash
-set -euo pipefail
-printf "### apt.dev %s\n" "$(readlink -f "$0")"
+[[ -v _APT_DEV ]] && return || readonly _APT_DEV=1
 
 PENNYKIT_APT_DEV+=("binutils")          # pkg: binutils; desc: Binary tools (objdump, nm, readelf, strip, ld, etc.)
 PENNYKIT_APT_DEV+=("binwalk")           # pkg: binwalk; desc: Firmware analysis and embedded file extraction tool

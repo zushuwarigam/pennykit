@@ -1,6 +1,4 @@
-#!/usr/bin/env bash
-set -euo pipefail
-printf "### apt.default %s\n" "$(readlink -f "$0")"
+[[ -v _APT_DEFAULT ]] && return || readonly _APT_DEFAULT=1
 
 if [ "$PENNYKIT_OS_VERSION_CODENAME" == "trixie" ]; then
     PENNYKIT_APT_DEFAULT+=("eza")           # pkg: eza; desc: Modern ls replacement with colors, icons, and Git status

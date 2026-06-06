@@ -37,12 +37,6 @@ else
   _brew_clean()   { brew cleanup --prune=all; }
 fi
 
-package_sets="${1:-apt}.default"
-
-# Check penny env
-echo "Check penny env:"
-env | grep PENNY
-
 cd "$PENNYKIT_HOME"
 
 _add_or_skip() {
@@ -54,8 +48,20 @@ _add_or_skip() {
     "add_$pkg"
 }
 
+# --- Pyramid layer stack ---
+# DEFAULT: only base    ADMIN: base → admin
+# DEV: base → dev       PENTEST: base → dev → pentest
+# ALL: base → admin → dev → pentest
+layers=()
+case "${PENNYKIT_PACKAGE_SET:-DEFAULT}" in
+  ADMIN)   layers=(admin) ;;
+  DEV)     layers=(dev) ;;
+  PENTEST) layers=(dev pentest) ;;
+  ALL)     layers=(admin dev pentest) ;;
+esac
+
 # shellcheck source=./packages/apt.default
-source "./packages/${package_sets}"
+source "./packages/apt.default"
 # shellcheck source=./packages/extern.packages
 source "./packages/extern.packages"
 
@@ -65,107 +71,64 @@ if [[ -v PENNYKIT_APT_DEFAULT ]]; then
 
   _apt_install "${PENNYKIT_APT_DEFAULT[@]}"
   # shellcheck source=./packages/apt.default.postinst
-  source "./packages/${package_sets}.postinst"
+  source "./packages/apt.default.postinst"
 
   [[ -v PENNYKIT_EXTERN_DEFAULT ]] \
     && for p in "${PENNYKIT_EXTERN_DEFAULT[@]}"; do _add_or_skip "$p"; done
 
-  case "$PENNYKIT_PACKAGE_SET" in
-    ADMIN) # admin package set
-      source "./packages/apt.admin"
-      [[ -v PENNYKIT_APT_ADMIN ]] \
-        && _apt_install "${PENNYKIT_APT_ADMIN[@]}"
-      # shellcheck source=./packages/apt.default.postinst
-      source "./packages/${package_sets}.postinst"
+  declare -A _seen_apt
+  unset _apt_pkgs
+  for layer in "${layers[@]}"; do
+    source "./packages/apt.${layer}"
 
-      source "./packages/pipx.admin"
-      [[ -v PENNYKIT_PIPX_ADMIN ]] \
-        && _pipx_install "${PENNYKIT_PIPX_ADMIN[@]}"
+    local_arr="PENNYKIT_APT_${layer^^}[@]"
+    for pkg in "${!local_arr}"; do
+      if [[ -z "${_seen_apt[$pkg]-}" ]]; then
+        _seen_apt[$pkg]=1
+        _apt_pkgs+=("$pkg")
+      fi
+    done
+  done
+  [[ ${#_apt_pkgs[@]} -gt 0 ]] && _apt_install "${_apt_pkgs[@]}"
 
-      source "./packages/npm.admin"
-      [[ -v PENNYKIT_NPM_ADMIN ]] \
-        && _npm_install "${PENNYKIT_NPM_ADMIN[@]}"
+  # pipx
+  declare -A _seen_pipx
+  unset _pipx_pkgs
+  for layer in "${layers[@]}"; do
+    source "./packages/pipx.${layer}" 2>/dev/null || true
 
-      [[ -v PENNYKIT_EXTERN_ADMIN ]] \
-        && for p in "${PENNYKIT_EXTERN_ADMIN[@]}"; do _add_or_skip "$p"; done
-      ;;
-    DEV) # dev package set
-      source "./packages/apt.dev"
-      [[ -v PENNYKIT_APT_DEV ]] \
-        && _apt_install "${PENNYKIT_APT_DEV[@]}"
-      # shellcheck source=./packages/apt.default.postinst
-      source "./packages/${package_sets}.postinst"
+    local_arr="PENNYKIT_PIPX_${layer^^}[@]"
+    for pkg in "${!local_arr}"; do
+      if [[ -z "${_seen_pipx[$pkg]-}" ]]; then
+        _seen_pipx[$pkg]=1
+        _pipx_pkgs+=("$pkg")
+      fi
+    done
+  done
+  [[ ${#_pipx_pkgs[@]} -gt 0 ]] && _pipx_install "${_pipx_pkgs[@]}"
 
-      source "./packages/pipx.dev"
-      [[ -v PENNYKIT_PIPX_DEV ]] \
-        && _pipx_install "${PENNYKIT_PIPX_DEV[@]}"
+  # npm
+  declare -A _seen_npm
+  unset _npm_pkgs
+  for layer in "${layers[@]}"; do
+    source "./packages/npm.${layer}" 2>/dev/null || true
 
-      source "./packages/npm.dev"
-      [[ -v PENNYKIT_NPM_DEV ]] \
-        && _npm_install "${PENNYKIT_NPM_DEV[@]}"
+    local_arr="PENNYKIT_NPM_${layer^^}[@]"
+    for pkg in "${!local_arr}"; do
+      if [[ -z "${_seen_npm[$pkg]-}" ]]; then
+        _seen_npm[$pkg]=1
+        _npm_pkgs+=("$pkg")
+      fi
+    done
+  done
+  [[ ${#_npm_pkgs[@]} -gt 0 ]] && _npm_install "${_npm_pkgs[@]}"
 
-      [[ -v PENNYKIT_EXTERN_DEV ]] \
-        && for p in "${PENNYKIT_EXTERN_DEV[@]}"; do _add_or_skip "$p"; done
-      ;;
-    PENTEST) # pentest package set
-      source "./packages/apt.pentest"
-      [[ -v PENNYKIT_APT_PENTEST ]] \
-        && _apt_install "${PENNYKIT_APT_PENTEST[@]}"
-      # shellcheck source=./packages/apt.default.postinst
-      source "./packages/${package_sets}.postinst"
-
-      source "./packages/pipx.pentest"
-      [[ -v PENNYKIT_PIPX_PENTEST ]] \
-        && _pipx_install "${PENNYKIT_PIPX_PENTEST[@]}"
-
-      source "./packages/npm.pentest"
-      [[ -v PENNYKIT_NPM_PENTEST ]] \
-        && _npm_install "${PENNYKIT_NPM_PENTEST[@]}"
-
-      [[ -v PENNYKIT_EXTERN_PENTEST ]] \
-        && for p in "${PENNYKIT_EXTERN_PENTEST[@]}"; do _add_or_skip "$p"; done
-      ;;
-    ALL) # all package sets
-      source "./packages/apt.admin"
-      source "./packages/apt.dev"
-      source "./packages/apt.pentest"
-      PENNYKIT_APT=()
-      [[ -v PENNYKIT_APT_ADMIN ]] && PENNYKIT_APT=("${PENNYKIT_APT[@]}" "${PENNYKIT_APT_ADMIN[@]}")
-      [[ -v PENNYKIT_APT_DEV ]] && PENNYKIT_APT=("${PENNYKIT_APT[@]}" "${PENNYKIT_APT_DEV[@]}")
-      [[ -v PENNYKIT_APT_PENTEST ]] && PENNYKIT_APT=("${PENNYKIT_APT[@]}" "${PENNYKIT_APT_PENTEST[@]}")
-      read -ra PENNYKIT_APT_uniq < <(printf '%s\n' "${PENNYKIT_APT[@]}" | sort -u)
-      _apt_install "${PENNYKIT_APT_uniq[@]}"
-      # shellcheck source=./packages/apt.default.postinst
-      source "./packages/${package_sets}.postinst"
-
-      source "./packages/pipx.admin"
-      source "./packages/pipx.dev"
-      source "./packages/pipx.pentest"
-      PENNYKIT_PIPX=()
-      [[ -v PENNYKIT_PIPX_ADMIN ]] && PENNYKIT_PIPX=("${PENNYKIT_PIPX[@]}" "${PENNYKIT_PIPX_ADMIN[@]}")
-      [[ -v PENNYKIT_PIPX_DEV ]] && PENNYKIT_PIPX=("${PENNYKIT_PIPX[@]}" "${PENNYKIT_PIPX_DEV[@]}")
-      [[ -v PENNYKIT_PIPX_PENTEST ]] && PENNYKIT_PIPX=("${PENNYKIT_PIPX[@]}" "${PENNYKIT_PIPX_PENTEST[@]}")
-      read -ra PENNYKIT_PIPX_uniq < <(printf '%s\n' "${PENNYKIT_PIPX[@]}" | sort -u)
-      _pipx_install "${PENNYKIT_PIPX_uniq[@]}"
-
-      # source "./packages/npm.admin"
-      # source "./packages/npm.dev"
-      # source "./packages/npm.pentest"
-      # PENNYKIT_NPM=()
-      # [[ -v PENNYKIT_NPM_ADMIN ]] && PENNYKIT_NPM=("${PENNYKIT_NPM[@]}" "${PENNYKIT_NPM_ADMIN[@]}")
-      # [[ -v PENNYKIT_NPM_DEV ]] && PENNYKIT_NPM=("${PENNYKIT_NPM[@]}" "${PENNYKIT_NPM_DEV[@]}")
-      # [[ -v PENNYKIT_NPM_PENTEST ]] && PENNYKIT_NPM=("${PENNYKIT_NPM[@]}" "${PENNYKIT_NPM_PENTEST[@]}")
-      # PENNYKIT_NPM_uniq=($(printf '%s\n' "${PENNYKIT_NPM[@]}" | sort -u))
-      # npm install "${PENNYKIT_NPM_uniq[@]}"
-
-      [[ -v PENNYKIT_EXTERN_ADMIN ]] \
-        && for p in "${PENNYKIT_EXTERN_ADMIN[@]}"; do _add_or_skip "$p"; done
-      [[ -v PENNYKIT_EXTERN_DEV ]] \
-        && for p in "${PENNYKIT_EXTERN_DEV[@]}"; do _add_or_skip "$p"; done
-      [[ -v PENNYKIT_EXTERN_PENTEST ]] \
-        && for p in "${PENNYKIT_EXTERN_PENTEST[@]}"; do _add_or_skip "$p"; done
-      ;;
-  esac
+  # extern
+  for layer in "${layers[@]}"; do
+    local_arr="PENNYKIT_EXTERN_${layer^^}[@]"
+    [[ -v "PENNYKIT_EXTERN_${layer^^}" ]] \
+      && for p in "${!local_arr}"; do _add_or_skip "$p"; done
+  done
 
   _apt_clean
 fi
