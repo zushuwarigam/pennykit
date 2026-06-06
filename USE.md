@@ -369,16 +369,79 @@ Git blame + review        → gitsigns + diffview
 
 ### Containerized Development
 
-```
-1. Build dev container    → ./scripts/build_docker-image.sh
-2. Run container          → ./scripts/run_docker-container.sh
-3. Inside container       → nvim (auto-configured via pennykit)
-4. Install packages       → pennykit extern (version-managed)
-5. Install apt packages   → uses apt.default/admin/dev/pentest sets
-6. Theme works inside     → pennykit theme <name>
+#### Dockerfile Reference
+
+| File | Base | Packages | Use Case |
+|------|------|----------|----------|
+| `Dockerfile.apt` | `debian:trixie` | apt default | Full dev env with Neovim (Lazy install), non-root user |
+| `Dockerfile.brew` | `debian:trixie` | apt default + Homebrew | Full dev env with Neovim + brew packages |
+| `Dockerfile.dev-debian_trixie` | `debian:trixie` | Minimal (curl, wget, git) | Lightweight base for customization |
+| `Dockerfile.dev-debian_bookworm` | `debian:bookworm` | Minimal (curl, wget, git) | Legacy Debian compatibility |
+
+#### Build Args
+
+All full Dockerfiles accept:
+
+| Arg | Default | Description |
+|-----|---------|-------------|
+| `PK_BASE_IMAGE_NAME` | `debian` | Base image name |
+| `PK_BASE_IMAGE_TAG` | `trixie` | Base image tag |
+| `UID` | `1000` | Non-root user UID |
+| `USER` | `user` | Non-root username |
+
+#### Workflow
+
+```bash
+# 1. Build interactively (prompts which Dockerfile)
+./scripts/build_docker-image.sh
+
+# 2. Or build explicitly with custom args
+docker build \
+  --build-arg "USER=$USER" \
+  --build-arg "UID=$UID" \
+  -f Dockerfile.apt \
+  -t my-pennykit:trixie \
+  .
+
+# 3. Run with current directory mounted as /workdir
+./scripts/run_docker-container.sh
+
+# 4. Inside container: full pennykit environment
+nvim              # AstroNvim (pre-configured, plugins installed)
+pennykit theme    # theme works inside container
+pennykit extern   # install/update version-managed tools
 ```
 
-Pennykit adjusts package installation based on OS detection (skips Homebrew on Linux, skips cargo builds if unavailable).
+#### Volume Mounts
+
+`run_docker-container.sh` mounts `$(pwd)` to `/workdir` inside the container. The pennykit config lives at `~/.pennykit/` inside the container (not mounted), so each container gets a fresh install. To persist config across runs, add:
+
+```bash
+docker run -ti --rm \
+  -v "$(pwd)":/workdir \
+  -v pennykit-home:/home/user/.pennykit \  # persistent config volume
+  -w /workdir \
+  pennykit:trixie
+```
+
+#### Themes in Containers
+
+Themes work identically inside containers:
+
+```bash
+pennykit theme gruvbox       # applies across all installed apps
+pennykit theme --dry-run gruvbox  # preview without applying
+```
+
+Theme configs are copied into the image during build. To add custom themes, place `.conf` files in `configs/themes/` before building.
+
+#### OS Detection Inside Container
+
+Pennykit auto-detects the container environment:
+- Detects Debian vs Ubuntu via `/etc/os-release`
+- Skips Homebrew on Linux unless explicitly sourced (`brew.on_linux`)
+- Skips cargo builds if `rustc` is unavailable
+- Adjusts package installation to match the OS
 
 ### Theme Switching
 

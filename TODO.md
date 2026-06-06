@@ -40,7 +40,7 @@
 - [x] **`lazy-lock.json` is gitignored** — Removed `**/lazy-lock.json` from `.gitignore`; astronvim lock file now trackable
 - [x] **Git submodules drift** — Dead `.git` submodule directories removed; actual configs stay as-is
 - [x] **Container detection edge cases** — Centralized in `check_system.sh`, sourced from both `pennykit_install.sh` and `bin/pennykit`
-- [ ] **Theme variables not centralized** — Theme `.conf` files define 13 variables each, but `cmd_theme` hardcodes which applications they affect. If a new app is added to the theme system, both the conf files AND the CLI need updating. Consider a declarative mapping
+- [x] **Theme variables not centralized** — Resolved via `configs/theme_mapping.toml` + `scripts/apply_theme.py`; bash fallback kept for environments without python3
 
 ## Documentation
 
