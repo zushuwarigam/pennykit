@@ -1,8 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
+[[ -v _CONFIG_SHELL ]] && return || readonly _CONFIG_SHELL=1
 printf "### %s\n" "$(readlink -f "$0")"
 
 if [[ -f "${HOME}/.bashrc" ]]; then
+
+    if [[ ! -v OSH ]]; then
+        local omb_install="/tmp/oh-my-bash-install.sh"
+        _curl -fsSL -o "$omb_install" "https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh"
+        if grep -q "Oh My Bash" "$omb_install" 2>/dev/null; then
+            bash "$omb_install" --unattended
+        else
+            echo "Warning: oh-my-bash install script looks suspicious, skipping" >&2
+        fi
+        rm -f "$omb_install"
+    fi
 
     if ! grep -q "export PENNYKIT_HOME" "${HOME}/.bashrc"; then
         echo -e "\nexport PENNYKIT_HOME=\"\$HOME/.pennykit\"" >> "${HOME}/.bashrc"
@@ -14,18 +26,8 @@ if [[ -f "${HOME}/.bashrc" ]]; then
         echo -e "\n[[ -f ~/.pennykit/pennykit.bash ]] && source \${HOME}/.pennykit/pennykit.bash" >> "${HOME}/.bashrc"
     fi
 
-    if [[ ! -v OSH ]]; then
-        bash -c "$(_curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" --unattended
-    fi
     sed -i 's/^OSH_THEME.*/OSH_THEME="duru"/g' "${HOME}/.bashrc"
 
-    # Re-ensure after oh-my-bash may have recreated .bashrc
-    if ! grep -q "export PENNYKIT_HOME" "${HOME}/.bashrc"; then
-        echo -e "\nexport PENNYKIT_HOME=\"\$HOME/.pennykit\"" >> "${HOME}/.bashrc"
-    fi
-    if ! grep -q "source.*pennykit" "${HOME}/.bashrc"; then
-        echo -e "\n[[ -f ~/.pennykit/pennykit.bash ]] && source \${HOME}/.pennykit/pennykit.bash" >> "${HOME}/.bashrc"
-    fi
     if [[ -f "${HOME}/.fzf.bash" ]] && ! grep -q "source.*fzf.bash" "${HOME}/.bashrc"; then
         echo -e "\n[ -f ~/.fzf.bash ] && source ~/.fzf.bash" >> "${HOME}/.bashrc"
     fi
@@ -34,7 +36,14 @@ fi
 if [[ -f "${HOME}/.zshrc" ]]; then
 
     if [[ ! -v ZSH ]]; then
-        sh -c "$(_curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" -- --unattended --skip-chsh
+        local omz_install="/tmp/oh-my-zsh-install.sh"
+        _curl -fsSL -o "$omz_install" "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh"
+        if grep -q "Oh My Zsh" "$omz_install" 2>/dev/null; then
+            sh "$omz_install" --unattended --skip-chsh
+        else
+            echo "Warning: oh-my-zsh install script looks suspicious, skipping" >&2
+        fi
+        rm -f "$omz_install"
     fi
 
     if ! grep -q "export PENNYKIT_HOME" "${HOME}/.zshrc"; then

@@ -14,6 +14,7 @@ import re
 import os
 import sys
 import shlex
+import subprocess
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PENNYKIT_HOME = os.environ.get("PENNYKIT_HOME", os.path.dirname(HERE))
@@ -219,7 +220,7 @@ def apply_post_cmd(cmd, vars_, dry_run):
         print(f"  [DRY-RUN] {cmd}")
         print(label)
         return label
-    os.system(cmd)
+    subprocess.run(cmd, shell=True, check=True)
     print(label)
     return label
 

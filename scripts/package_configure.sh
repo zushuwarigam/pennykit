@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-printf "### %s\n" "$(readlink -f "$0")"
+printf "### %s\n" "$0"
 
 cd "$PENNYKIT_HOME"
 

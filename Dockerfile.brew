@@ -13,7 +13,6 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update && \
-  apt-get upgrade -y && \
   apt-get install -y --no-install-recommends \
     build-essential \
     ca-certificates \
@@ -51,8 +50,12 @@ RUN mkdir -p /home/linuxbrew/.linuxbrew \
   && chown -R ${USER}:${USER} /home/linuxbrew/.linuxbrew
 
 USER ${USER}
-RUN /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" \
-  && echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> "${HOME}/.bashrc"
+RUN brew_install="/tmp/homebrew-install.sh" \
+  && curl -fsSL -o "$brew_install" "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh" \
+  && grep -q "Homebrew" "$brew_install" \
+  && /bin/bash "$brew_install" \
+  && echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> "${HOME}/.bashrc" \
+  && rm -f "$brew_install"
 USER root
 
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
@@ -108,6 +111,20 @@ ARG USER=user
 ARG HOME=/home/${USER}
 
 WORKDIR ${HOME}
-COPY --chown=${USER}:${USER} . ${HOME}/.pennykit
+COPY --chown=${USER}:${USER} bin/ ${HOME}/.pennykit/bin/
+COPY --chown=${USER}:${USER} configs/ ${HOME}/.pennykit/configs/
+COPY --chown=${USER}:${USER} lib/ ${HOME}/.pennykit/lib/
+COPY --chown=${USER}:${USER} packages/ ${HOME}/.pennykit/packages/
+COPY --chown=${USER}:${USER} scripts/ ${HOME}/.pennykit/scripts/
+COPY --chown=${USER}:${USER} nvim-starter/ ${HOME}/.pennykit/nvim-starter/
+COPY --chown=${USER}:${USER} pennykit.bash ${HOME}/.pennykit/
+COPY --chown=${USER}:${USER} pennykit.zsh ${HOME}/.pennykit/
+COPY --chown=${USER}:${USER} pennykit_shell.alias ${HOME}/.pennykit/
+COPY --chown=${USER}:${USER} pennykit_shell.exports ${HOME}/.pennykit/
+COPY --chown=${USER}:${USER} pennykit_shell.functions ${HOME}/.pennykit/
+COPY --chown=${USER}:${USER} install ${HOME}/.pennykit/install
+COPY --chown=${USER}:${USER} config ${HOME}/.pennykit/config
+
+USER ${USER}
 
 FROM runtime AS dev

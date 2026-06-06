@@ -2,7 +2,7 @@
 # shellcheck disable=SC1090,SC1091
 set -euo pipefail
 [[ -v _CHECK_SYSTEM_SH ]] && return || readonly _CHECK_SYSTEM_SH=1
-printf "### %s\n" "$(readlink -f "$0")"
+printf "### %s\n" "$0"
 
 # Defaults
 PENNYKIT_OS_VERSION_CODENAME=""

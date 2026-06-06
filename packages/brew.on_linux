@@ -4,9 +4,5 @@ source ./packages/brew
 
 PENNYKIT_APT_DEFAULT+=("lua5.1")
 
-PENNYKIT_APT_DEBUG+=("gdb")
-PENNYKIT_APT_DEBUG+=("gdb-multiarch")
-PENNYKIT_APT_DEBUG+=("libc6-dbg")
-PENNYKIT_APT_DEBUG+=("glibc-source")
-PENNYKIT_APT_DEBUG+=("strace")
+
 

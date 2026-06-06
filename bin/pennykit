@@ -48,7 +48,7 @@ cmd_status() {
 
     local nvim_config="none"
     if [[ -L "$HOME/.config/nvim" ]]; then
-        nvim_config=$(basename "$(readlink -f "$HOME/.config/nvim")")
+        nvim_config=$(basename "$(_readlinkf "$HOME/.config/nvim")")
     elif [[ -d "$HOME/.config/nvim" ]]; then
         nvim_config="custom dir"
     fi
@@ -91,6 +91,22 @@ cmd_status() {
 
 # ── nvim config switcher ───────────────────────────────────────
 
+_nvim_config_type() {
+    if [[ -L "$HOME/.config/nvim" ]]; then
+        local target
+        target="$(_readlinkf "$HOME/.config/nvim")"
+        if [[ "$target" == *nvim-starter* ]]; then
+            echo "symlink"
+        else
+            echo "external_symlink"
+        fi
+    elif [[ -d "$HOME/.config/nvim" ]]; then
+        echo "directory"
+    else
+        echo "none"
+    fi
+}
+
 cmd_nvim() {
     local configs=()
     mapfile -t configs < <(find "${PENNYKIT_HOME}/nvim-starter" -maxdepth 1 -mindepth 1 -type d ! -name '*.git' 2>/dev/null)
@@ -98,28 +114,21 @@ cmd_nvim() {
 
     PS3="Enter your choice: "
     select i in "${configs[@]}"; do
-        if [[ -n "$i" ]]; then
-            if [[ "$i" =~ ^Disable ]]; then
-                if [[ -L "$HOME/.config/nvim" ]]; then
-                    if [[ "$(readlink -f "$HOME/.config/nvim")" == *nvim-starter* ]]; then
-                        unlink "$HOME/.config/nvim"
-                    fi
-                fi
-            else
-                if [[ -d "$HOME/.config/nvim" && ! -L "$HOME/.config/nvim" ]]; then
-                    break
-                elif [[ -L "$HOME/.config/nvim" ]]; then
-                    if [[ "$(readlink -f "$HOME/.config/nvim")" == *nvim-starter* ]]; then
-                        unlink "$HOME/.config/nvim"
-                        ln -s "$i" "$HOME/.config/nvim"
-                        rm -rf ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim
-                    fi
-                else
-                    ln -s "$i" "$HOME/.config/nvim"
-                fi
-            fi
-            break
+        if [[ -z "$i" ]]; then
+            continue
         fi
+        if [[ "$i" =~ ^Disable ]]; then
+            if [[ "$(_nvim_config_type)" == "symlink" ]]; then
+                unlink "$HOME/.config/nvim"
+            fi
+        elif [[ "$(_nvim_config_type)" == "symlink" ]]; then
+            unlink "$HOME/.config/nvim"
+            ln -s "$i" "$HOME/.config/nvim"
+            rm -rf ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim
+        elif [[ "$(_nvim_config_type)" == "none" ]]; then
+            ln -s "$i" "$HOME/.config/nvim"
+        fi
+        break
     done
 }
 
@@ -308,7 +317,8 @@ cmd_extern() {
         activate)
             [[ -z "${2:-}" ]] && { echo "Usage: $(basename "$0") extern activate <package>"; exit 1; }
             if [[ -f "$skip_file" ]]; then
-                grep -vxF "$2" "$skip_file" > "$skip_file.tmp" && mv "$skip_file.tmp" "$skip_file"
+                grep -vxF "$2" "$skip_file" > "$skip_file.tmp" || true
+                mv "$skip_file.tmp" "$skip_file" 2>/dev/null || true
                 [[ ! -s "$skip_file" ]] && rm -f "$skip_file"
                 echo "Activated: $2"
             fi
@@ -377,7 +387,7 @@ cmd_doctor() {
         echo "  ${GREEN}✓${RESET} Repository: valid"
     else
         echo "  ${RED}✗${RESET} Repository: not a git repo"
-        ((errors++))
+        ((++errors))
     fi
 
     # Symlinks
@@ -399,7 +409,7 @@ cmd_doctor() {
             echo "  ${GREEN}✓${RESET} Symlink: $label"
         else
             echo "  ${YELLOW}⚠${RESET} Symlink: $label (not found)"
-            ((warnings++))
+            ((++warnings))
         fi
     done
 
@@ -410,7 +420,7 @@ cmd_doctor() {
             echo "  ${GREEN}✓${RESET} Binary: $bin"
         else
             echo "  ${YELLOW}⚠${RESET} Binary: $bin (not found)"
-            ((warnings++))
+            ((++warnings))
         fi
     done
 
@@ -422,11 +432,11 @@ cmd_doctor() {
             echo "  ${GREEN}✓${RESET} Theme: $active"
         else
             echo "  ${RED}✗${RESET} Theme: $active config missing"
-            ((errors++))
+            ((++errors))
         fi
     else
         echo "  ${YELLOW}⚠${RESET} Theme: not configured"
-        ((warnings++))
+        ((++warnings))
     fi
 
     # Nerd Font
@@ -434,7 +444,7 @@ cmd_doctor() {
         echo "  ${GREEN}✓${RESET} Nerd Font: found"
     else
         echo "  ${YELLOW}⚠${RESET} Nerd Font: not detected (icons may not render)"
-        ((warnings++))
+        ((++warnings))
     fi
 
     # EditorConfig
@@ -491,7 +501,7 @@ cmd_clean() {
     fi
 
     for path in "${targets[@]}"; do
-        if [[ -L "$path" ]] && [[ "$(readlink -f "$path")" == "$PENNYKIT_HOME"* ]]; then
+        if [[ -L "$path" ]] && [[ "$(_readlinkf "$path")" == "$PENNYKIT_HOME"* ]]; then
             status "Removing symlink: $path"
             unlink "$path"
         fi

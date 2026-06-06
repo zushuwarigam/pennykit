@@ -6,7 +6,7 @@ printf "### %s\n" "$(readlink -f "$0")"
 PENNYKIT_HOME="${PENNYKIT_HOME:-$HOME/.pennykit}"
 
 # Ensure OS detection is loaded
-[[ -v PENNYKIT_OS_ID ]] || source "$(dirname "$(readlink -f "$0")")/check_system.sh"
+[[ -v PENNYKIT_OS_ID ]] || source "$(dirname "$(_readlinkf "$0")")/check_system.sh"
 
 # Load shared helpers (_is_deactivated, _curl, _wget, status, etc.)
 source "$PENNYKIT_HOME/lib/helpers.sh" 2>/dev/null || true
@@ -25,6 +25,7 @@ if [[ -n "${PENNYKIT_DRY_RUN:-}" ]]; then
   _npm_install()  { echo "  [DRY-RUN] npm install $*"; }
   _brew_install() { echo "  [DRY-RUN] brew install $*"; }
   _apt_update()   { echo "  [DRY-RUN] $SUDO apt-get update"; }
+  _apt_upgrade()  { echo "  [DRY-RUN] $SUDO apt-get upgrade -y"; }
   _apt_clean()    { echo "  [DRY-RUN] $SUDO apt-get clean"; }
   _brew_clean()   { echo "  [DRY-RUN] brew cleanup --prune=all"; }
 else
@@ -33,6 +34,7 @@ else
   _npm_install()  { npm install "$@"; }
   _brew_install() { brew install "$@"; }
   _apt_update()   { $SUDO apt-get update; }
+  _apt_upgrade()  { $SUDO apt-get upgrade -y; }
   _apt_clean()    { $SUDO apt-get clean; }
   _brew_clean()   { brew cleanup --prune=all; }
 fi
@@ -67,7 +69,7 @@ source "./packages/extern.packages"
 
 # apt
 if [[ -v PENNYKIT_APT_DEFAULT ]]; then
-  _apt_update && $SUDO apt-get upgrade -y
+  _apt_update && _apt_upgrade
 
   _apt_install "${PENNYKIT_APT_DEFAULT[@]}"
   # shellcheck source=./packages/apt.default.postinst
@@ -77,9 +79,11 @@ if [[ -v PENNYKIT_APT_DEFAULT ]]; then
     && for p in "${PENNYKIT_EXTERN_DEFAULT[@]}"; do _add_or_skip "$p"; done
 
   declare -A _seen_apt
-  unset _apt_pkgs
+  declare -a _apt_pkgs=()
   for layer in "${layers[@]}"; do
-    source "./packages/apt.${layer}"
+    # Each source may define PENNYKIT_APT_<LAYER> and/or other variables.
+    # These variables persist for the loop duration; _seen_apt prevents duplicates.
+    source "./packages/apt.${layer}" 2>/dev/null || true
 
     local_arr="PENNYKIT_APT_${layer^^}[@]"
     for pkg in "${!local_arr}"; do
@@ -93,7 +97,7 @@ if [[ -v PENNYKIT_APT_DEFAULT ]]; then
 
   # pipx
   declare -A _seen_pipx
-  unset _pipx_pkgs
+  declare -a _pipx_pkgs=()
   for layer in "${layers[@]}"; do
     source "./packages/pipx.${layer}" 2>/dev/null || true
 
@@ -109,7 +113,7 @@ if [[ -v PENNYKIT_APT_DEFAULT ]]; then
 
   # npm
   declare -A _seen_npm
-  unset _npm_pkgs
+  declare -a _npm_pkgs=()
   for layer in "${layers[@]}"; do
     source "./packages/npm.${layer}" 2>/dev/null || true
 

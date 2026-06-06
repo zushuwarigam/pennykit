@@ -19,7 +19,7 @@ services:
     environment:
       - PENNYKIT_THEME=${PENNYKIT_THEME:-gruvbox}
     healthcheck:
-      test: ["CMD", "bash", "-c", "command -v nvim && nvim --version >/dev/null 2>&1"]
+      test: ["CMD-SHELL", "nvim --version >/dev/null 2>&1"]
       interval: 30s
       timeout: 10s
       retries: 3

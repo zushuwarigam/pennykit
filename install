@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-printf "### %s\n" "$(readlink -f "$0")"
+printf "### %s\n" "$0"
 
 readonly PENNYKIT_REPO_URL="https://github.com/zushuwarigam/pennykit.git"
 readonly PENNYKIT_HOME="${HOME}/.pennykit"
@@ -51,9 +51,15 @@ if [[ -d "$PENNYKIT_HOME" ]]; then
     if [[ "$PENNYKIT_FORCE" == "true" ]]; then
         echo "INFO: --force supplied – removing existing $PENNYKIT_HOME ..."
         rm -rf "$PENNYKIT_HOME"
-    else
+    elif git -C "$PENNYKIT_HOME" rev-parse --git-dir >/dev/null 2>&1; then
         echo "INFO: $PENNYKIT_HOME already exists – using existing copy."
-        git -C "$PENNYKIT_HOME" pull --rebase
+        git -C "$PENNYKIT_HOME" pull --rebase || {
+            echo "WARNING: git pull failed – removing and re-cloning ..."
+            rm -rf "$PENNYKIT_HOME"
+        }
+    else
+        echo "INFO: $PENNYKIT_HOME exists but is not a git repo – removing and re-cloning ..."
+        rm -rf "$PENNYKIT_HOME"
     fi
 fi
 

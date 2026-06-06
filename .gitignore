@@ -14,3 +14,15 @@
 
 # Local theme overrides (written by penny theme)
 /configs/wezterm/_local_theme.lua
+
+# BATS vendored helpers (generated)
+/tests/bats/test_helper/*/load.bash
+
+# Node artifacts (bats test runner)
+node_modules/
+package-lock.json
+package.json
+
+# Python bytecode
+__pycache__/
+*.pyc
