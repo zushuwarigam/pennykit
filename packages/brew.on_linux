@@ -1,6 +1,6 @@
 [[ -v _BREW_ON_LINUX ]] && return || readonly _BREW_ON_LINUX=1
 
-source ./packages/_brew
+source ./packages/brew
 
 PENNYKIT_APT_DEFAULT+=("lua5.1")
 

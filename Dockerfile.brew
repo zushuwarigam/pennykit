@@ -53,7 +53,7 @@ WORKDIR ${PENNYKIT_HOME}
 
 # Install apt packages from default set + brew.on_linux additions
 RUN bash -c "source ./scripts/check_system.sh && \
-  source ./packages/_brew.on_linux && \
+  source ./packages/brew.on_linux && \
   ./scripts/package_installer.sh apt"
 
 RUN mkdir -p "${HOME}/.config" && \
