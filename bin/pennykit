@@ -231,28 +231,11 @@ THEME
         echo "  lazygit border: $PENNYKIT_THEME_LAZYGIT_BORDER"
     fi
 
-    # nvim astronvim_v6
-    if cat > nvim-starter/astronvim_v6/lua/_local_theme.lua << THEME
-return { colorscheme = "${PENNYKIT_THEME_NVIM}" }
-THEME
+    # nvim (shared across all starters via symlinks to configs/shared/nvim_colorscheme.lua)
+    if printf '%s\n' 'return { colorscheme = "'"${PENNYKIT_THEME_NVIM}"'" }' \
+        > configs/shared/nvim_colorscheme.lua
     then
-        echo "  Neovim (astronvim_v6): $PENNYKIT_THEME_NVIM"
-    fi
-
-    # nvim lazyvim
-    if cat > nvim-starter/lazyvim/lua/_local_theme.lua << THEME
-return { colorscheme = "${PENNYKIT_THEME_NVIM}" }
-THEME
-    then
-        echo "  Neovim (lazyvim): $PENNYKIT_THEME_NVIM"
-    fi
-
-    # nvim kickstart
-    if cat > nvim-starter/kickstart/lua/_local_theme.lua << THEME
-return { colorscheme = "${PENNYKIT_THEME_NVIM}" }
-THEME
-    then
-        echo "  Neovim (kickstart): $PENNYKIT_THEME_NVIM"
+        echo "  Neovim: $PENNYKIT_THEME_NVIM"
     fi
 
     # tmux

@@ -12,8 +12,5 @@
 
 /tmp/
 
-# Local theme overrides (written by penny-theme)
-/nvim-starter/astronvim_v6/lua/_local_theme.lua
-/nvim-starter/lazyvim/lua/_local_theme.lua
-/nvim-starter/kickstart/lua/_local_theme.lua
+# Local theme overrides (written by penny theme)
 /configs/wezterm/_local_theme.lua

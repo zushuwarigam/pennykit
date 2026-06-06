@@ -1,0 +1,1 @@
+../../../configs/shared/nvim_colorscheme.lua
