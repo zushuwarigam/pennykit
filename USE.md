@@ -389,24 +389,42 @@ All full Dockerfiles accept:
 | `UID` | `1000` | Non-root user UID |
 | `USER` | `user` | Non-root username |
 
+#### Build Targets (Multi-Stage)
+
+Both `Dockerfile.apt` and `Dockerfile.brew` use multi-stage builds. Select a target with `--target`:
+
+| Target | Contents | Cache invalidated by |
+|--------|----------|---------------------|
+| `os` | System packages, user, locale | Base image or apt-base deps |
+| `pkgs` | + Pennykit packages (`apt install`) | `packages/`, `scripts/`, `lib/` |
+| `nvim` | + Configs, Neovim plugins (Lazy install) | `nvim-starter/`, `configs/` |
+| `runtime` | + All source files (default) | Any source change |
+| `dev` | Runtime + compose dev mode | Any source change |
+
 #### Workflow
 
 ```bash
-# 1. Build interactively (prompts which Dockerfile)
+# 1. Build interactively (prompts which Dockerfile, accepts --target)
 ./scripts/build_docker-image.sh
 
-# 2. Or build explicitly with custom args
+# 2. Build explicitly with custom args + target
 docker build \
   --build-arg "USER=$USER" \
   --build-arg "UID=$UID" \
+  --target runtime \
   -f Dockerfile.apt \
-  -t my-pennykit:trixie \
+  -t pennykit:trixie \
   .
 
-# 3. Run with current directory mounted as /workdir
+# 3. Or use docker compose (recommended)
+docker compose up -d          # build + start with dev overrides
+docker compose exec pennykit bash  # shell inside container
+docker compose down           # stop and remove
+
+# 4. Run with current directory mounted as /workdir
 ./scripts/run_docker-container.sh
 
-# 4. Inside container: full pennykit environment
+# 5. Inside container: full pennykit environment
 nvim              # AstroNvim (pre-configured, plugins installed)
 pennykit theme    # theme works inside container
 pennykit extern   # install/update version-managed tools
@@ -414,14 +432,18 @@ pennykit extern   # install/update version-managed tools
 
 #### Volume Mounts
 
-`run_docker-container.sh` mounts `$(pwd)` to `/workdir` inside the container. The pennykit config lives at `~/.pennykit/` inside the container (not mounted), so each container gets a fresh install. To persist config across runs, add:
+`docker-compose.yml` mounts `$(pwd)` to `/workdir` inside the container. Pennykit config lives at `~/.pennykit/` inside the image (not mounted). To persist config across runs, add a named volume:
 
-```bash
-docker run -ti --rm \
-  -v "$(pwd)":/workdir \
-  -v pennykit-home:/home/user/.pennykit \  # persistent config volume
-  -w /workdir \
-  pennykit:trixie
+```yaml
+# docker-compose.override.yml
+services:
+  pennykit:
+    volumes:
+      - .:/workdir
+      - pennykit-home:/home/user/.pennykit
+
+volumes:
+  pennykit-home:
 ```
 
 #### Themes in Containers
@@ -433,7 +455,7 @@ pennykit theme gruvbox       # applies across all installed apps
 pennykit theme --dry-run gruvbox  # preview without applying
 ```
 
-Theme configs are copied into the image during build. To add custom themes, place `.conf` files in `configs/themes/` before building.
+Theme configs are baked into the image during build. Add custom `.conf` files to `configs/themes/` before building.
 
 #### OS Detection Inside Container
 
