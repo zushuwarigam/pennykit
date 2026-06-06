@@ -576,6 +576,72 @@ The script scans `lua/plugins/*.lua` across all starters for keymap definitions 
 
 ---
 
+## Cross-Starter Compatibility
+
+Pennykit ships 3 Neovim starter configs in `nvim-starter/`. The primary is **AstroNvim v6**; LazyVim and kickstart are available via `pennykit nvim`.
+
+### Shared Across All 3
+
+| Category | Feature | Notes |
+|----------|---------|-------|
+| Plugin manager | `folke/lazy.nvim` | All use lazy.nvim |
+| Theme mechanism | `_local_theme.lua` + colorscheme fallback | Identical `_local_theme.lua` returning `gruvbox-material` |
+| Editorconfig | `vim.g.editorconfig = true` | |
+| Leader key | `<Space>` | |
+| Mason | mason.nvim / mason-tool-installer.nvim | All use mason ecosystem |
+| LSP | nvim-lspconfig or AstroLSP | All configure LSP |
+| Git signs | gitsigns.nvim | Kickstart: optional module |
+| Which-key | `folke/which-key.nvim` | Popup keybinding helper |
+
+### AstroNvim v6 Only
+
+| Feature | Notes |
+|---------|-------|
+| **AstroNvim framework** | `astrocore`, `astrolsp`, `astroui` |
+| **6 conditional themes** | catppuccin, dracula, gruvbox-material, nord, solarized, tokyonight |
+| **15 language packs** | via AstroCommunity (ansible, bash, cmake, cpp, docker, go, json, lua, markdown, python, toml, yaml, ...) |
+| **Test runner** | neotest (Python/Go) |
+| **Markdown** | preview + inline render + log review |
+| **Hex viewer** | `hex.nvim` |
+| **REST client** | `rest.nvim` |
+| **Oil.nvim** | file-as-buffer (`-`) |
+| **Lf / tmux-navigator** | file manager + tmux pane nav |
+| **Go doc browser** | `godoc.nvim` |
+| **AI chat** | `codecompanion.nvim` |
+| **Trouble + Diffview** | via AstroCommunity |
+| **DAP** | codelldb + debugpy with venv auto-detect |
+| **20+ mason tools** | auto-installed (bash-language-server, beautysh, cpptools, codelldb, gopls, gofumpt, golangci-lint, delve, ltex-ls, docker LSPs, ...) |
+| **Spell** | enabled (en+ru), custom word lists |
+| **Custom commands** | `:PKhello` |
+
+### LazyVim Only
+
+| Feature | Notes |
+|---------|-------|
+| **LazyVim framework** | `LazyVim/LazyVim` with full plugin ecosystem |
+| **Cyrillic.nvim** | Keyboard layout helper |
+
+### Kickstart Only
+
+| Feature | Notes |
+|---------|-------|
+| **Self-contained init.lua** | ~1024 lines, plugins defined inline |
+| **blink.cmp** | Completion engine (instead of nvim-cmp) |
+| **mini.nvim** | mini.ai, mini.surround, mini.statusline |
+| **Nerd Font gating** | `vim.g.have_nerd_font` controls icons |
+| **guess-indent.nvim** | Auto-detect indentation |
+| **6 modular plugins** | debug, gitsigns-keymaps, autopairs, indent-blankline, lint, neo-tree (all disabled by default) |
+
+### Switching Configs
+
+```bash
+pennykit nvim              # interactive: astronvim_v6 / lazyvim / kickstart / disable
+```
+
+Switching clears `~/.local/share/nvim`, `~/.local/state/nvim`, and `~/.cache/nvim`. `:Lazy install` is required after switch.
+
+---
+
 ## Performance Checklist
 
 - [ ] `:Lazy profile` — target <50ms startup

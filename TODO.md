@@ -45,5 +45,5 @@
 ## Documentation
 
 - [x] **Generate keymap reference from config** — Added `scripts/gen_keymap_ref.py` that scans `lua/plugins/*.lua` for `desc` fields and outputs a markdown table; documented in USE.md
-- [ ] **Cross-starter compatibility matrix** — Document which plugins/keymaps/features work in all 3 starters vs astro-only vs lazyvim-only vs kickstart-only
+- [x] **Cross-starter compatibility matrix** — Documented in USE.md: shared features, per-starter unique features, switching instructions
 - [ ] **Docker workflow docs** — Add a dedicated section for the 4 Dockerfiles: which to use when, build args, volume mounts, how themes work inside containers
