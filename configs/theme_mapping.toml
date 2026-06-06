@@ -1,0 +1,77 @@
+# Theme mapping: describes how each app's config is updated when a theme changes.
+# Variable references like %VAR% are substituted from the theme conf file
+# (e.g., configs/themes/gruvbox.conf → PENNYKIT_THEME_WEZTERM_LINUX → %WEZTERM_LINUX%).
+
+[apps.wezterm]
+file = "configs/wezterm/_local_theme.lua"
+type = "template"
+template = 'return { linux = "%WEZTERM_LINUX%", macos = "%WEZTERM_MACOS%" }'
+
+[apps.bat]
+file = "configs/bat/config"
+type = "sed"
+search = '^--theme=".*"'
+replace = '--theme="%BAT%"'
+grep = '^--theme='
+
+[apps.yazi]
+file = "configs/yazi/theme.toml"
+type = "sed"
+search = '^use = ".*"'
+replace = 'use = "%YAZI%"'
+grep = '^use = '
+post_cmd = "ya pack -a %YAZI% 2>/dev/null || ya pkg add %YAZI% 2>/dev/null || true"
+
+[apps.vivid]
+file = "pennykit_shell.exports"
+type = "sed"
+search = "vivid generate .*"
+replace = 'vivid generate %VIVID%)\"'
+grep = "vivid generate"
+
+[apps.harlequin]
+file = "pennykit_shell.alias"
+type = "sed"
+search = "--theme [a-zA-Z0-9_/-]*"
+replace = "--theme %HARLEQUIN%"
+grep = "--theme"
+
+[apps.lazygit]
+file = "configs/lazygit/config.yml"
+type = "sed"
+search = "activeBorderColor: \\[.*, bold\\]"
+replace = "activeBorderColor: [%LAZYGIT_BORDER%, bold]"
+grep = "activeBorderColor:"
+
+[apps.nvim]
+file = "configs/shared/nvim_colorscheme.lua"
+type = "template"
+template = 'return { colorscheme = "%NVIM%" }'
+
+[apps.tmux]
+file = "configs/tmux/tmux_theme.conf"
+type = "tmux_case"
+variable = "TMUX"
+
+[apps.lf]
+file = "configs/lf/lfrc"
+type = "sed_lf"
+grep = "set promptfmt"
+# lf uses literal \033 sequences; the _lf suffix normalizes the backslash count
+variable = "LF"
+# The sed_lf type handles \\\\033[ → \033[Nm replacement internally
+
+[apps.shell_bash]
+file = "{HOME}/.bashrc"
+type = "sed"
+search = '^OSH_THEME=".*"'
+replace = 'OSH_THEME="%OMB%"'
+grep = "^OSH_THEME="
+
+[apps.shell_zsh]
+file = "{HOME}/.zshrc"
+type = "sed_or_append"
+search = '^ZSH_THEME=".*"'
+replace = 'ZSH_THEME="%OMZ%"'
+append = 'ZSH_THEME="%OMZ%"'
+grep = "^ZSH_THEME="
