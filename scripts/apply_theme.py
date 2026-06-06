@@ -202,8 +202,10 @@ def apply_sed_lf(entry, vars_, dry_run):
         print(label)
         return label
 
-    # Match \033[<digits>m and replace with new color
-    content = re.sub(r'(\\033\[)([0-9;]+)(m)', lambda m: m.group(1) + color + m.group(3), content)
+    # Pass 1: replace \033[<color>m (color starts with 1-9) → \033[<LF>m
+    content = re.sub(r'(\\033\[)([1-9][0-9]*)(m)', lambda m: m.group(1) + color + m.group(3), content)
+    # Pass 2: replace \033[1;<color>m (bold variant) → \033[1;<LF>m
+    content = re.sub(r'(\\033\[1;)([1-9][0-9]*)(m)', lambda m: m.group(1) + color + m.group(3), content)
     with open(path, "w") as f:
         f.write(content)
     print(label)

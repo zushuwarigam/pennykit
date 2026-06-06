@@ -1,4 +1,5 @@
 # shellcheck disable=SC1090,SC1091
+[[ -v _HELPERS_SH ]] && return || readonly _HELPERS_SH=1
 
 _curl() {
   curl --retry 5 --retry-all-errors --retry-delay 2 --connect-timeout 10 --max-time 60 "$@"

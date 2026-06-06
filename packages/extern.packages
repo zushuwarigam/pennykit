@@ -1,7 +1,5 @@
-#!/usr/bin/env bash
 # shellcheck disable=SC1090,SC1091
-set -euo pipefail
-printf "### extern.packages %s\n" "$(readlink -f "$0")"
+[[ -v _EXTERN_PACKAGES ]] && return || readonly _EXTERN_PACKAGES=1
 
 if [[ $(id -u) != 0 ]]; then
     SUDO="sudo"

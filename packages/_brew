@@ -1,4 +1,4 @@
-printf "### %s\n" "$(readlink -f "$0")"
+[[ -v _BREW_PACKAGES ]] && return || readonly _BREW_PACKAGES=1
 
 PENNYKIT_BREW_DEFAULT+=("7zip") # +
 PENNYKIT_BREW_DEFAULT+=("bottom") # + btm

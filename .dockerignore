@@ -11,4 +11,7 @@ Dockerfile*
 README.md
 LICENSE
 TODO/
-nvim-starter/*.git/
+nvim-starter/*/.git/
+nvim-starter/*/spell/
+nvim-starter/*/doc/
+nvim-starter/*/lazy-lock.json

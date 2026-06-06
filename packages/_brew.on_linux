@@ -1,4 +1,4 @@
-printf "### %s\n" "$(readlink -f "$0")"
+[[ -v _BREW_ON_LINUX ]] && return || readonly _BREW_ON_LINUX=1
 
 source ./packages/_brew
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1090,SC1091
 set -euo pipefail
+[[ -v _CHECK_SYSTEM_SH ]] && return || readonly _CHECK_SYSTEM_SH=1
 printf "### %s\n" "$(readlink -f "$0")"
 
 # Defaults
@@ -13,12 +14,17 @@ detect_os() {
   elif [[ -f /etc/os-release ]]; then
     source /etc/os-release
     case "$ID" in
-      debian)
-        PENNYKIT_OS_ID=debian
+      debian|ubuntu)
+        PENNYKIT_OS_ID=$ID
         PENNYKIT_OS_VERSION_CODENAME=$VERSION_CODENAME
         ;;
       *)
-        PENNYKIT_OS_ID=other
+        if [[ "${ID_LIKE:-}" == *debian* ]]; then
+          PENNYKIT_OS_ID=debian
+          PENNYKIT_OS_VERSION_CODENAME=$VERSION_CODENAME
+        else
+          PENNYKIT_OS_ID=other
+        fi
         ;;
     esac
   else
