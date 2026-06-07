@@ -41,3 +41,7 @@ else
     fi
     ln -s "${PENNYKIT_HOME}/nvim-starter/${NVIM_CONFIG}" "$NVIM_CONFIG_HOME"
 fi
+
+if command -v tree-sitter >/dev/null 2>&1 && [[ ! -f "${HOME}/.config/tree-sitter/config.json" ]]; then
+    tree-sitter init-config 2>/dev/null || true
+fi
