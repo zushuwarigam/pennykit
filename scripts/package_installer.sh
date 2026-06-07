@@ -117,13 +117,8 @@ if [[ -v PENNYKIT_APT_DEFAULT ]]; then
   declare -A _seen_npm
   declare -a _npm_pkgs=()
 
-  if [[ -v PENNYKIT_NPM_DEFAULT ]]; then
-    for pkg in "${PENNYKIT_NPM_DEFAULT[@]}"; do
-      if [[ -z "${_seen_npm[$pkg]-}" ]]; then
-        _seen_npm[$pkg]=1
-        _npm_pkgs+=("$pkg")
-      fi
-    done
+  if [[ -v PENNYKIT_NPM_DEFAULT ]] && [[ ${#PENNYKIT_NPM_DEFAULT[@]} -gt 0 ]]; then
+    npm install -g "${PENNYKIT_NPM_DEFAULT[@]}"
   fi
 
   for layer in "${layers[@]}"; do
