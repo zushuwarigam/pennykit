@@ -1,19 +1,33 @@
 #!/usr/bin/env bash
 set -euo pipefail
 [[ -v _CONFIG_SHELL ]] && return || readonly _CONFIG_SHELL=1
-printf "### %s\n" "$(readlink -f "$0")"
+
+_readlinkf() { command -v greadlink >/dev/null 2>&1 && greadlink -f "$@" || readlink -f "$@"; }
+printf "### %s\n" "$(_readlinkf "$0")"
+
+_verify_install_script() {
+    local file="$1" name="$2"
+    [[ ! -f "$file" ]] && return 1
+    local checks=0
+    grep -q '#!/' "$file"           && ((++checks))
+    grep -q "function\|()\s*{" "$file" && ((++checks))
+    grep -qi "$name" "$file"        && ((++checks))
+    grep -qi "install\|setup" "$file" && ((++checks))
+    [[ $checks -ge 3 ]]
+}
 
 if [[ -f "${HOME}/.bashrc" ]]; then
 
     if [[ ! -v OSH ]]; then
-        local omb_install="/tmp/oh-my-bash-install.sh"
+        omb_install="/tmp/oh-my-bash-install.sh"
         _curl -fsSL -o "$omb_install" "https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh"
-        if grep -q "Oh My Bash" "$omb_install" 2>/dev/null; then
+        if _verify_install_script "$omb_install" "Oh My Bash"; then
             bash "$omb_install" --unattended
         else
             echo "Warning: oh-my-bash install script looks suspicious, skipping" >&2
         fi
         rm -f "$omb_install"
+        unset omb_install
     fi
 
     if ! grep -q "export PENNYKIT_HOME" "${HOME}/.bashrc"; then
@@ -36,14 +50,15 @@ fi
 if [[ -f "${HOME}/.zshrc" ]]; then
 
     if [[ ! -v ZSH ]]; then
-        local omz_install="/tmp/oh-my-zsh-install.sh"
+        omz_install="/tmp/oh-my-zsh-install.sh"
         _curl -fsSL -o "$omz_install" "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh"
-        if grep -q "Oh My Zsh" "$omz_install" 2>/dev/null; then
+        if _verify_install_script "$omz_install" "Oh My Zsh"; then
             sh "$omz_install" --unattended --skip-chsh
         else
             echo "Warning: oh-my-zsh install script looks suspicious, skipping" >&2
         fi
         rm -f "$omz_install"
+        unset omz_install
     fi
 
     if ! grep -q "export PENNYKIT_HOME" "${HOME}/.zshrc"; then

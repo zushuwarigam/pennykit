@@ -83,30 +83,30 @@ PENNYKIT_EXTERN_DEFAULT+=("golang")
 function add_golang() {
 	echo "Add external package: golang"
     if ! command -v go >/dev/null; then
-        LATEST_VERSION="$(_curl -s "https://go.dev/VERSION?m=text" | grep go)"
-        _wget "https://go.dev/dl/${LATEST_VERSION}.linux-amd64.tar.gz"
-        _wget "https://go.dev/dl/${LATEST_VERSION}.linux-amd64.tar.gz.sha256"
-        expected=$(awk '{print $1}' "${LATEST_VERSION}.linux-amd64.tar.gz.sha256")
-        _verify_sha256 "${LATEST_VERSION}.linux-amd64.tar.gz" "$expected" || { rm -f "${LATEST_VERSION}.linux-amd64.tar.gz" "${LATEST_VERSION}.linux-amd64.tar.gz.sha256"; return 1; }
-        rm -f "${LATEST_VERSION}.linux-amd64.tar.gz.sha256"
+        LATEST_VERSION="$(_curl -s "https://go.dev/VERSION?m=text" | grep '^go')"
+        _wget -O "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "https://go.dev/dl/${LATEST_VERSION}.linux-amd64.tar.gz"
+        _wget -O "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" "https://go.dev/dl/${LATEST_VERSION}.linux-amd64.tar.gz.sha256"
+        expected=$(awk '{print $1}' "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256")
+        _verify_sha256 "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "$expected" || { rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256"; return 1; }
+        rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256"
         $SUDO rm -rf /usr/local/go
-        $SUDO tar -C /usr/local -xzf "${LATEST_VERSION}.linux-amd64.tar.gz"
-        rm -f "${LATEST_VERSION}.linux-amd64.tar.gz"
+        $SUDO tar -C /usr/local -xzf "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz"
+        rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz"
     fi
 }
 
 function update_golang() {
 	echo "Update external package: golang"
     if command -v go >/dev/null; then
-        LATEST_VERSION="$(_curl -s "https://go.dev/VERSION?m=text" | grep go)"
-        _wget "https://go.dev/dl/${LATEST_VERSION}.linux-amd64.tar.gz"
-        _wget "https://go.dev/dl/${LATEST_VERSION}.linux-amd64.tar.gz.sha256"
-        expected=$(awk '{print $1}' "${LATEST_VERSION}.linux-amd64.tar.gz.sha256")
-        _verify_sha256 "${LATEST_VERSION}.linux-amd64.tar.gz" "$expected" || { rm -f "${LATEST_VERSION}.linux-amd64.tar.gz" "${LATEST_VERSION}.linux-amd64.tar.gz.sha256"; return 1; }
-        rm -f "${LATEST_VERSION}.linux-amd64.tar.gz.sha256"
+        LATEST_VERSION="$(_curl -s "https://go.dev/VERSION?m=text" | grep '^go')"
+        _wget -O "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "https://go.dev/dl/${LATEST_VERSION}.linux-amd64.tar.gz"
+        _wget -O "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" "https://go.dev/dl/${LATEST_VERSION}.linux-amd64.tar.gz.sha256"
+        expected=$(awk '{print $1}' "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256")
+        _verify_sha256 "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "$expected" || { rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256"; return 1; }
+        rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256"
         $SUDO rm -rf /usr/local/go
-        $SUDO tar -C /usr/local -xzf "${LATEST_VERSION}.linux-amd64.tar.gz"
-        rm -f "${LATEST_VERSION}.linux-amd64.tar.gz"
+        $SUDO tar -C /usr/local -xzf "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz"
+        rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz"
     fi
 }
 
@@ -186,15 +186,18 @@ function add_lazygit() {
     if ! command -v lazygit >/dev/null; then
         local LG_VERSION
         LG_VERSION=$(_curl -sL "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
-        _curl -LO "https://github.com/jesseduffield/lazygit/releases/download/v${LG_VERSION}/lazygit_${LG_VERSION}_linux_x86_64.tar.gz"
-        _curl -LO "https://github.com/jesseduffield/lazygit/releases/download/v${LG_VERSION}/checksums.txt"
-        expected=$(grep "lazygit_${LG_VERSION}_linux_x86_64.tar.gz" checksums.txt | awk '{print $1}')
-        _verify_sha256 "lazygit_${LG_VERSION}_linux_x86_64.tar.gz" "$expected" || { rm -f "lazygit_${LG_VERSION}_linux_x86_64.tar.gz" checksums.txt; return 1; }
-        rm -f checksums.txt
-        tar -xzf "lazygit_${LG_VERSION}_linux_x86_64.tar.gz" lazygit
+        local archive="/tmp/lazygit_${LG_VERSION}_linux_x86_64.tar.gz"
+        local checksums="/tmp/lazygit_checksums.txt"
+        _curl --output-dir "/tmp" -fOL "https://github.com/jesseduffield/lazygit/releases/download/v${LG_VERSION}/lazygit_${LG_VERSION}_linux_x86_64.tar.gz"
+        _curl --output-dir "/tmp" -fOL "https://github.com/jesseduffield/lazygit/releases/download/v${LG_VERSION}/checksums.txt"
+        mv /tmp/checksums.txt "$checksums"
+        expected=$(grep "lazygit_${LG_VERSION}_linux_x86_64.tar.gz" "$checksums" | awk '{print $1}')
+        _verify_sha256 "$archive" "$expected" || { rm -f "$archive" "$checksums"; return 1; }
+        rm -f "$checksums"
+        tar -xzf "$archive" lazygit
         mkdir -p "${HOME}/.local/bin"
         mv lazygit "$HOME/.local/bin/"
-        rm -f "lazygit_${LG_VERSION}_linux_x86_64.tar.gz"
+        rm -f "$archive"
     fi
 }
 
@@ -203,15 +206,18 @@ function update_lazygit() {
     if command -v lazygit >/dev/null; then
         local LG_VERSION
         LG_VERSION=$(_curl -sL "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
-        _curl -LO "https://github.com/jesseduffield/lazygit/releases/download/v${LG_VERSION}/lazygit_${LG_VERSION}_linux_x86_64.tar.gz"
-        _curl -LO "https://github.com/jesseduffield/lazygit/releases/download/v${LG_VERSION}/checksums.txt"
-        expected=$(grep "lazygit_${LG_VERSION}_linux_x86_64.tar.gz" checksums.txt | awk '{print $1}')
-        _verify_sha256 "lazygit_${LG_VERSION}_linux_x86_64.tar.gz" "$expected" || { rm -f "lazygit_${LG_VERSION}_linux_x86_64.tar.gz" checksums.txt; return 1; }
-        rm -f checksums.txt
-        tar -xzf "lazygit_${LG_VERSION}_linux_x86_64.tar.gz" lazygit
+        local archive="/tmp/lazygit_${LG_VERSION}_linux_x86_64.tar.gz"
+        local checksums="/tmp/lazygit_checksums.txt"
+        _curl --output-dir "/tmp" -fOL "https://github.com/jesseduffield/lazygit/releases/download/v${LG_VERSION}/lazygit_${LG_VERSION}_linux_x86_64.tar.gz"
+        _curl --output-dir "/tmp" -fOL "https://github.com/jesseduffield/lazygit/releases/download/v${LG_VERSION}/checksums.txt"
+        mv /tmp/checksums.txt "$checksums"
+        expected=$(grep "lazygit_${LG_VERSION}_linux_x86_64.tar.gz" "$checksums" | awk '{print $1}')
+        _verify_sha256 "$archive" "$expected" || { rm -f "$archive" "$checksums"; return 1; }
+        rm -f "$checksums"
+        tar -xzf "$archive" lazygit
         mkdir -p "${HOME}/.local/bin"
         mv lazygit "$HOME/.local/bin/"
-        rm -f "lazygit_${LG_VERSION}_linux_x86_64.tar.gz"
+        rm -f "$archive"
     fi
 }
 
@@ -222,15 +228,15 @@ function add_nvim() {
     if ! command -v nvim >/dev/null; then
         local nvim_version
         nvim_version=$(_curl -sL "https://api.github.com/repos/neovim/neovim/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
-        _curl -LO "https://github.com/neovim/neovim/releases/download/v${nvim_version}/nvim-linux-x86_64.tar.gz"
-        _curl -LO "https://github.com/neovim/neovim/releases/download/v${nvim_version}/SHA256SUMS.txt"
-        expected=$(grep "nvim-linux-x86_64.tar.gz" SHA256SUMS.txt | awk '{print $1}')
-        _verify_sha256 "nvim-linux-x86_64.tar.gz" "$expected" || { rm -f "nvim-linux-x86_64.tar.gz" SHA256SUMS.txt; return 1; }
-        rm -f SHA256SUMS.txt
-        tar -xzf nvim-linux-x86_64.tar.gz
+        _curl --output-dir "/tmp" -fOL "https://github.com/neovim/neovim/releases/download/v${nvim_version}/nvim-linux-x86_64.tar.gz"
+        _curl --output-dir "/tmp" -fOL "https://github.com/neovim/neovim/releases/download/v${nvim_version}/SHA256SUMS.txt"
+        expected=$(grep "nvim-linux-x86_64.tar.gz" /tmp/SHA256SUMS.txt | awk '{print $1}')
+        _verify_sha256 "/tmp/nvim-linux-x86_64.tar.gz" "$expected" || { rm -f "/tmp/nvim-linux-x86_64.tar.gz" "/tmp/SHA256SUMS.txt"; return 1; }
+        rm -f /tmp/SHA256SUMS.txt
+        tar -xzf /tmp/nvim-linux-x86_64.tar.gz
         $SUDO mv nvim-linux-x86_64 /opt/nvim
         $SUDO ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim
-        rm -f nvim-linux-x86_64.tar.gz
+        rm -f /tmp/nvim-linux-x86_64.tar.gz
     fi
 }
 
@@ -239,16 +245,16 @@ function update_nvim() {
     if command -v nvim >/dev/null; then
         local nvim_version
         nvim_version=$(_curl -sL "https://api.github.com/repos/neovim/neovim/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
-        _curl -LO "https://github.com/neovim/neovim/releases/download/v${nvim_version}/nvim-linux-x86_64.tar.gz"
-        _curl -LO "https://github.com/neovim/neovim/releases/download/v${nvim_version}/SHA256SUMS.txt"
-        expected=$(grep "nvim-linux-x86_64.tar.gz" SHA256SUMS.txt | awk '{print $1}')
-        _verify_sha256 "nvim-linux-x86_64.tar.gz" "$expected" || { rm -f "nvim-linux-x86_64.tar.gz" SHA256SUMS.txt; return 1; }
-        rm -f SHA256SUMS.txt
-        tar -xzf nvim-linux-x86_64.tar.gz
+        _curl --output-dir "/tmp" -fOL "https://github.com/neovim/neovim/releases/download/v${nvim_version}/nvim-linux-x86_64.tar.gz"
+        _curl --output-dir "/tmp" -fOL "https://github.com/neovim/neovim/releases/download/v${nvim_version}/SHA256SUMS.txt"
+        expected=$(grep "nvim-linux-x86_64.tar.gz" /tmp/SHA256SUMS.txt | awk '{print $1}')
+        _verify_sha256 "/tmp/nvim-linux-x86_64.tar.gz" "$expected" || { rm -f "/tmp/nvim-linux-x86_64.tar.gz" "/tmp/SHA256SUMS.txt"; return 1; }
+        rm -f /tmp/SHA256SUMS.txt
+        tar -xzf /tmp/nvim-linux-x86_64.tar.gz
         $SUDO rm -rf /opt/nvim
         $SUDO mv nvim-linux-x86_64 /opt/nvim
         $SUDO ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim
-        rm -f nvim-linux-x86_64.tar.gz
+        rm -f /tmp/nvim-linux-x86_64.tar.gz
     fi
 }
 
@@ -297,16 +303,21 @@ _install_yazi_prebuilt() {
     local version
     version=$(_curl -sL "https://api.github.com/repos/sxyazi/yazi/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
     local archive="yazi-x86_64-unknown-linux-gnu.zip"
-    _curl -LO "https://github.com/sxyazi/yazi/releases/download/v${version}/${archive}"
-    local actual actual_expected
-    actual=$(sha256sum "$archive" | awk '{print $1}')
-    # No official checksum file from yazi releases; log hash for integrity audit
-    echo "  SHA256($archive): $actual"
-    unzip -o "$archive" -d /tmp/yazi_prebuilt
+    _curl --output-dir "/tmp" -fOL "https://github.com/sxyazi/yazi/releases/download/v${version}/${archive}"
+    _curl --output-dir "/tmp" -fOL "https://github.com/sxyazi/yazi/releases/download/v${version}/${archive}.sha256"
+    expected=$(awk '{print $1}' "/tmp/${archive}.sha256" 2>/dev/null || true)
+    if [[ -n "$expected" ]]; then
+        _verify_sha256 "/tmp/${archive}" "$expected" || { rm -f "/tmp/${archive}" "/tmp/${archive}.sha256"; return 1; }
+        rm -f "/tmp/${archive}.sha256"
+    else
+        actual=$(sha256sum "/tmp/${archive}" | awk '{print $1}')
+        echo "  WARNING: No checksum file for yazi; log hash for audit: $actual" >&2
+    fi
+    unzip -o "/tmp/${archive}" -d /tmp/yazi_prebuilt
     mkdir -p "${HOME}/.local/bin"
     mv /tmp/yazi_prebuilt/yazi-x86_64-unknown-linux-gnu/yazi "${HOME}/.local/bin/"
     mv /tmp/yazi_prebuilt/yazi-x86_64-unknown-linux-gnu/ya "${HOME}/.local/bin/"
-    rm -rf "$archive" /tmp/yazi_prebuilt
+    rm -f "/tmp/${archive}" && rm -rf /tmp/yazi_prebuilt
     echo "  Installed yazi v${version} (prebuilt)"
 }
 

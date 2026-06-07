@@ -4,6 +4,13 @@ set -euo pipefail
 
 PENNYKIT_HOME="${PENNYKIT_HOME:-$HOME/.pennykit}"
 
+if [[ ! -d "$PENNYKIT_HOME" ]]; then
+    echo "Error: PENNYKIT_HOME ($PENNYKIT_HOME) does not exist." >&2
+    echo "Run the install script first:" >&2
+    echo "  bash <(curl -fsSL https://raw.githubusercontent.com/zushuwarigam/pennykit/refs/heads/kit/install)" >&2
+    exit 1
+fi
+
 source "$PENNYKIT_HOME/lib/helpers.sh"
 
 usage() {
@@ -166,6 +173,10 @@ cmd_theme() {
         return
     fi
 
+    if [[ "$theme_name" == *".."* || "$theme_name" == *"/"* ]]; then
+        echo "Error: invalid theme name '${theme_name}' (path separators not allowed)" >&2
+        exit 1
+    fi
     local theme_file="configs/themes/${theme_name}.conf"
     if [[ ! -f "$theme_file" ]]; then
         echo "Error: theme '${theme_name}' not found"

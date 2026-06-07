@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1090,SC1091
 set -euo pipefail
-printf "### %s\n" "$(readlink -f "$0")"
 
 export DEBIAN_FRONTEND=noninteractive
 export LC_ALL=C.UTF-8
@@ -13,6 +12,7 @@ fi
 
 # Shared helpers (_curl, _wget, status, die, _is_deactivated)
 source "$PENNYKIT_HOME/lib/helpers.sh"
+printf "### %s\n" "$(_readlinkf "$0")"
 
 # Detect OS and container
 source "$PENNYKIT_HOME/scripts/check_system.sh"

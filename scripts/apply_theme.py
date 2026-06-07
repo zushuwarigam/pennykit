@@ -14,6 +14,7 @@ import re
 import os
 import sys
 import shlex
+import string
 import subprocess
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -118,9 +119,11 @@ def apply_sed(entry, vars_, dry_run):
     if not os.path.exists(path):
         return None
 
-    if grep_check and not re.search(grep_check, open(path).read(), re.MULTILINE):
-        print(f"  {os.path.basename(path)}: pattern not found, skipping")
-        return None
+    if grep_check:
+        with open(path) as f:
+            if not re.search(grep_check, f.read(), re.MULTILINE):
+                print(f"  {os.path.basename(path)}: pattern not found, skipping")
+                return None
 
     label = f"  {entry.get('label', os.path.basename(path))}: {replace[:60]}"
     if dry_run:
@@ -159,7 +162,8 @@ def apply_sed_or_append(entry, vars_, dry_run):
     if not os.path.exists(path):
         return None
 
-    content = open(path).read()
+    with open(path) as f:
+        content = f.read()
     if grep_check and re.search(grep_check, content, re.MULTILINE):
         label = f"  {os.path.basename(path)}: {replace[:60]}"
         if dry_run:
@@ -192,7 +196,6 @@ def apply_sed_lf(entry, vars_, dry_run):
 
     with open(path) as f:
         content = f.read()
-
     if grep_check and grep_check not in content:
         print(f"  lf: pattern not found, skipping")
         return None
@@ -213,8 +216,24 @@ def apply_sed_lf(entry, vars_, dry_run):
     return label
 
 
+_SAFE_VAR_RE = re.compile(r'^[a-zA-Z0-9_.\-:@/]+$')
+
+def _validate_post_cmd(cmd):
+    for word in shlex.split(cmd):
+        if word.startswith("/") or word.startswith("."):
+            continue
+        if word in ("true", "false", "||", "&&", "2>/dev/null", ">/dev/null"):
+            continue
+        if not _SAFE_VAR_RE.match(word):
+            if not word.startswith("-"):
+                return False
+    return True
+
 def apply_post_cmd(cmd, vars_, dry_run):
     cmd = subst(cmd, vars_)
+    if not _validate_post_cmd(cmd):
+        print(f"  WARNING: post_cmd blocked (unsafe characters): {cmd[:60]}", file=sys.stderr)
+        return None
     label = f"  post: {cmd[:60]}"
     if dry_run:
         print(f"  [DRY-RUN] {cmd}")

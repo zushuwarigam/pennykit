@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1090,SC1091
 set -euo pipefail
-printf "### %s\n" "$(readlink -f "$0")"
 
 PENNYKIT_HOME="${PENNYKIT_HOME:-$HOME/.pennykit}"
 
+# Load shared helpers (_readlinkf, _is_deactivated, _curl, _wget, status, etc.)
+source "$PENNYKIT_HOME/lib/helpers.sh" 2>/dev/null || true
+printf "### %s\n" "$(_readlinkf "$0")" 2>/dev/null || printf "### %s\n" "$0"
+
 # Ensure OS detection is loaded
 [[ -v PENNYKIT_OS_ID ]] || source "$(dirname "$(_readlinkf "$0")")/check_system.sh"
-
-# Load shared helpers (_is_deactivated, _curl, _wget, status, etc.)
-source "$PENNYKIT_HOME/lib/helpers.sh" 2>/dev/null || true
 
 if [[ $(id -u) != 0 ]]; then
   SUDO="sudo"

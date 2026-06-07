@@ -52,7 +52,9 @@ RUN mkdir -p /home/linuxbrew/.linuxbrew \
 USER ${USER}
 RUN brew_install="/tmp/homebrew-install.sh" \
   && curl -fsSL -o "$brew_install" "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh" \
-  && grep -q "Homebrew" "$brew_install" \
+  && grep -q '#\!' "$brew_install" \
+  && grep -qi "Homebrew" "$brew_install" \
+  && grep -qi "install" "$brew_install" \
   && /bin/bash "$brew_install" \
   && echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> "${HOME}/.bashrc" \
   && rm -f "$brew_install"
