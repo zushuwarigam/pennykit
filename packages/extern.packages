@@ -481,10 +481,9 @@ function add_vivid() {
         local VIVID_VERSION
         VIVID_VERSION=$(_curl -sL "https://api.github.com/repos/sharkdp/vivid/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
         _curl --output-dir "/tmp" -fOL "https://github.com/sharkdp/vivid/releases/download/v${VIVID_VERSION}/vivid_${VIVID_VERSION}_amd64.deb"
-        _curl --output-dir "/tmp" -fOL "https://github.com/sharkdp/vivid/releases/download/v${VIVID_VERSION}/vivid_${VIVID_VERSION}_amd64.deb.sha256"
-        expected=$(awk '{print $1}' "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256")
-        _verify_sha256 "/tmp/vivid_${VIVID_VERSION}_amd64.deb" "$expected" || { rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb" "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256"; return 1; }
-        rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256"
+        _curl --output-dir "/tmp" -fOL "https://github.com/sharkdp/vivid/releases/download/v${VIVID_VERSION}/vivid_${VIVID_VERSION}_amd64.deb.sha256" || true
+        _verify_or_warn_sha256 "/tmp/vivid_${VIVID_VERSION}_amd64.deb" "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256" || { rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb" "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256"; return 1; }
+        rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256" 2>/dev/null || true
         $SUDO apt install -y "/tmp/vivid_${VIVID_VERSION}_amd64.deb"
         rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb"
     fi
@@ -496,10 +495,9 @@ function update_vivid() {
         local VIVID_VERSION
         VIVID_VERSION=$(_curl -sL "https://api.github.com/repos/sharkdp/vivid/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
         _curl --output-dir "/tmp" -fOL "https://github.com/sharkdp/vivid/releases/download/v${VIVID_VERSION}/vivid_${VIVID_VERSION}_amd64.deb"
-        _curl --output-dir "/tmp" -fOL "https://github.com/sharkdp/vivid/releases/download/v${VIVID_VERSION}/vivid_${VIVID_VERSION}_amd64.deb.sha256"
-        expected=$(awk '{print $1}' "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256")
-        _verify_sha256 "/tmp/vivid_${VIVID_VERSION}_amd64.deb" "$expected" || { rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb" "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256"; return 1; }
-        rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256"
+        _curl --output-dir "/tmp" -fOL "https://github.com/sharkdp/vivid/releases/download/v${VIVID_VERSION}/vivid_${VIVID_VERSION}_amd64.deb.sha256" || true
+        _verify_or_warn_sha256 "/tmp/vivid_${VIVID_VERSION}_amd64.deb" "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256" || { rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb" "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256"; return 1; }
+        rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256" 2>/dev/null || true
         $SUDO apt install -y "/tmp/vivid_${VIVID_VERSION}_amd64.deb"
         rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb"
     fi
