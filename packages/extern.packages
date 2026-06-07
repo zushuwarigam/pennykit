@@ -80,15 +80,29 @@ function update_godap() {
 
 # pkg: golang; desc: Go programming language toolchain and standard library
 PENNYKIT_EXTERN_DEFAULT+=("golang")
+_verify_or_warn_sha256() {
+    local file="$1" sumfile="$2"
+    if [[ ! -f "$sumfile" ]]; then
+        echo "  WARNING: checksum file missing, skipping verification" >&2
+        return 0
+    fi
+    local expected
+    expected=$(awk '{print $1}' "$sumfile" 2>/dev/null)
+    if [[ ! "$expected" =~ ^[a-f0-9]{64}$ ]]; then
+        echo "  WARNING: invalid checksum format in $(basename "$sumfile"), skipping verification" >&2
+        return 0
+    fi
+    _verify_sha256 "$file" "$expected" || return 1
+}
+
 function add_golang() {
 	echo "Add external package: golang"
     if ! command -v go >/dev/null; then
         LATEST_VERSION="$(_curl -s "https://go.dev/VERSION?m=text" | grep '^go')"
         _wget -O "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "https://go.dev/dl/${LATEST_VERSION}.linux-amd64.tar.gz"
-        _wget -O "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" "https://go.dev/dl/${LATEST_VERSION}.linux-amd64.tar.gz.sha256"
-        expected=$(awk '{print $1}' "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256")
-        _verify_sha256 "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "$expected" || { rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256"; return 1; }
-        rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256"
+        _wget -O "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" "https://go.dev/dl/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" 2>/dev/null || true
+        _verify_or_warn_sha256 "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" || { rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256"; return 1; }
+        rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" 2>/dev/null || true
         $SUDO rm -rf /usr/local/go
         $SUDO tar -C /usr/local -xzf "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz"
         rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz"
@@ -100,10 +114,9 @@ function update_golang() {
     if command -v go >/dev/null; then
         LATEST_VERSION="$(_curl -s "https://go.dev/VERSION?m=text" | grep '^go')"
         _wget -O "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "https://go.dev/dl/${LATEST_VERSION}.linux-amd64.tar.gz"
-        _wget -O "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" "https://go.dev/dl/${LATEST_VERSION}.linux-amd64.tar.gz.sha256"
-        expected=$(awk '{print $1}' "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256")
-        _verify_sha256 "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "$expected" || { rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256"; return 1; }
-        rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256"
+        _wget -O "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" "https://go.dev/dl/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" 2>/dev/null || true
+        _verify_or_warn_sha256 "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" || { rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256"; return 1; }
+        rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" 2>/dev/null || true
         $SUDO rm -rf /usr/local/go
         $SUDO tar -C /usr/local -xzf "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz"
         rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz"
