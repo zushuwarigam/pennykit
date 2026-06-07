@@ -64,6 +64,8 @@ esac
 
 # shellcheck source=./packages/apt.default
 source "./packages/apt.default"
+# shellcheck source=./packages/npm.default
+source "./packages/npm.default" 2>/dev/null || true
 # shellcheck source=./packages/extern.packages
 source "./packages/extern.packages"
 
@@ -114,6 +116,16 @@ if [[ -v PENNYKIT_APT_DEFAULT ]]; then
   # npm
   declare -A _seen_npm
   declare -a _npm_pkgs=()
+
+  if [[ -v PENNYKIT_NPM_DEFAULT ]]; then
+    for pkg in "${PENNYKIT_NPM_DEFAULT[@]}"; do
+      if [[ -z "${_seen_npm[$pkg]-}" ]]; then
+        _seen_npm[$pkg]=1
+        _npm_pkgs+=("$pkg")
+      fi
+    done
+  fi
+
   for layer in "${layers[@]}"; do
     source "./packages/npm.${layer}" 2>/dev/null || true
 

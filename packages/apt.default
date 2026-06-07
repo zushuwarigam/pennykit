@@ -3,8 +3,7 @@
 if [ "$PENNYKIT_OS_VERSION_CODENAME" == "trixie" ]; then
     PENNYKIT_APT_DEFAULT+=("eza")           # pkg: eza; desc: Modern ls replacement with colors, icons, and Git status
     PENNYKIT_APT_DEFAULT+=("rustup")        # pkg: rustup; desc: Rust toolchain installer and version manager
-    PENNYKIT_APT_DEFAULT+=("tree-sitter-cli")   # pkg: tree-sitter-cli; desc: CLI for building and testing Tree-sitter grammars
-else
+    else
     PENNYKIT_APT_DEFAULT+=("rust-all")      # pkg: rust-all; desc: Rust compiler, stdlib, and tools via apt (static install)
 fi
 

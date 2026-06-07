@@ -1,0 +1,3 @@
+[[ -v _NPM_DEFAULT ]] && return || readonly _NPM_DEFAULT=1
+
+PENNYKIT_NPM_DEFAULT+=("tree-sitter-cli")   # pkg: tree-sitter-cli; desc: CLI for building and testing Tree-sitter grammars (npm version is newer than apt)
