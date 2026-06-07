@@ -65,8 +65,7 @@ function add_godap() {
         local tmp_dir
         tmp_dir=$(mktemp -d /tmp/pennykit-godap.XXX)
         git clone --depth 1 https://github.com/Macmod/godap "$tmp_dir"
-        cd "$tmp_dir"
-        go install .
+        (cd "$tmp_dir" && go install .)
         rm -rf "$tmp_dir"
     fi
 }
