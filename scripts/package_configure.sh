@@ -4,4 +4,4 @@ printf "### %s\n" "$0"
 
 cd "$PENNYKIT_HOME"
 
-find configs -maxdepth 1 -mindepth 1 -name "config.*" -exec bash -c 'source "$1"' _ {} \;
+find configs -maxdepth 1 -mindepth 1 -name "config.*" -exec bash -c 'source "$0"' {} \;
