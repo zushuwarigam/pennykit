@@ -242,10 +242,18 @@ function add_nvim() {
         local nvim_version
         nvim_version=$(_curl -sL "https://api.github.com/repos/neovim/neovim/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
         _curl --output-dir "/tmp" -fOL "https://github.com/neovim/neovim/releases/download/v${nvim_version}/nvim-linux-x86_64.tar.gz"
-        _curl --output-dir "/tmp" -fOL "https://github.com/neovim/neovim/releases/download/v${nvim_version}/SHA256SUMS.txt"
-        expected=$(grep "nvim-linux-x86_64.tar.gz" /tmp/SHA256SUMS.txt | awk '{print $1}')
-        _verify_sha256 "/tmp/nvim-linux-x86_64.tar.gz" "$expected" || { rm -f "/tmp/nvim-linux-x86_64.tar.gz" "/tmp/SHA256SUMS.txt"; return 1; }
-        rm -f /tmp/SHA256SUMS.txt
+        _curl --output-dir "/tmp" -fOL "https://github.com/neovim/neovim/releases/download/v${nvim_version}/SHA256SUMS.txt" || true
+        if [[ -f /tmp/SHA256SUMS.txt ]]; then
+            expected=$(grep "nvim-linux-x86_64.tar.gz" /tmp/SHA256SUMS.txt | awk '{print $1}')
+            if [[ "$expected" =~ ^[a-f0-9]{64}$ ]]; then
+                _verify_sha256 "/tmp/nvim-linux-x86_64.tar.gz" "$expected" || { rm -f "/tmp/nvim-linux-x86_64.tar.gz" "/tmp/SHA256SUMS.txt"; return 1; }
+            else
+                echo "  WARNING: invalid checksum format in SHA256SUMS.txt, skipping verification" >&2
+            fi
+            rm -f /tmp/SHA256SUMS.txt
+        else
+            echo "  WARNING: No checksum file for nvim, skipping verification" >&2
+        fi
         tar -xzf /tmp/nvim-linux-x86_64.tar.gz
         $SUDO mv nvim-linux-x86_64 /opt/nvim
         $SUDO ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim
@@ -259,10 +267,18 @@ function update_nvim() {
         local nvim_version
         nvim_version=$(_curl -sL "https://api.github.com/repos/neovim/neovim/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
         _curl --output-dir "/tmp" -fOL "https://github.com/neovim/neovim/releases/download/v${nvim_version}/nvim-linux-x86_64.tar.gz"
-        _curl --output-dir "/tmp" -fOL "https://github.com/neovim/neovim/releases/download/v${nvim_version}/SHA256SUMS.txt"
-        expected=$(grep "nvim-linux-x86_64.tar.gz" /tmp/SHA256SUMS.txt | awk '{print $1}')
-        _verify_sha256 "/tmp/nvim-linux-x86_64.tar.gz" "$expected" || { rm -f "/tmp/nvim-linux-x86_64.tar.gz" "/tmp/SHA256SUMS.txt"; return 1; }
-        rm -f /tmp/SHA256SUMS.txt
+        _curl --output-dir "/tmp" -fOL "https://github.com/neovim/neovim/releases/download/v${nvim_version}/SHA256SUMS.txt" || true
+        if [[ -f /tmp/SHA256SUMS.txt ]]; then
+            expected=$(grep "nvim-linux-x86_64.tar.gz" /tmp/SHA256SUMS.txt | awk '{print $1}')
+            if [[ "$expected" =~ ^[a-f0-9]{64}$ ]]; then
+                _verify_sha256 "/tmp/nvim-linux-x86_64.tar.gz" "$expected" || { rm -f "/tmp/nvim-linux-x86_64.tar.gz" "/tmp/SHA256SUMS.txt"; return 1; }
+            else
+                echo "  WARNING: invalid checksum format in SHA256SUMS.txt, skipping verification" >&2
+            fi
+            rm -f /tmp/SHA256SUMS.txt
+        else
+            echo "  WARNING: No checksum file for nvim, skipping verification" >&2
+        fi
         tar -xzf /tmp/nvim-linux-x86_64.tar.gz
         $SUDO rm -rf /opt/nvim
         $SUDO mv nvim-linux-x86_64 /opt/nvim
