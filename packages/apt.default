@@ -49,6 +49,7 @@ PENNYKIT_APT_DEFAULT+=("zoxide")        # pkg: zoxide; desc: Smarter cd that lea
 PENNYKIT_APT_DEFAULT+=("btm")           # pkg: btm; desc: Cross-platform graphical process/system monitor (bottom)
 PENNYKIT_APT_DEFAULT+=("chafa")         # pkg: chafa; desc: Display images in the terminal using Unicode/ANSI art
 PENNYKIT_APT_DEFAULT+=("composer")      # pkg: composer; desc: Dependency manager for PHP projects
+PENNYKIT_APT_DEFAULT+=("gcc")           # pkg: gcc; desc: GNU C compiler (needed by nvim-treesitter to build parsers)
 PENNYKIT_APT_DEFAULT+=("ffmpeg")        # pkg: ffmpeg; desc: Audio/video conversion, streaming, and processing toolkit
 PENNYKIT_APT_DEFAULT+=("ghostscript")   # pkg: ghostscript; desc: PostScript and PDF interpreter and renderer
 PENNYKIT_APT_DEFAULT+=("imagemagick")   # pkg: imagemagick; desc: Image conversion, editing, and manipulation suite
