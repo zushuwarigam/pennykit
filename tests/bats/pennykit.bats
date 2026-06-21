@@ -67,6 +67,39 @@ setup() {
     assert_output --partial "dive"
 }
 
+@test "pennykit extern list-problematic: shows problematic packages" {
+    mkdir -p "$PENNYKIT_HOME/configs"
+    echo "badpkg" > "$PENNYKIT_HOME/configs/extern.problematic"
+    echo "anotherpkg" >> "$PENNYKIT_HOME/configs/extern.problematic"
+    git init "$PENNYKIT_HOME"
+    mkdir -p "$PENNYKIT_HOME/packages"
+    touch "$PENNYKIT_HOME/packages/extern.packages"
+    run bash "$PENNYKIT_BIN" extern list-problematic
+    assert_success
+    assert_output --partial "badpkg"
+    assert_output --partial "anotherpkg"
+}
+
+@test "pennykit extern list-problematic: shows message when no file" {
+    git init "$PENNYKIT_HOME"
+    mkdir -p "$PENNYKIT_HOME/packages"
+    touch "$PENNYKIT_HOME/packages/extern.packages"
+    run bash "$PENNYKIT_BIN" extern list-problematic
+    assert_success
+    assert_output --partial "No problematic"
+}
+
+@test "pennykit extern reset-problematic: clears file" {
+    mkdir -p "$PENNYKIT_HOME/configs"
+    echo "badpkg" > "$PENNYKIT_HOME/configs/extern.problematic"
+    git init "$PENNYKIT_HOME"
+    mkdir -p "$PENNYKIT_HOME/packages"
+    touch "$PENNYKIT_HOME/packages/extern.packages"
+    run bash "$PENNYKIT_BIN" extern reset-problematic
+    assert_success
+    assert [ ! -f "$PENNYKIT_HOME/configs/extern.problematic" ]
+}
+
 @test "pennykit extern activate: removes from skip file" {
     echo "dive" > "$PENNYKIT_HOME/configs/extern.skip"
     run bash "$PENNYKIT_BIN" extern activate "dive"

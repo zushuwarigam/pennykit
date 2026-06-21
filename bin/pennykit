@@ -22,10 +22,12 @@ Commands:
   nvim               Interactive nvim config switcher
   theme              Show current theme and available themes
   theme <name>       Apply a theme (e.g. $(basename "$0") theme catppuccin)
-  extern [set]       Update external packages (set: default|admin|dev|pentest|all)
+  extern [set]             Update external packages (set: default|admin|dev|pentest|all)
   extern deactivate <pkg>  Deactivate a package (skip install/update)
   extern activate <pkg>    Reactivate a deactivated package
   extern list-deactivated  List all deactivated packages
+  extern list-problematic  List packages whose install/update failed
+  extern reset-problematic Clear the list of problematic packages
   update             Update pennykit itself (git pull --rebase)
   doctor             Run health checks on the environment
   branch             Show current git branch
@@ -302,17 +304,35 @@ _update_or_skip() {
         echo "  Skipping $pkg (deactivated)"
         return
     fi
-    if declare -F "update_$pkg" >/dev/null 2>&1; then
-        "update_$pkg"
+    if command -v "$pkg" >/dev/null 2>&1; then
+        if declare -F "update_$pkg" >/dev/null 2>&1; then
+            if "update_$pkg"; then
+                _clear_problematic "$pkg"
+            else
+                echo "  ${YELLOW}⚠ ${pkg}: update failed, marked as problematic${RESET}"
+                _mark_problematic "$pkg"
+            fi
+        else
+            echo "  $pkg: already installed, no update function"
+            _clear_problematic "$pkg"
+        fi
     else
-        echo "  Warning: update_$pkg not found, skipping"
+        echo "  $pkg: not installed, trying add_${pkg}..."
+        if "add_$pkg"; then
+            _clear_problematic "$pkg"
+        else
+            echo "  ${YELLOW}⚠ ${pkg}: install failed, marked as problematic${RESET}"
+            _mark_problematic "$pkg"
+        fi
     fi
 }
 
 cmd_extern() {
     cd "$PENNYKIT_HOME"
     local skip_file="configs/extern.skip"
+    local problematic_file="configs/extern.problematic"
     local cmd="${1:-}"
+    local set="${cmd:-default}"
 
     case "$cmd" in
         deactivate)
@@ -344,13 +364,60 @@ cmd_extern() {
             fi
             return
             ;;
+        list-problematic)
+            if [[ -f "$problematic_file" ]]; then
+                local count
+                count=$(grep -cvE '^\s*(#|$)' "$problematic_file" || true)
+                if [[ "$count" -gt 0 ]]; then
+                    echo "Problematic packages:"
+                    grep -vE '^\s*(#|$)' "$problematic_file"
+                else
+                    echo "No problematic packages."
+                fi
+            else
+                echo "No problematic packages."
+            fi
+            return
+            ;;
+        reset-problematic)
+            if [[ -f "$problematic_file" ]]; then
+                rm -f "$problematic_file"
+                echo "Problematic list cleared."
+            else
+                echo "No problematic packages to clear."
+            fi
+            return
+            ;;
     esac
 
-    local set="${cmd:-default}"
     # shellcheck source=./scripts/check_system.sh
     source "$PENNYKIT_HOME/scripts/check_system.sh" 2>/dev/null || true
     # shellcheck source=./packages/extern.packages
     source "./packages/extern.packages"
+
+    # Retry previously problematic packages before processing the requested set
+    if [[ -f "$problematic_file" ]]; then
+        echo "  Retrying problematic packages..."
+        local temp_file="${problematic_file}.tmp"
+        : > "$temp_file"
+        while IFS= read -r line; do
+            [[ "$line" =~ ^# ]] && continue
+            [[ -z "$line" ]] && continue
+            if command -v "$line" >/dev/null 2>&1; then
+                echo "  ${GREEN}✓${RESET} $line: already installed, removing from problematic list"
+            else
+                echo "  $line: retrying add_${line}..."
+                if "add_$line"; then
+                    echo "  ${GREEN}✓${RESET} $line: install succeeded"
+                else
+                    echo "  ${YELLOW}⚠ ${line}: retry failed${RESET}"
+                    echo "$line" >> "$temp_file"
+                fi
+            fi
+        done < "$problematic_file"
+        mv "$temp_file" "$problematic_file" 2>/dev/null || true
+        [[ ! -s "$problematic_file" ]] && rm -f "$problematic_file"
+    fi
 
     case "$set" in
         default)
@@ -380,7 +447,7 @@ cmd_extern() {
                 && for p in "${PENNYKIT_EXTERN_PENTEST[@]}"; do _update_or_skip "$p"; done
             ;;
         *)
-            echo "Usage: $(basename "$0") extern [default|admin|dev|pentest|all|deactivate|activate|list-deactivated]"
+            echo "Usage: $(basename "$0") extern [default|admin|dev|pentest|all|deactivate|activate|list-deactivated|list-problematic|reset-problematic]"
             exit 1
             ;;
     esac

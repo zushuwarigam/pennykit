@@ -34,6 +34,7 @@ echo ""
 set +e
 timeout "$BUILD_TIMEOUT" \
     sudo docker build \
+        --network=host \
         --progress=plain \
         -f Dockerfile.apt \
         -t pennykit:test \

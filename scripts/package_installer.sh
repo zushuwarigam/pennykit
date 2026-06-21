@@ -47,7 +47,12 @@ _add_or_skip() {
         echo "  Skipping $pkg (deactivated)"
         return
     fi
-    "add_$pkg"
+    if "add_$pkg"; then
+        _clear_problematic "$pkg"
+    else
+        echo "  ${YELLOW}⚠ ${pkg}: install failed, marked as problematic${RESET}"
+        _mark_problematic "$pkg"
+    fi
 }
 
 # --- Pyramid layer stack ---

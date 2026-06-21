@@ -202,7 +202,13 @@ _add_or_skip() {
         echo "  Skipping $pkg (deactivated)"
         return
     fi
-    "add_$pkg"
+    if "add_$pkg"; then
+        _clear_problematic "$pkg"
+    else
+        echo "  Warning: $pkg: install failed, marked as problematic"
+        _mark_problematic "$pkg"
+        return 1
+    fi
 }
 
 @test "_add_or_skip: calls add_ function for active package" {
@@ -223,9 +229,12 @@ _add_or_skip() {
     assert_output --partial "Skipping dive"
 }
 
-@test "_add_or_skip: passes through error from add_ function" {
+@test "_add_or_skip: marks nonexistent package as problematic" {
     source "$(dirname "$BATS_TEST_FILENAME")/../../packages/extern.packages"
-    run -127 _add_or_skip "nonexistent"
+    run _add_or_skip "nonexistent"
     assert_failure
-    assert_output --partial "add_nonexistent"
+    assert_output --partial "install failed"
+    assert [ -f "$PENNYKIT_HOME/configs/extern.problematic" ]
+    run cat "$PENNYKIT_HOME/configs/extern.problematic"
+    assert_output "nonexistent"
 }

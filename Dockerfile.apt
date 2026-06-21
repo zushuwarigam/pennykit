@@ -49,6 +49,8 @@ ARG HOME=/home/${USER}
 WORKDIR ${HOME}/.pennykit
 
 ENV PENNYKIT_HOME="${HOME}/.pennykit"
+ENV npm_config_prefix="${HOME}/.npm-global"
+ENV PATH="${HOME}/.npm-global/bin:${PATH}"
 
 COPY scripts/check_system.sh scripts/package_installer.sh ./scripts/
 COPY lib/ ./lib/

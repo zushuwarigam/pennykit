@@ -65,3 +65,23 @@ _is_deactivated() {
     done < "$skip_file"
     return 1
 }
+
+_mark_problematic() {
+    local pkg="$1"
+    local problematic_file="${PENNYKIT_HOME:-$HOME/.pennykit}/configs/extern.problematic"
+    mkdir -p "$(dirname "$problematic_file")"
+    if ! grep -qxF "$pkg" "$problematic_file" 2>/dev/null; then
+        echo "$pkg" >> "$problematic_file"
+    fi
+}
+
+_clear_problematic() {
+    local pkg="$1"
+    local problematic_file="${PENNYKIT_HOME:-$HOME/.pennykit}/configs/extern.problematic"
+    [[ ! -f "$problematic_file" ]] && return
+    grep -vxF "$pkg" "$problematic_file" > "$problematic_file.tmp" || true
+    mv "$problematic_file.tmp" "$problematic_file" 2>/dev/null || true
+    if [[ ! -s "$problematic_file" ]]; then
+        rm -f "$problematic_file"
+    fi
+}

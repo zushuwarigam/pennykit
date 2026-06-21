@@ -151,6 +151,20 @@ check "pip3 works" "pip3 --version"
 check "npm global list" "npm list -g --depth=0 2>/dev/null | head -5"
 
 echo ""
+echo -e "${BOLD}Phase 7: Full set installation${RESET}"
+echo ""
+
+check "pennykit extern admin" "\$PENNYKIT_HOME/bin/pennykit extern admin 2>&1"
+check "pennykit extern dev" "\$PENNYKIT_HOME/bin/pennykit extern dev 2>&1"
+
+check_bin "dive"
+check_bin "godap"
+check_bin "hadolint"
+
+check "list-problematic shows problematic packages" "\$PENNYKIT_HOME/bin/pennykit extern list-problematic 2>&1"
+check "reset-problematic subcommand works" "\$PENNYKIT_HOME/bin/pennykit extern reset-problematic 2>&1"
+
+echo ""
 echo -e "${BOLD}Cleaning up...${RESET}"
 sudo docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
 

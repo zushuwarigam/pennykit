@@ -72,3 +72,46 @@ setup() {
     assert_success
     assert_output --partial "curl"
 }
+
+# ── _mark_problematic / _clear_problematic ───────────────────────
+
+@test "_mark_problematic: creates file and adds package" {
+    run _mark_problematic "fzf"
+    assert_success
+    assert [ -f "$PENNYKIT_HOME/configs/extern.problematic" ]
+    run cat "$PENNYKIT_HOME/configs/extern.problematic"
+    assert_output "fzf"
+}
+
+@test "_mark_problematic: does not duplicate entries" {
+    _mark_problematic "fzf"
+    _mark_problematic "fzf"
+    run cat "$PENNYKIT_HOME/configs/extern.problematic"
+    assert_output "fzf"
+}
+
+@test "_clear_problematic: removes package from file" {
+    _mark_problematic "fzf"
+    _mark_problematic "dive"
+    _clear_problematic "fzf"
+    run cat "$PENNYKIT_HOME/configs/extern.problematic"
+    assert_output "dive"
+}
+
+@test "_clear_problematic: removes file when empty" {
+    _mark_problematic "fzf"
+    _clear_problematic "fzf"
+    assert [ ! -f "$PENNYKIT_HOME/configs/extern.problematic" ]
+}
+
+@test "_clear_problematic: does nothing for missing file" {
+    run _clear_problematic "nonexistent"
+    assert_success
+}
+
+@test "_clear_problematic: does nothing for non-listed package" {
+    _mark_problematic "fzf"
+    _clear_problematic "dive"
+    run cat "$PENNYKIT_HOME/configs/extern.problematic"
+    assert_output "fzf"
+}
