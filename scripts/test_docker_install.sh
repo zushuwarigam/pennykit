@@ -5,6 +5,12 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 LOG_DIR="$PROJECT_DIR/logs"
 
+do_verify=false
+if [[ "${1:-}" == "--verify" ]]; then
+    do_verify=true
+    shift
+fi
+
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 LOG_FILE="$LOG_DIR/docker-install-$TIMESTAMP.log"
 SUMMARY_FILE="$LOG_DIR/docker-install-$TIMESTAMP.summary"
@@ -25,6 +31,7 @@ echo "Target: runtime (full multi-stage build: os -> pkgs -> nvim -> runtime)"
 echo "Timeout: ${BUILD_TIMEOUT}s"
 echo ""
 
+set +e
 timeout "$BUILD_TIMEOUT" \
     sudo docker build \
         --progress=plain \
@@ -33,8 +40,8 @@ timeout "$BUILD_TIMEOUT" \
         . 2>&1 \
     | eval "$TIMESTAMPER" \
     | tee "$LOG_FILE"
-
 BUILD_EXIT=${PIPESTATUS[0]}
+set -e
 
 echo ""
 echo "=== Build Summary ===" > "$SUMMARY_FILE"
@@ -91,5 +98,11 @@ echo "--- Total Build Duration ---" | tee -a "$SUMMARY_FILE"
 echo "" | tee -a "$SUMMARY_FILE"
 echo "Summary saved to: $SUMMARY_FILE" | tee -a "$SUMMARY_FILE"
 echo "" | tee -a "$SUMMARY_FILE"
+
+if $do_verify && [[ $BUILD_EXIT -eq 0 ]]; then
+    echo "=== Launching verification (--verify) ==="
+    echo ""
+    exec "$SCRIPT_DIR/verify_docker_install.sh"
+fi
 
 exit "$BUILD_EXIT"
