@@ -22,6 +22,10 @@ source "$PENNYKIT_HOME/scripts/check_system.sh"
 
 cd "$PENNYKIT_HOME"
 
+# Ensure npm global prefix is user-local (avoids EACCES on npm install -g)
+mkdir -p "${HOME}/.npm-global"
+npm config set prefix "${HOME}/.npm-global"
+
 # Packages
 case "$PENNYKIT_OS_ID" in
   "debian")
