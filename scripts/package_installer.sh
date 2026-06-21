@@ -29,13 +29,13 @@ if [[ -n "${PENNYKIT_DRY_RUN:-}" ]]; then
   _apt_clean()    { echo "  [DRY-RUN] $SUDO apt-get clean"; }
   _brew_clean()   { echo "  [DRY-RUN] brew cleanup --prune=all"; }
 else
-  _apt_install()  { $SUDO apt-get install -y --no-install-recommends --no-install-suggests "$@" | grep -v "already"; }
+  _apt_install()  { $SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt-get install -qq -y --no-install-recommends --no-install-suggests "$@" 2>&1 | grep -v "already" || true; }
   _pipx_install() { pipx install "$@"; }
   _npm_install()  { npm install "$@"; }
   _brew_install() { brew install "$@"; }
-  _apt_update()   { $SUDO apt-get update; }
-  _apt_upgrade()  { $SUDO apt-get upgrade -y; }
-  _apt_clean()    { $SUDO apt-get clean; }
+  _apt_update()   { $SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt-get update -qq; }
+  _apt_upgrade()  { $SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt-get upgrade -qq -y; }
+  _apt_clean()    { $SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt-get clean -qq; }
   _brew_clean()   { brew cleanup --prune=all; }
 fi
 

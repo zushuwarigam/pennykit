@@ -16,7 +16,7 @@ _install_dive_deb() {
     local deb_file="/tmp/dive_${ver}_linux_amd64.deb"
     rm -f "$deb_file"
     _curl --output-dir "/tmp" -fOL "https://github.com/wagoodman/dive/releases/download/v${ver}/dive_${ver}_linux_amd64.deb" || return 1
-    $SUDO apt install -y "$deb_file"
+    $SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y "$deb_file"
     rm -f "$deb_file"
 }
 
@@ -306,7 +306,7 @@ function add_ueberzugpp() {
         rm -f "$deb_file"
         _wget -O "$deb_file" \
             "https://download.opensuse.org/repositories/home:/justkidding/Debian_13/amd64/ueberzugpp_${ver}_amd64.deb" || { rm -f "$deb_file"; return 1; }
-        $SUDO apt install -y "$deb_file"
+        $SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y "$deb_file"
         rm -f "$deb_file"
     fi
 }
@@ -320,7 +320,7 @@ function update_ueberzugpp() {
         rm -f "$deb_file"
         _wget -O "$deb_file" \
             "https://download.opensuse.org/repositories/home:/justkidding/Debian_13/amd64/ueberzugpp_${ver}_amd64.deb" || { rm -f "$deb_file"; return 1; }
-        $SUDO apt install -y "$deb_file"
+        $SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y "$deb_file"
         rm -f "$deb_file"
     fi
 }
@@ -483,7 +483,7 @@ function add_vivid() {
         _curl --output-dir "/tmp" -fOL "https://github.com/sharkdp/vivid/releases/download/v${VIVID_VERSION}/vivid_${VIVID_VERSION}_amd64.deb.sha256" || true
         _verify_or_warn_sha256 "/tmp/vivid_${VIVID_VERSION}_amd64.deb" "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256" || { rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb" "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256"; return 1; }
         rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256" 2>/dev/null || true
-        $SUDO apt install -y "/tmp/vivid_${VIVID_VERSION}_amd64.deb"
+        $SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y "/tmp/vivid_${VIVID_VERSION}_amd64.deb"
         rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb"
     fi
 }
@@ -497,7 +497,7 @@ function update_vivid() {
         _curl --output-dir "/tmp" -fOL "https://github.com/sharkdp/vivid/releases/download/v${VIVID_VERSION}/vivid_${VIVID_VERSION}_amd64.deb.sha256" || true
         _verify_or_warn_sha256 "/tmp/vivid_${VIVID_VERSION}_amd64.deb" "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256" || { rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb" "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256"; return 1; }
         rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256" 2>/dev/null || true
-        $SUDO apt install -y "/tmp/vivid_${VIVID_VERSION}_amd64.deb"
+        $SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y "/tmp/vivid_${VIVID_VERSION}_amd64.deb"
         rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb"
     fi
 }

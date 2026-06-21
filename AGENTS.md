@@ -12,8 +12,8 @@ python3 -m pytest tests/python/ -v -m "not slow"   # Python tests only (skip Doc
 bats tests/bats/*.bats             # BATS tests only
 ```
 
-- Single slow Docker build test marker: `@pytest.mark.slow` — skipped by default, `-m "slow"`
-- BATS tests use `test_helper/` dirs with generated `load.bash` (in `.gitignore`)
+- Slow Docker build tests: `@pytest.mark.slow` — skipped by default, run with `-m "slow"`
+- BATS uses generated `tests/bats/test_helper/*/load.bash` (in `.gitignore`); install bats via `npm install` (in `package.json`)
 
 ## Project structure
 
@@ -22,27 +22,32 @@ bats tests/bats/*.bats             # BATS tests only
 | `bin/pennykit` | CLI entry point |
 | `lib/helpers.sh` | Shared: `_curl`, `_wget`, `_verify_sha256`, `_is_deactivated`, colored output |
 | `scripts/` | Build, install, theme, test, config, Docker |
-| `packages/` | `apt.*`, `npm.*`, `pipx.*`, `brew`, `extern.packages` |
-| `configs/` | Per-app configs + `themes/` + `theme_mapping.toml` |
+| `packages/` | `apt.{default,dev,admin,pentest}`, `npm.{default,...}`, `pipx.{default,...}`, `brew`, `extern.packages` |
+| `configs/` | Per-app configs + `themes/` + `theme_mapping.toml` + `extern.skip` (deactivated pkgs) |
 | `nvim-starter/` | `astronvim_v6/`, `lazyvim/`, `kickstart/`, `vimrc.base` |
-| `tests/bats/` | 6 test files covering helpers, CLI, package installer, install, config, extern |
-| `tests/python/` | `test_apply_theme.py`, `test_docker_build.py` |
+| `pennykit_shell.{exports,alias,functions}` | Sourced by `pennykit.bash`/`pennykit.zsh` |
+| `config` | Docker build config: sets `PROJECT_NAME`, `PK_BASE_IMAGE_NAME`, `PK_BASE_IMAGE_TAG` |
+
+## Package layers
+
+DEFAULT always installed. `-p` flag selects higher tiers (ADMIN, DEV, PENTEST, ALL). Pyramid: each tier adds to the previous. DEV includes DEFAULT + dev packages, etc.
 
 ## Architecture notes
 
 - **Theme system**: Python-first (`scripts/apply_theme.py` reads `configs/theme_mapping.toml`), falls back to bash sed in `bin/pennykit`. Needs Python 3.11+ or `tomli` package.
-- **Package layers**: DEFAULT always installed. ADMIN/DEV/PENTEST/ALL selected via `-p` flag on install. Pyramid: ADMIN adds to DEFAULT, DEV adds to default → dev, PENTEST = DEV → pentest.
-- **External packages**: `packages/extern.packages` defines `add_<pkg>()` / `update_<pkg>()` functions. Deactivation via `configs/extern.skip`.
-- **OS detection**: `scripts/check_system.sh` sets `$PENNYKIT_OS_ID` (debian/macos/other) and `$PENNYKIT_OS_VERSION_CODENAME`. Important for correct package paths (eza/rustup only on trixie).
-- **Docker**: Multi-stage builds (os → pkgs → nvim → runtime → dev). Use `docker compose up -d` or `scripts/build_docker-image.sh`.
+- **External packages**: `packages/extern.packages` defines `add_<pkg>()` / `update_<pkg>()` functions. Deactivation via `configs/extern.skip`. Problematic state stored in `configs/extern.problematic`.
+- **OS detection**: `scripts/check_system.sh` sets `$PENNYKIT_OS_ID` (debian/macos/other) and `$PENNYKIT_OS_VERSION_CODENAME`. Controls conditional package paths (eza/rustup only on trixie; harlequin via pipx only on trixie).
+- **Docker**: Multi-stage builds (os → pkgs → nvim → runtime → dev). Use `docker compose up -d` or `scripts/build_docker-image.sh`. The `docker-compose.override.yml` sets build target to `dev`.
 - **Nvim config switching**: Clears `~/.local/share/nvim`, `~/.local/state/nvim`, `~/.cache/nvim` on switch.
 
 ## Conventions
 
 - Shell scripts: `set -euo pipefail`, pass `shellcheck --severity=style`
-- `PENNYKIT_DRY_RUN=1` env var to print install commands without executing
+- `PENNYKIT_DRY_RUN=1` env var prints install commands without executing (works for both `scripts/package_installer.sh` and `scripts/build_docker-image.sh`)
 - `_add_or_skip` wraps package install to check deactivation
 - `_is_deactivated` checks `configs/extern.skip` (one package name per line, `#` comments)
+- `scripts/get_packages.sh` lists all packages with descriptions (`grep -rnI "pkg.*desc"`)
+- Docker build verification: `scripts/verify_docker_install.sh` and `scripts/test_docker_install.sh` — output goes to `logs/`
 
 ## Gotchas
 
@@ -50,5 +55,7 @@ bats tests/bats/*.bats             # BATS tests only
 - Theme `--dry-run` flag only supported via Python apply (not bash fallback)
 - BATS uses `load 'test_helper/bats-support/load'` — these helpers are generated, see `.gitignore`
 - `python3` with tomllib required for theme apply; bash fallback is basic sed
+- Install script clones branch from `PENNYKIT_BRANCH` env var (defaults to `kit`)
 - Container detection reads `/etc/os-release`; Homebrew skipped on Linux unless `brew.on_linux` sourced
 - Vivid/LS_COLORS, harlequin, and bat aliases are patched via sed in `pennykit_shell.exports`/`.alias`
+- Blue screen during install: sudo's `env_reset` drops `DEBIAN_FRONTEND`/`DEBCONF_FRONTEND`. Every `$SUDO apt` call in `scripts/package_installer.sh` and `packages/extern.packages` must inline env vars: `$SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt ...`

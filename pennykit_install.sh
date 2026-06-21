@@ -3,7 +3,10 @@
 set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
+export DEBCONF_FRONTEND=noninteractive
+export DEBCONF_NONINTERACTIVE_SEEN=true
 export LC_ALL=C.UTF-8
+export NEEDRESTART_MODE=a
 
 if [[ ! -v PENNYKIT_HOME ]]; then
   export PENNYKIT_HOME
