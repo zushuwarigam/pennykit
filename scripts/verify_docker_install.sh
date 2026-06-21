@@ -46,6 +46,7 @@ echo -e "${BOLD}Phase 0: Build image (target=runtime)${RESET}"
 set +e
 timeout "$BUILD_TIMEOUT" \
     sudo docker build \
+        --network=host \
         --progress=plain \
         -f Dockerfile.apt \
         -t "$DOCKER_IMAGE_NAME" \
@@ -68,13 +69,13 @@ echo -e "${BOLD}Starting container...${RESET}"
 sudo docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
 sudo docker run -d --name "$CONTAINER_NAME" "$DOCKER_IMAGE_NAME" sleep 300 2>&1 | tail -1
 
-DOCKER_EXEC="sudo docker exec -u user -w /home/user $CONTAINER_NAME bash -c"
+DOCKER_EXEC="sudo docker exec -i -u user -w /home/user $CONTAINER_NAME bash -i -c"
 
 check() {
     local label="$1"
     local cmd="$2"
 
-    if $DOCKER_EXEC "$cmd" 2>&1; then
+    if $DOCKER_EXEC "source ~/.bashrc 2>/dev/null; $cmd" 2>&1; then
         echo -e "  ${PASS} $label"
         PASS_COUNT=$((PASS_COUNT + 1))
     else
@@ -85,7 +86,12 @@ check() {
 
 check_bin() {
     local label="$1"
-    check "binary: $label" "command -v $label && ($label --version 2>&1 || $label -V 2>&1 || $label -version 2>&1 || true) | head -1"
+    local alt="${2:-}"
+    if [[ -n $alt ]]; then
+        check "binary: $label" "command -v $label || (command -v $alt && ($alt --version 2>&1 || $alt -V 2>&1 || true) | head -1)"
+    else
+        check "binary: $label" "command -v $label && ($label --version 2>&1 || $label -V 2>&1 || $label -version 2>&1 || true) | head -1"
+    fi
 }
 
 echo -e "${BOLD}Phase 1: Core CLI${RESET}"
@@ -102,9 +108,11 @@ echo ""
 echo -e "${BOLD}Phase 2: Binary presence${RESET}"
 echo ""
 
-for bin in nvim git rg fzf tmux lazygit bat lf jq zoxide python3 node npm pipx make gcc delta glow lsd fd chafa tig; do
+for bin in nvim git rg fzf tmux lazygit lf jq zoxide python3 node npm pipx make gcc delta glow lsd chafa tig; do
     check_bin "$bin"
 done
+check_bin "bat" "batcat"
+check_bin "fd" "fdfind"
 
 echo ""
 echo -e "${BOLD}Phase 3: External packages${RESET}"
