@@ -19,6 +19,7 @@ usage() {
     Options:
     -f, --force           Force re‑clone even if $PENNYKIT_HOME already exists
     -p, --package-set     Package set: a/adm/admin, d/dev/develop, p/pen/pentest, all
+    -r, --rootless        Rootless mode (skip apt, install to ~/.local/)
     -h, --help            Show this help message and exit
 
 EOF
@@ -39,6 +40,7 @@ while [[ $# -gt 0 ]]; do
             esac
             shift
             ;;
+        -r|--rootless) PENNYKIT_ROOTLESS=true; shift ;;
         -h|--help)  usage ;;
         *)          shift ;;   # unknown options are ignored – they will be passed through
     esac
@@ -46,6 +48,7 @@ done
 
 export PENNYKIT_FORCE
 export PENNYKIT_PACKAGE_SET
+export PENNYKIT_ROOTLESS
 
 if [[ -d "$PENNYKIT_HOME" ]]; then
     if [[ "$PENNYKIT_FORCE" == "true" ]]; then

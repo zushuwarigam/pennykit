@@ -7,17 +7,20 @@ else
     SUDO=""
 fi
 
-export PATH="/usr/local/go/bin:${PATH}"
+PENNYKIT_LOCAL_DIR="${PENNYKIT_LOCAL_DIR:-$HOME/.local}"
+export PATH="${PENNYKIT_LOCAL_DIR}/go/bin:${PATH}"
 
 # pkg: dive; desc: Explore Docker image layers and optimize image size
 PENNYKIT_EXTERN_ADMIN+=("dive")
-_install_dive_deb() {
+_install_dive() {
     local ver="$1"
     local deb_file="/tmp/dive_${ver}_linux_amd64.deb"
     rm -f "$deb_file"
     _curl --output-dir "/tmp" -fOL "https://github.com/wagoodman/dive/releases/download/v${ver}/dive_${ver}_linux_amd64.deb" || return 1
-    $SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y "$deb_file"
-    rm -f "$deb_file"
+    mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
+    dpkg-deb -x "$deb_file" /tmp/dive-extract 2>/dev/null
+    mv /tmp/dive-extract/usr/bin/dive "$PENNYKIT_LOCAL_DIR/bin/dive"
+    rm -rf /tmp/dive-extract "$deb_file"
 }
 
 function add_dive() {
@@ -25,7 +28,7 @@ function add_dive() {
     if ! command -v dive >/dev/null; then
         local DIVE_VERSION
         DIVE_VERSION=$(_curl -sL "https://api.github.com/repos/wagoodman/dive/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
-        _install_dive_deb "$DIVE_VERSION"
+        _install_dive "$DIVE_VERSION"
     fi
 }
 
@@ -34,7 +37,7 @@ function update_dive() {
     if command -v dive >/dev/null; then
         local DIVE_VERSION
         DIVE_VERSION=$(_curl -sL "https://api.github.com/repos/wagoodman/dive/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
-        _install_dive_deb "$DIVE_VERSION"
+        _install_dive "$DIVE_VERSION"
     fi
 }
 
@@ -102,8 +105,9 @@ function add_golang() {
         _wget -O "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" "https://go.dev/dl/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" 2>/dev/null || true
         _verify_or_warn_sha256 "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" || { rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256"; return 1; }
         rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" 2>/dev/null || true
-        $SUDO rm -rf /usr/local/go
-        $SUDO tar -C /usr/local -xzf "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz"
+        rm -rf "$PENNYKIT_LOCAL_DIR/go"
+        mkdir -p "$PENNYKIT_LOCAL_DIR"
+        tar -C "$PENNYKIT_LOCAL_DIR" -xzf "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz"
         rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz"
     fi
 }
@@ -116,8 +120,9 @@ function update_golang() {
         _wget -O "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" "https://go.dev/dl/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" 2>/dev/null || true
         _verify_or_warn_sha256 "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" || { rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256"; return 1; }
         rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" 2>/dev/null || true
-        $SUDO rm -rf /usr/local/go
-        $SUDO tar -C /usr/local -xzf "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz"
+        rm -rf "$PENNYKIT_LOCAL_DIR/go"
+        mkdir -p "$PENNYKIT_LOCAL_DIR"
+        tar -C "$PENNYKIT_LOCAL_DIR" -xzf "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz"
         rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz"
     fi
 }
@@ -254,8 +259,10 @@ function add_nvim() {
             echo "  WARNING: No checksum file for nvim, skipping verification" >&2
         fi
         tar -xzf /tmp/nvim-linux-x86_64.tar.gz
-        $SUDO mv nvim-linux-x86_64 /opt/nvim
-        $SUDO ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim
+        mkdir -p "$PENNYKIT_LOCAL_DIR/opt" "$PENNYKIT_LOCAL_DIR/bin"
+        rm -rf "$PENNYKIT_LOCAL_DIR/opt/nvim"
+        mv nvim-linux-x86_64 "$PENNYKIT_LOCAL_DIR/opt/nvim"
+        ln -sf "$PENNYKIT_LOCAL_DIR/opt/nvim/bin/nvim" "$PENNYKIT_LOCAL_DIR/bin/nvim"
         rm -f /tmp/nvim-linux-x86_64.tar.gz
     fi
 }
@@ -279,9 +286,10 @@ function update_nvim() {
             echo "  WARNING: No checksum file for nvim, skipping verification" >&2
         fi
         tar -xzf /tmp/nvim-linux-x86_64.tar.gz
-        $SUDO rm -rf /opt/nvim
-        $SUDO mv nvim-linux-x86_64 /opt/nvim
-        $SUDO ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim
+        mkdir -p "$PENNYKIT_LOCAL_DIR/opt" "$PENNYKIT_LOCAL_DIR/bin"
+        rm -rf "$PENNYKIT_LOCAL_DIR/opt/nvim"
+        mv nvim-linux-x86_64 "$PENNYKIT_LOCAL_DIR/opt/nvim"
+        ln -sf "$PENNYKIT_LOCAL_DIR/opt/nvim/bin/nvim" "$PENNYKIT_LOCAL_DIR/bin/nvim"
         rm -f /tmp/nvim-linux-x86_64.tar.gz
     fi
 }
@@ -306,8 +314,10 @@ function add_ueberzugpp() {
         rm -f "$deb_file"
         _wget -O "$deb_file" \
             "https://download.opensuse.org/repositories/home:/justkidding/Debian_13/amd64/ueberzugpp_${ver}_amd64.deb" || { rm -f "$deb_file"; return 1; }
-        $SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y "$deb_file"
-        rm -f "$deb_file"
+        mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
+        dpkg-deb -x "$deb_file" /tmp/ueberzugpp-extract 2>/dev/null
+        mv /tmp/ueberzugpp-extract/usr/bin/ueberzugpp "$PENNYKIT_LOCAL_DIR/bin/ueberzugpp"
+        rm -rf /tmp/ueberzugpp-extract "$deb_file"
     fi
 }
 
@@ -320,8 +330,10 @@ function update_ueberzugpp() {
         rm -f "$deb_file"
         _wget -O "$deb_file" \
             "https://download.opensuse.org/repositories/home:/justkidding/Debian_13/amd64/ueberzugpp_${ver}_amd64.deb" || { rm -f "$deb_file"; return 1; }
-        $SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y "$deb_file"
-        rm -f "$deb_file"
+        mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
+        dpkg-deb -x "$deb_file" /tmp/ueberzugpp-extract 2>/dev/null
+        mv /tmp/ueberzugpp-extract/usr/bin/ueberzugpp "$PENNYKIT_LOCAL_DIR/bin/ueberzugpp"
+        rm -rf /tmp/ueberzugpp-extract "$deb_file"
     fi
 }
 
@@ -437,8 +449,10 @@ function add_vivid() {
         _curl --output-dir "/tmp" -fOL "https://github.com/sharkdp/vivid/releases/download/v${VIVID_VERSION}/vivid_${VIVID_VERSION}_amd64.deb.sha256" || true
         _verify_or_warn_sha256 "/tmp/vivid_${VIVID_VERSION}_amd64.deb" "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256" || { rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb" "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256"; return 1; }
         rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256" 2>/dev/null || true
-        $SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y "/tmp/vivid_${VIVID_VERSION}_amd64.deb"
-        rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb"
+        mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
+        dpkg-deb -x "/tmp/vivid_${VIVID_VERSION}_amd64.deb" /tmp/vivid-extract 2>/dev/null
+        mv /tmp/vivid-extract/usr/bin/vivid "$PENNYKIT_LOCAL_DIR/bin/vivid"
+        rm -rf /tmp/vivid-extract "/tmp/vivid_${VIVID_VERSION}_amd64.deb"
     fi
 }
 
@@ -451,7 +465,9 @@ function update_vivid() {
         _curl --output-dir "/tmp" -fOL "https://github.com/sharkdp/vivid/releases/download/v${VIVID_VERSION}/vivid_${VIVID_VERSION}_amd64.deb.sha256" || true
         _verify_or_warn_sha256 "/tmp/vivid_${VIVID_VERSION}_amd64.deb" "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256" || { rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb" "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256"; return 1; }
         rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256" 2>/dev/null || true
-        $SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y "/tmp/vivid_${VIVID_VERSION}_amd64.deb"
-        rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb"
+        mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
+        dpkg-deb -x "/tmp/vivid_${VIVID_VERSION}_amd64.deb" /tmp/vivid-extract 2>/dev/null
+        mv /tmp/vivid-extract/usr/bin/vivid "$PENNYKIT_LOCAL_DIR/bin/vivid"
+        rm -rf /tmp/vivid-extract "/tmp/vivid_${VIVID_VERSION}_amd64.deb"
     fi
 }

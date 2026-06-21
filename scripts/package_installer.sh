@@ -17,6 +17,14 @@ else
   SUDO=""
 fi
 
+# Rootless mode: skip apt, install extern packages to ~/.local/
+PENNYKIT_LOCAL_DIR="${PENNYKIT_LOCAL_DIR:-$HOME/.local}"
+if [[ -n "${PENNYKIT_ROOTLESS:-}" ]] && [[ $(id -u) != 0 ]]; then
+  echo "  [ROOTLESS] Rootless mode — skipping apt, using $PENNYKIT_LOCAL_DIR"
+  SUDO=""
+  mkdir -p "$PENNYKIT_LOCAL_DIR/bin" "$PENNYKIT_LOCAL_DIR/opt" "$PENNYKIT_LOCAL_DIR/go"
+fi
+
 # Dry-run mode: set PENNYKIT_DRY_RUN=1 to print commands without executing
 if [[ -n "${PENNYKIT_DRY_RUN:-}" ]]; then
   echo "  [DRY-RUN] Dry-run mode enabled — install commands will be printed, not executed"
@@ -37,6 +45,14 @@ else
   _apt_upgrade()  { $SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt-get upgrade -qq -y; }
   _apt_clean()    { $SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt-get clean -qq; }
   _brew_clean()   { brew cleanup --prune=all; }
+fi
+
+# Rootless overrides whatever dry-run or normal mode set above
+if [[ -n "${PENNYKIT_ROOTLESS:-}" ]] && [[ $(id -u) != 0 ]]; then
+  _apt_install() { echo "  [ROOTLESS] Skipping apt install: $*"; }
+  _apt_update()   { echo "  [ROOTLESS] Skipping apt update"; }
+  _apt_upgrade()  { echo "  [ROOTLESS] Skipping apt upgrade"; }
+  _apt_clean()    { echo "  [ROOTLESS] Skipping apt clean"; }
 fi
 
 cd "$PENNYKIT_HOME"

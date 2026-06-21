@@ -26,6 +26,15 @@ cd "$PENNYKIT_HOME"
 mkdir -p "${HOME}/.npm-global"
 npm config set prefix "${HOME}/.npm-global"
 
+# Rootless mode: skip apt, install extern packages to ~/.local/
+PENNYKIT_LOCAL_DIR="${PENNYKIT_LOCAL_DIR:-$HOME/.local}"
+if [[ -n "${PENNYKIT_ROOTLESS:-}" ]]; then
+  echo "  [ROOTLESS] Rootless mode enabled"
+  export PENNYKIT_ROOTLESS
+  export PENNYKIT_LOCAL_DIR
+  mkdir -p "$PENNYKIT_LOCAL_DIR/bin" "$PENNYKIT_LOCAL_DIR/opt" "$PENNYKIT_LOCAL_DIR/go"
+fi
+
 # Packages
 case "$PENNYKIT_OS_ID" in
   "debian")

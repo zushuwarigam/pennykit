@@ -14,6 +14,7 @@ bats tests/bats/*.bats             # BATS tests only
 
 - Slow Docker build tests: `@pytest.mark.slow` — skipped by default, run with `-m "slow"`
 - BATS uses generated `tests/bats/test_helper/*/load.bash` (in `.gitignore`); install bats via `npm install` (in `package.json`)
+- Rootless mode: `PENNYKIT_ROOTLESS=1 bash scripts/package_installer.sh apt` skips apt tiers, installs extern packages to `~/.local/`
 
 ## Project structure
 
@@ -59,3 +60,4 @@ DEFAULT always installed. `-p` flag selects higher tiers (ADMIN, DEV, PENTEST, A
 - Container detection reads `/etc/os-release`; Homebrew skipped on Linux unless `brew.on_linux` sourced
 - Vivid/LS_COLORS, harlequin, and bat aliases are patched via sed in `pennykit_shell.exports`/`.alias`
 - Blue screen during install: sudo's `env_reset` drops `DEBIAN_FRONTEND`/`DEBCONF_FRONTEND`. Every `$SUDO apt` call in `scripts/package_installer.sh` and `packages/extern.packages` must inline env vars: `$SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt ...`
+- Rootless mode (`PENNYKIT_ROOTLESS=1`): apt tiers are skipped entirely. Extern packages (Go, Neovim, dive, vivid, ueberzugpp) install to `$PENNYKIT_LOCAL_DIR` (default `~/.local/`) instead of system paths. Set via `install -r` or `PENNYKIT_ROOTLESS=1` env var.
