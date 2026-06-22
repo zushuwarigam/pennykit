@@ -238,3 +238,86 @@ _add_or_skip() {
     run cat "$PENNYKIT_HOME/configs/extern.problematic"
     assert_output "nonexistent"
 }
+
+# ── _update_or_skip (from bin/pennykit) ──────────────────────────
+
+setup_update_or_skip() {
+    source "$(dirname "$BATS_TEST_FILENAME")/../../lib/helpers.sh"
+    eval "$(sed -n '/^_update_or_skip/,/^}/p' "$(dirname "$BATS_TEST_FILENAME")/../../bin/pennykit")"
+}
+
+@test "_update_or_skip: skips deactivated package" {
+    setup_update_or_skip
+    _is_deactivated() { return 0; }
+    export -f _is_deactivated
+    run _update_or_skip "anypkg"
+    assert_success
+    assert_output --partial "Skipping anypkg"
+}
+
+@test "_update_or_skip: calls add_ when package not installed" {
+    setup_update_or_skip
+    _is_deactivated() { return 1; }
+    add_testpkg() { echo "installing testpkg"; }
+    export -f _is_deactivated add_testpkg
+    run _update_or_skip "testpkg"
+    assert_success
+    assert_output --partial "not installed, trying add_testpkg"
+    assert_output --partial "installing testpkg"
+}
+
+@test "_update_or_skip: calls update_ when package installed" {
+    mkdir -p "$BATS_TEST_TMPDIR/bin"
+    echo '#!/bin/bash' > "$BATS_TEST_TMPDIR/bin/installed_pkg"
+    chmod +x "$BATS_TEST_TMPDIR/bin/installed_pkg"
+    export PATH="$BATS_TEST_TMPDIR/bin:$PATH"
+
+    setup_update_or_skip
+    _is_deactivated() { return 1; }
+    update_installed_pkg() { echo "updating installed_pkg"; }
+    export -f _is_deactivated update_installed_pkg
+    run _update_or_skip "installed_pkg"
+    assert_success
+    assert_output --partial "updating installed_pkg"
+}
+
+@test "_update_or_skip: marks problematic on failed add" {
+    setup_update_or_skip
+    _is_deactivated() { return 1; }
+    add_failpkg() { return 1; }
+    export -f _is_deactivated add_failpkg
+    run _update_or_skip "failpkg"
+    assert_success
+    assert_output --partial "install failed"
+    assert_output --partial "marked as problematic"
+}
+
+@test "_update_or_skip: marks problematic on failed update" {
+    mkdir -p "$BATS_TEST_TMPDIR/bin"
+    echo '#!/bin/bash' > "$BATS_TEST_TMPDIR/bin/update_fail"
+    chmod +x "$BATS_TEST_TMPDIR/bin/update_fail"
+    export PATH="$BATS_TEST_TMPDIR/bin:$PATH"
+
+    setup_update_or_skip
+    _is_deactivated() { return 1; }
+    update_update_fail() { return 1; }
+    export -f _is_deactivated update_update_fail
+    run _update_or_skip "update_fail"
+    assert_success
+    assert_output --partial "update failed"
+    assert_output --partial "marked as problematic"
+}
+
+@test "_update_or_skip: reports no update function when installed without update_" {
+    mkdir -p "$BATS_TEST_TMPDIR/bin"
+    echo '#!/bin/bash' > "$BATS_TEST_TMPDIR/bin/no_update_pkg"
+    chmod +x "$BATS_TEST_TMPDIR/bin/no_update_pkg"
+    export PATH="$BATS_TEST_TMPDIR/bin:$PATH"
+
+    setup_update_or_skip
+    _is_deactivated() { return 1; }
+    export -f _is_deactivated
+    run _update_or_skip "no_update_pkg"
+    assert_success
+    assert_output --partial "already installed, no update function"
+}
