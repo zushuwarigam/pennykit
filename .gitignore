@@ -12,11 +12,16 @@
 
 /tmp/
 
-# Local theme overrides (written by penny theme)
+# Machine-generated config state (written by pennykit commands)
+/configs/extern.problematic
+/configs/extern.skip
+/configs/theme.conf
+/configs/shared/nvim_colorscheme.lua
+/configs/tmux/tmux_theme.conf
 /configs/wezterm/_local_theme.lua
 
-# Failed extern packages (machine-generated state)
-/configs/extern.problematic
+# Pin lazy-lock.json for deterministic Neovim installs
+nvim-starter/*/lazy-lock.json
 
 # BATS vendored helpers (generated)
 /tests/bats/test_helper/*/load.bash
