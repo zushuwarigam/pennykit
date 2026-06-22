@@ -150,7 +150,7 @@ if [[ -v PENNYKIT_APT_DEFAULT ]]; then
   declare -a _npm_pkgs=()
 
   if [[ -v PENNYKIT_NPM_DEFAULT ]] && [[ ${#PENNYKIT_NPM_DEFAULT[@]} -gt 0 ]]; then
-    npm install -g "${PENNYKIT_NPM_DEFAULT[@]}"
+    _npm_install -g "${PENNYKIT_NPM_DEFAULT[@]}"
   fi
 
   for layer in "${layers[@]}"; do

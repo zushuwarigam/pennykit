@@ -129,3 +129,120 @@ EOF
     assert_output --partial "no rootless alternative"
     refute_output --partial "Installing bat"
 }
+
+# ── pipx layer processing ───────────────────────────────────────
+
+@test "package_installer: processes pipx dev packages in dry-run" {
+    export PENNYKIT_DRY_RUN=1
+    export PENNYKIT_PACKAGE_SET=DEV
+    cat > "$PENNYKIT_HOME/packages/pipx.dev" << 'EOF'
+PENNYKIT_PIPX_DEV=(poetry black)
+EOF
+    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    assert_success
+    assert_output --partial "[DRY-RUN] pipx install poetry black"
+}
+
+@test "package_installer: processes pipx admin packages in dry-run" {
+    export PENNYKIT_DRY_RUN=1
+    export PENNYKIT_PACKAGE_SET=ADMIN
+    cat > "$PENNYKIT_HOME/packages/pipx.admin" << 'EOF'
+PENNYKIT_PIPX_ADMIN=(httpie)
+EOF
+    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    assert_success
+    assert_output --partial "[DRY-RUN] pipx install httpie"
+}
+
+@test "package_installer: processes pipx pentest packages in dry-run" {
+    export PENNYKIT_DRY_RUN=1
+    export PENNYKIT_PACKAGE_SET=PENTEST
+    cat > "$PENNYKIT_HOME/packages/pipx.pentest" << 'EOF'
+PENNYKIT_PIPX_PENTEST=(sqlmap)
+EOF
+    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    assert_success
+    assert_output --partial "[DRY-RUN] pipx install sqlmap"
+}
+
+@test "package_installer: deduplicates pipx packages across layers" {
+    export PENNYKIT_DRY_RUN=1
+    export PENNYKIT_PACKAGE_SET=ALL
+    cat > "$PENNYKIT_HOME/packages/pipx.admin" << 'EOF'
+PENNYKIT_PIPX_ADMIN=(common)
+EOF
+    cat > "$PENNYKIT_HOME/packages/pipx.dev" << 'EOF'
+PENNYKIT_PIPX_DEV=(common tool)
+EOF
+    cat > "$PENNYKIT_HOME/packages/pipx.pentest" << 'EOF'
+PENNYKIT_PIPX_PENTEST=(common)
+EOF
+    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    assert_success
+    # "common" should appear only once
+    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    assert_success
+    # Count occurrences of "common" in pipx install calls
+    local count
+    count=$(grep -c "pipx install common" <<< "$output" || true)
+    [[ "$count" -eq 1 ]]
+}
+
+# ── npm layer processing ────────────────────────────────────────
+
+@test "package_installer: processes npm default packages in dry-run" {
+    export PENNYKIT_DRY_RUN=1
+    export PENNYKIT_PACKAGE_SET=DEFAULT
+    cat > "$PENNYKIT_HOME/packages/npm.default" << 'EOF'
+PENNYKIT_NPM_DEFAULT=(tree-sitter-cli)
+EOF
+    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    assert_success
+    assert_output --partial "[DRY-RUN] npm install -g tree-sitter-cli"
+}
+
+@test "package_installer: processes npm dev packages in dry-run" {
+    export PENNYKIT_DRY_RUN=1
+    export PENNYKIT_PACKAGE_SET=DEV
+    mkdir -p "$PENNYKIT_HOME/packages"
+    cat > "$PENNYKIT_HOME/packages/npm.dev" << 'EOF'
+PENNYKIT_NPM_DEV=(typescript)
+EOF
+    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    assert_success
+    assert_output --partial "[DRY-RUN] npm install typescript"
+}
+
+@test "package_installer: deduplicates npm packages across layers" {
+    export PENNYKIT_DRY_RUN=1
+    export PENNYKIT_PACKAGE_SET=ALL
+    cat > "$PENNYKIT_HOME/packages/npm.admin" << 'EOF'
+PENNYKIT_NPM_ADMIN=(shared)
+EOF
+    cat > "$PENNYKIT_HOME/packages/npm.dev" << 'EOF'
+PENNYKIT_NPM_DEV=(shared tool)
+EOF
+    cat > "$PENNYKIT_HOME/packages/npm.pentest" << 'EOF'
+PENNYKIT_NPM_PENTEST=(shared)
+EOF
+    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    assert_success
+    local count
+    count=$(grep -c "npm install shared" <<< "$output" || true)
+    [[ "$count" -eq 1 ]]
+}
+
+@test "package_installer: processes both pipx and npm in same run" {
+    export PENNYKIT_DRY_RUN=1
+    export PENNYKIT_PACKAGE_SET=DEV
+    cat > "$PENNYKIT_HOME/packages/pipx.dev" << 'EOF'
+PENNYKIT_PIPX_DEV=(poetry)
+EOF
+    cat > "$PENNYKIT_HOME/packages/npm.dev" << 'EOF'
+PENNYKIT_NPM_DEV=(typescript)
+EOF
+    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    assert_success
+    assert_output --partial "pipx install poetry"
+    assert_output --partial "npm install typescript"
+}
