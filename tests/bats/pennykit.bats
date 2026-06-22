@@ -304,3 +304,102 @@ EXTERNEOF
     assert_success
     assert_output --partial "already installed, removing from problematic list"
 }
+
+# ── cmd_theme ───────────────────────────────────────────────────
+
+setup_theme_apply() {
+    export PENNYKIT_HOME="$BATS_TEST_TMPDIR/.pennykit"
+    export HOME="$BATS_TEST_TMPDIR/home"
+    mkdir -p "$PENNYKIT_HOME"/{configs/themes,configs/wezterm,configs/tmux,configs/shared,configs/bat,lib}
+
+    cat > "$PENNYKIT_HOME/configs/themes/full.conf" << 'EOF'
+PENNYKIT_THEME_NAME=full
+PENNYKIT_THEME_WEZTERM_LINUX=full-dark
+PENNYKIT_THEME_WEZTERM_MACOS=full-light
+PENNYKIT_THEME_BAT=full-bat
+PENNYKIT_THEME_YAZI=full-yazi
+PENNYKIT_THEME_VIVID=full-vivid
+PENNYKIT_THEME_HARLEQUIN=full-harlequin
+PENNYKIT_THEME_NVIM=full-nvim
+PENNYKIT_THEME_LAZYGIT_BORDER=full-border
+PENNYKIT_THEME_TMUX=minimal
+PENNYKIT_THEME_OMB=full-omb
+PENNYKIT_THEME_OMZ=full-omz
+PENNYKIT_THEME_LF=97
+EOF
+
+    cp "$(dirname "$BATS_TEST_FILENAME")/../../lib/helpers.sh" "$PENNYKIT_HOME/lib/helpers.sh"
+
+    PENNYKIT_BIN="$PENNYKIT_HOME/../bin/pennykit"
+    if [[ ! -f "$PENNYKIT_BIN" ]]; then
+        PENNYKIT_BIN="$(dirname "$BATS_TEST_FILENAME")/../../bin/pennykit"
+    fi
+}
+
+@test "cmd_theme: no args shows current and available themes" {
+    setup_theme_apply
+    # Create a second theme file for listing
+    echo "PENNYKIT_THEME_NAME=other" > "$PENNYKIT_HOME/configs/themes/other.conf"
+    run bash "$PENNYKIT_BIN" theme
+    assert_success
+    assert_output --partial "Current theme: none"
+    assert_output --partial "full"
+    assert_output --partial "other"
+}
+
+@test "cmd_theme: invalid name with path separators exits with error" {
+    run bash "$PENNYKIT_BIN" theme "../evil"
+    assert_failure
+    assert_output --partial "invalid theme name"
+}
+
+@test "cmd_theme: invalid name with slash exits with error" {
+    run bash "$PENNYKIT_BIN" theme "foo/bar"
+    assert_failure
+    assert_output --partial "invalid theme name"
+}
+
+@test "cmd_theme: missing theme file exits with error" {
+    run bash "$PENNYKIT_BIN" theme "nonexistent"
+    assert_failure
+    assert_output --partial "theme 'nonexistent' not found"
+}
+
+@test "cmd_theme: bash fallback writes wezterm theme" {
+    setup_theme_apply
+    printf 'return { linux = "", macos = "" }\n' > "$PENNYKIT_HOME/configs/wezterm/_local_theme.lua"
+    run bash "$PENNYKIT_BIN" theme full
+    assert_success
+    assert_output --partial "Applying theme (fallback)"
+    assert_output --partial "full-dark"
+    run cat "$PENNYKIT_HOME/configs/wezterm/_local_theme.lua"
+    assert_output --partial 'full-dark'
+    assert_output --partial 'full-light'
+}
+
+@test "cmd_theme: bash fallback writes nvim colorscheme" {
+    setup_theme_apply
+    run bash "$PENNYKIT_BIN" theme full
+    assert_success
+    assert_output --partial "full-nvim"
+    run cat "$PENNYKIT_HOME/configs/shared/nvim_colorscheme.lua"
+    assert_output --partial 'full-nvim'
+}
+
+@test "cmd_theme: bash fallback writes theme.conf" {
+    setup_theme_apply
+    run bash "$PENNYKIT_BIN" theme full
+    assert_success
+    assert_output --partial "Theme 'full' applied"
+    run cat "$PENNYKIT_HOME/configs/theme.conf"
+    assert_output --partial 'PENNYKIT_THEME="full"'
+}
+
+@test "cmd_theme: bash fallback validates required variables" {
+    setup_theme_apply
+    # Create theme missing required vars
+    echo "PENNYKIT_THEME_NAME=partial" > "$PENNYKIT_HOME/configs/themes/partial.conf"
+    run bash "$PENNYKIT_BIN" theme partial
+    assert_failure
+    assert_output --partial "missing required variable"
+}
