@@ -1,0 +1,143 @@
+# shellcheck disable=SC1090,SC1091
+[[ -v _APT_ROOTLESS ]] && return || readonly _APT_ROOTLESS=1
+
+# Rootless alternatives for apt packages.
+# Maps package names to installer functions.
+# Sourced by package_installer.sh when PENNYKIT_ROOTLESS=1.
+
+declare -A _ROOTLESS_APT
+
+# ── Shared helpers ──────────────────────────────────────────────
+
+# Install a binary from a GitHub release tarball.
+# Usage: _rootless_gh_release <repo> <asset_pattern> <binary> [dest_name]
+#   repo: "owner/repo"
+#   asset_pattern: "bat-v{VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+#   binary: name of binary file inside archive
+#   dest_name: optional rename (defaults to binary)
+_rootless_gh_release() {
+  local repo="$1" asset="$2" binary="$3"
+  local dest="${4:-$binary}"
+  local ver url tmpdir
+  ver=$(_curl -sL "https://api.github.com/repos/${repo}/releases/latest" \
+    | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+  [[ -z "$ver" ]] && { echo "  WARNING: Could not determine version for ${repo}" >&2; return 1; }
+  url="https://github.com/${repo}/releases/download/v${ver}/${asset//\{VERSION\}/$ver}"
+  echo "  Installing ${dest} v${ver}"
+  tmpdir=$(mktemp -d "/tmp/pk-rootless-${dest}.XXX")
+  _curl -fL "$url" -o "${tmpdir}/archive" 2>/dev/null || { rm -rf "$tmpdir"; return 1; }
+  tar -xzf "${tmpdir}/archive" -C "$tmpdir" 2>/dev/null \
+    || tar -xJf "${tmpdir}/archive" -C "$tmpdir" 2>/dev/null \
+    || { echo "  WARNING: Could not extract archive for ${repo}" >&2; rm -rf "$tmpdir"; return 1; }
+  local found
+  found=$(find "$tmpdir" -type f -name "$binary" 2>/dev/null | head -1)
+  [[ -z "$found" ]] && { echo "  WARNING: Binary '${binary}' not found in archive" >&2; rm -rf "$tmpdir"; return 1; }
+  mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
+  cp "$found" "$PENNYKIT_LOCAL_DIR/bin/$dest"
+  chmod +x "$PENNYKIT_LOCAL_DIR/bin/$dest"
+  rm -rf "$tmpdir"
+  echo "  ${dest} installed to ${PENNYKIT_LOCAL_DIR}/bin/"
+}
+
+# Install via pipx (if available)
+_rootless_pipx() {
+  local pkg="$1"
+  echo "  Installing ${pkg} via pipx"
+  pipx install "$pkg" 2>/dev/null || { echo "  WARNING: pipx install of ${pkg} failed" >&2; return 1; }
+}
+
+# Install via go install
+_rootless_go_install() {
+  local pkg="$1" import_path="$2"
+  echo "  Installing ${pkg} via go install"
+  go install "${import_path}@latest" 2>/dev/null \
+    || { echo "  WARNING: go install of ${pkg} failed" >&2; return 1; }
+}
+
+# ── Package installers ──────────────────────────────────────────
+
+# DEFAULT tier
+_apt_rootless_bat()     { _rootless_gh_release "sharkdp/bat"   "bat-v{VERSION}-x86_64-unknown-linux-gnu.tar.gz"   "bat"; }
+_apt_rootless_ripgrep() { _rootless_gh_release "BurntSushi/ripgrep" "ripgrep-{VERSION}-x86_64-unknown-linux-musl.tar.gz" "rg" "ripgrep"; }
+_apt_rootless_fd_find() { _rootless_gh_release "sharkdp/fd"    "fd-v{VERSION}-x86_64-unknown-linux-musl.tar.gz"   "fd" "fd"; }
+_apt_rootless_lsd()     { _rootless_gh_release "lsd-rs/lsd"    "lsd-{VERSION}-x86_64-unknown-linux-gnu.tar.gz"    "lsd"; }
+_apt_rootless_glow()    { _rootless_gh_release "charmbracelet/glow" "glow_{VERSION}_linux_amd64.tar.gz"            "glow"; }
+_apt_rootless_gdu()     { _rootless_gh_release "dundee/gdu"     "gdu_linux_amd64_static.tgz"                     "gdu"; }
+_apt_rootless_zoxide()  { _rootless_gh_release "ajeetdsouza/zoxide" "zoxide-{VERSION}-x86_64-unknown-linux-musl.tar.gz" "zoxide"; }
+_apt_rootless_bottom()  { _rootless_gh_release "ClementTsang/bottom" "bottom_x86_64-unknown-linux-gnu.tar.gz"    "btm" "bottom"; }
+_apt_rootless_eza()     { _rootless_gh_release "eza-community/eza"  "eza_x86_64-unknown-linux-gnu.tar.gz"        "eza"; }
+_apt_rootless_delta()   { _rootless_gh_release "dandavison/delta" "delta-{VERSION}-x86_64-unknown-linux-gnu.tar.gz" "delta" "git-delta"; }
+_apt_rootless_jq() {
+  echo "  Installing jq"
+  local ver
+  ver=$(_curl -sL "https://api.github.com/repos/jqlang/jq/releases/latest" | grep '"tag_name":' | sed -E 's/.*"jq-([^"]+)".*/\1/')
+  [[ -z "$ver" ]] && { echo "  WARNING: Could not determine jq version" >&2; return 1; }
+  mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
+  _curl -fL "https://github.com/jqlang/jq/releases/download/jq-${ver}/jq-linux64" -o "$PENNYKIT_LOCAL_DIR/bin/jq" || return 1
+  chmod +x "$PENNYKIT_LOCAL_DIR/bin/jq"
+  echo "  jq installed to ${PENNYKIT_LOCAL_DIR}/bin/"
+}
+
+# ADMIN tier
+_apt_rootless_httpie()  { _rootless_pipx "httpie"; }
+_apt_rootless_xh()      { _rootless_gh_release "ducaale/xh"  "xh-v{VERSION}-x86_64-unknown-linux-musl.tar.gz" "xh"; }
+
+# DEV tier
+_apt_rootless_shellcheck() { _rootless_gh_release "koalaman/shellcheck" "shellcheck-v{VERSION}.linux.x86_64.tar.xz" "shellcheck"; }
+_apt_rootless_shfmt()      { _rootless_go_install "shfmt" "mvdan.cc/sh/v3/cmd/shfmt"; }
+_apt_rootless_gopls()      { _rootless_go_install "gopls" "golang.org/x/tools/gopls"; }
+_apt_rootless_delve()      { _rootless_go_install "delve" "github.com/go-delve/delve/cmd/dlv"; }
+_apt_rootless_binwalk()    { _rootless_pipx "binwalk"; }
+
+# PENTEST tier
+_apt_rootless_gobuster()   { _rootless_go_install "gobuster" "github.com/OJ/gobuster/v3"; }
+_apt_rootless_dnsrecon()   { _rootless_pipx "dnsrecon"; }
+_apt_rootless_recon_ng()   { _rootless_pipx "recon-ng"; }
+_apt_rootless_lynis() {
+  echo "  Installing lynis"
+  local ver
+  ver=$(_curl -sL "https://api.github.com/repos/CISOfy/lynis/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+  [[ -z "$ver" ]] && { echo "  WARNING: Could not determine lynis version" >&2; return 1; }
+  local tmpdir
+  tmpdir=$(mktemp -d "/tmp/pk-rootless-lynis.XXX")
+  _curl -fL "https://github.com/CISOfy/lynis/archive/refs/tags/v${ver}.tar.gz" -o "${tmpdir}/archive.tar.gz" || { rm -rf "$tmpdir"; return 1; }
+  tar -xzf "${tmpdir}/archive.tar.gz" -C "$tmpdir"
+  mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
+  cp -r "$tmpdir/lynis-${ver}" "$PENNYKIT_LOCAL_DIR/bin/lynis"
+  chmod +x "$PENNYKIT_LOCAL_DIR/bin/lynis/lynis"
+  ln -sf "$PENNYKIT_LOCAL_DIR/bin/lynis/lynis" "$PENNYKIT_LOCAL_DIR/bin/lynis"
+  rm -rf "$tmpdir"
+  echo "  lynis installed to ${PENNYKIT_LOCAL_DIR}/bin/"
+}
+
+# ── Registration ───────────────────────────────────────────────
+
+# DEFAULT tier
+_ROOTLESS_APT[bat]=_apt_rootless_bat
+_ROOTLESS_APT[ripgrep]=_apt_rootless_ripgrep
+_ROOTLESS_APT[fd-find]=_apt_rootless_fd_find
+_ROOTLESS_APT[lsd]=_apt_rootless_lsd
+_ROOTLESS_APT[glow]=_apt_rootless_glow
+_ROOTLESS_APT[gdu]=_apt_rootless_gdu
+_ROOTLESS_APT[zoxide]=_apt_rootless_zoxide
+_ROOTLESS_APT[btm]=_apt_rootless_bottom
+_ROOTLESS_APT[eza]=_apt_rootless_eza
+_ROOTLESS_APT[git-delta]=_apt_rootless_delta
+_ROOTLESS_APT[jq]=_apt_rootless_jq
+
+# ADMIN tier
+_ROOTLESS_APT[httpie]=_apt_rootless_httpie
+_ROOTLESS_APT[xh]=_apt_rootless_xh
+
+# DEV tier
+_ROOTLESS_APT[shellcheck]=_apt_rootless_shellcheck
+_ROOTLESS_APT[shfmt]=_apt_rootless_shfmt
+_ROOTLESS_APT[gopls]=_apt_rootless_gopls
+_ROOTLESS_APT[delve]=_apt_rootless_delve
+_ROOTLESS_APT[binwalk]=_apt_rootless_binwalk
+
+# PENTEST tier
+_ROOTLESS_APT[gobuster]=_apt_rootless_gobuster
+_ROOTLESS_APT[dnsrecon]=_apt_rootless_dnsrecon
+_ROOTLESS_APT[recon-ng]=_apt_rootless_recon_ng
+_ROOTLESS_APT[lynis]=_apt_rootless_lynis

@@ -31,7 +31,7 @@ bats tests/bats/*.bats             # BATS tests only
 
 ## Package layers
 
-DEFAULT always installed. `-p` flag selects higher tiers (ADMIN, DEV, PENTEST, ALL). Pyramid: each tier adds to the previous. DEV includes DEFAULT + dev packages, etc.
+DEFAULT always installed. `-p` flag selects higher tiers (ADMIN, DEV, PENTEST, ALL). Pyramid: each tier adds to the previous. ALL = DEFAULT + admin + dev + pentest. DEV = DEFAULT + dev. PENTEST = DEFAULT + dev + pentest.
 
 ## Architecture notes
 

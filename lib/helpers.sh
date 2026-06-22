@@ -47,13 +47,6 @@ _verify_sha256() {
     echo "  SHA256 verified: $(basename "$file")"
 }
 
-_cleanup_on_exit() {
-    local files=("$@")
-    for f in "${files[@]}"; do
-        [[ -f "$f" ]] && rm -f "$f" || true
-    done
-}
-
 _is_deactivated() {
     local pkg="$1"
     local skip_file="${PENNYKIT_HOME:-$HOME/.pennykit}/configs/extern.skip"

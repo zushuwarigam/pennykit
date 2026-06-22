@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1091
 set -euo pipefail
-printf "### %s\n" "$(readlink -f "$0")"
 
-_readlinkf() { command -v greadlink >/dev/null 2>&1 && greadlink -f "$@" || readlink -f "$@"; }
-
-SCRIPT_DIR="$(cd "$(dirname "$(_readlinkf "$0")")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_DIR"
 

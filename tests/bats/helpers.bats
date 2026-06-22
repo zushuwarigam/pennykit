@@ -53,20 +53,6 @@ setup() {
     assert_output "$BATS_TEST_TMPDIR/regular"
 }
 
-@test "_cleanup_on_exit: removes temp files" {
-    touch "$BATS_TEST_TMPDIR/temp1" "$BATS_TEST_TMPDIR/temp2"
-    _cleanup_on_exit "$BATS_TEST_TMPDIR/temp1" "$BATS_TEST_TMPDIR/temp2"
-    assert [ ! -f "$BATS_TEST_TMPDIR/temp1" ]
-    assert [ ! -f "$BATS_TEST_TMPDIR/temp2" ]
-}
-
-@test "_cleanup_on_exit: does not fail on missing files" {
-    touch "$BATS_TEST_TMPDIR/existing"
-    _cleanup_on_exit "$BATS_TEST_TMPDIR/nonexistent"
-    _cleanup_on_exit "$BATS_TEST_TMPDIR/existing"
-    assert [ ! -f "$BATS_TEST_TMPDIR/existing" ]
-}
-
 @test "_curl: includes -fL flags" {
     run _curl --version
     assert_success

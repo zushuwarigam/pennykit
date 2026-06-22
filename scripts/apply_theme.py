@@ -217,10 +217,18 @@ def apply_sed_lf(entry, vars_, dry_run):
 
 
 _SAFE_VAR_RE = re.compile(r'^[a-zA-Z0-9_.\-:@/]+$')
+_ALLOWED_PATH_PREFIXES = [os.path.normpath(p) + os.sep for p in [
+    PENNYKIT_HOME,
+    os.path.expanduser("~"),
+]]
 
 def _validate_post_cmd(cmd):
     for word in shlex.split(cmd):
         if word.startswith("/") or word.startswith("."):
+            resolved = os.path.normpath(os.path.join(os.getcwd(), word))
+            allowed = any(resolved.startswith(p) for p in _ALLOWED_PATH_PREFIXES)
+            if not allowed:
+                return False
             continue
         if word in ("true", "false", "||", "&&", "2>/dev/null", ">/dev/null"):
             continue

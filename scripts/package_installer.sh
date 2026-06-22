@@ -47,15 +47,26 @@ else
   _brew_clean()   { brew cleanup --prune=all; }
 fi
 
+cd "$PENNYKIT_HOME"
+
 # Rootless overrides whatever dry-run or normal mode set above
+declare -A _ROOTLESS_APT 2>/dev/null || true
 if [[ -n "${PENNYKIT_ROOTLESS:-}" ]] && [[ $(id -u) != 0 ]]; then
-  _apt_install() { echo "  [ROOTLESS] Skipping apt install: $*"; }
+  source "${PENNYKIT_HOME}/packages/apt.rootless" 2>/dev/null || true
+  _apt_install() {
+    local pkg
+    for pkg in "$@"; do
+      if [[ -n "${_ROOTLESS_APT[$pkg]+_}" ]]; then
+        "${_ROOTLESS_APT[$pkg]}"
+      else
+        echo "  [ROOTLESS] Skipping apt install: $pkg (no rootless alternative)"
+      fi
+    done
+  }
   _apt_update()   { echo "  [ROOTLESS] Skipping apt update"; }
   _apt_upgrade()  { echo "  [ROOTLESS] Skipping apt upgrade"; }
   _apt_clean()    { echo "  [ROOTLESS] Skipping apt clean"; }
 fi
-
-cd "$PENNYKIT_HOME"
 
 _add_or_skip() {
     local pkg="$1"
