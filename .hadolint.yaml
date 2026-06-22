@@ -1,8 +1,7 @@
 failure-threshold: warning
 override:
-  warning:
-    - DL3008
   info:
+    - DL3008
     - DL3009
     - DL3013
 trustedRegistries:

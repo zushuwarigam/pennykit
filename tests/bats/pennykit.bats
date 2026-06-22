@@ -397,9 +397,57 @@ EOF
 
 @test "cmd_theme: bash fallback validates required variables" {
     setup_theme_apply
-    # Create theme missing required vars
     echo "PENNYKIT_THEME_NAME=partial" > "$PENNYKIT_HOME/configs/themes/partial.conf"
     run bash "$PENNYKIT_BIN" theme partial
     assert_failure
     assert_output --partial "missing required variable"
+}
+
+# ── cmd_doctor error paths ───────────────────────────────────────
+
+@test "cmd_doctor: reports error when not a git repo" {
+    run bash "$PENNYKIT_BIN" doctor
+    assert_success
+    assert_output --partial "not a git repo"
+}
+
+@test "cmd_doctor: reports error for missing nvim symlink" {
+    git init "$PENNYKIT_HOME"
+    run bash "$PENNYKIT_BIN" doctor
+    assert_success
+    assert_output --partial "Symlink: Neovim (not found)"
+}
+
+@test "cmd_doctor: reports warning for missing theme" {
+    git init "$PENNYKIT_HOME"
+    run bash "$PENNYKIT_BIN" doctor
+    assert_success
+    assert_output --partial "Theme: not configured"
+}
+
+@test "cmd_doctor: reports error when theme config missing" {
+    git init "$PENNYKIT_HOME"
+    echo 'PENNYKIT_THEME="nonexistent"' > "$PENNYKIT_HOME/configs/theme.conf"
+    run bash "$PENNYKIT_BIN" doctor
+    assert_success
+    assert_output --partial "Theme: nonexistent config missing"
+}
+
+@test "cmd_doctor: reports summary with errors and warnings" {
+    run bash "$PENNYKIT_BIN" doctor
+    assert_success
+    assert_output --partial "errors"
+    assert_output --partial "warnings"
+}
+
+@test "cmd_doctor: detects valid repo and theme" {
+    git init "$PENNYKIT_HOME"
+    git -C "$PENNYKIT_HOME" config user.email "test@test.com"
+    git -C "$PENNYKIT_HOME" config user.name "Test"
+    echo 'PENNYKIT_THEME="test"' > "$PENNYKIT_HOME/configs/theme.conf"
+    mkdir -p "$HOME/.config/nvim"
+    run bash "$PENNYKIT_BIN" doctor
+    assert_success
+    assert_output --partial "Repository: valid"
+    assert_output --partial "Theme: test"
 }

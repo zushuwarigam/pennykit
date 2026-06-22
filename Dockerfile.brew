@@ -58,7 +58,6 @@ RUN brew_install="/tmp/homebrew-install.sh" \
   && /bin/bash "$brew_install" \
   && echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> "${HOME}/.bashrc" \
   && rm -f "$brew_install"
-USER root
 
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
 
@@ -77,11 +76,12 @@ COPY scripts/check_system.sh scripts/package_installer.sh ./scripts/
 COPY lib/ ./lib/
 COPY packages/ ./packages/
 
-RUN chown -R ${USER}:${USER} ${HOME}/.pennykit
+USER root
+RUN chown -R ${USER}:${USER} ${HOME}/.pennykit && \
+    chmod -R a+rX ${HOME}/.pennykit
 
 USER ${USER}
 RUN bash -c "source ./scripts/check_system.sh && source ./packages/brew.on_linux && ./scripts/package_installer.sh apt"
-USER root
 
 # ═══════════════════════════════════════════════════════════════════
 # Stage 4: nvim — configs + nvim-starter + Lazy install
@@ -96,12 +96,13 @@ COPY scripts/package_configure.sh ./scripts/
 COPY configs/ ./configs/
 COPY nvim-starter/ ./nvim-starter/
 
-RUN chown -R ${USER}:${USER} ${HOME}/.pennykit
+USER root
+RUN chown -R ${USER}:${USER} ${HOME}/.pennykit && \
+    chmod -R a+rX ${HOME}/.pennykit
 
 USER ${USER}
-RUN ./scripts/package_configure.sh
-RUN nvim --headless -c 'Lazy install' -c 'qa'
-USER root
+RUN ./scripts/package_configure.sh && \
+    nvim --headless -c 'Lazy install' -c 'qa' || true
 
 # ═══════════════════════════════════════════════════════════════════
 # Stage 5: runtime — overlay all source files

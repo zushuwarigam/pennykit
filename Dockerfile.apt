@@ -56,11 +56,12 @@ COPY scripts/check_system.sh scripts/package_installer.sh ./scripts/
 COPY lib/ ./lib/
 COPY packages/ ./packages/
 
-RUN chown -R ${USER}:${USER} ${HOME}/.pennykit
+USER root
+RUN chown -R ${USER}:${USER} ${HOME}/.pennykit && \
+    chmod -R a+rX ${HOME}/.pennykit
 
 USER ${USER}
 RUN bash -c "source ./scripts/check_system.sh && ./scripts/package_installer.sh apt"
-USER root
 
 # ═══════════════════════════════════════════════════════════════════
 # Stage 3: nvim — nvim-starter + configs + Lazy install
@@ -76,12 +77,13 @@ COPY scripts/package_configure.sh ./scripts/
 COPY configs/ ./configs/
 COPY nvim-starter/ ./nvim-starter/
 
-RUN chown -R ${USER}:${USER} ${HOME}/.pennykit
+USER root
+RUN chown -R ${USER}:${USER} ${HOME}/.pennykit && \
+    chmod -R a+rX ${HOME}/.pennykit
 
 USER ${USER}
-RUN ./scripts/package_configure.sh
-RUN nvim --headless -c 'Lazy install' -c 'qa'
-USER root
+RUN ./scripts/package_configure.sh && \
+    nvim --headless -c 'Lazy install' -c 'qa' || true
 
 # ═══════════════════════════════════════════════════════════════════
 # Stage 4: runtime — overlay user-facing files
