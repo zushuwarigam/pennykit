@@ -119,3 +119,84 @@ setup() {
     run bash "$PENNYKIT_BIN" branch
     assert_success
 }
+
+# ── _nvim_config_type ───────────────────────────────────────────
+
+@test "_nvim_config_type: returns 'none' when no config directory" {
+    source "$PENNYKIT_HOME/lib/helpers.sh"
+    eval "$(sed -n '/^_nvim_config_type/,/^}/p' "$PENNYKIT_BIN")"
+    run _nvim_config_type
+    assert_success
+    assert_output "none"
+}
+
+@test "_nvim_config_type: returns 'directory' when regular directory exists" {
+    mkdir -p "$HOME/.config/nvim"
+    source "$PENNYKIT_HOME/lib/helpers.sh"
+    eval "$(sed -n '/^_nvim_config_type/,/^}/p' "$PENNYKIT_BIN")"
+    run _nvim_config_type
+    assert_success
+    assert_output "directory"
+}
+
+@test "_nvim_config_type: returns 'symlink' when linked to nvim-starter" {
+    mkdir -p "$HOME/.config"
+    mkdir -p "$PENNYKIT_HOME/nvim-starter/astronvim_v6"
+    ln -s "$PENNYKIT_HOME/nvim-starter/astronvim_v6" "$HOME/.config/nvim"
+    source "$PENNYKIT_HOME/lib/helpers.sh"
+    eval "$(sed -n '/^_nvim_config_type/,/^}/p' "$PENNYKIT_BIN")"
+    run _nvim_config_type
+    assert_success
+    assert_output "symlink"
+}
+
+@test "_nvim_config_type: returns 'external_symlink' when linked elsewhere" {
+    mkdir -p "$HOME/.config"
+    mkdir -p "$BATS_TEST_TMPDIR/external"
+    ln -s "$BATS_TEST_TMPDIR/external" "$HOME/.config/nvim"
+    source "$PENNYKIT_HOME/lib/helpers.sh"
+    eval "$(sed -n '/^_nvim_config_type/,/^}/p' "$PENNYKIT_BIN")"
+    run _nvim_config_type
+    assert_success
+    assert_output "external_symlink"
+}
+
+@test "cmd_nvim: select creates symlink when type is 'none'" {
+    mkdir -p "$PENNYKIT_HOME/nvim-starter/astronvim_v6"
+    run bash "$PENNYKIT_BIN" nvim <<< "1"
+    assert_success
+    [[ -L "$HOME/.config/nvim" ]]
+}
+
+@test "cmd_nvim: switching configs removes nvim data dirs" {
+    mkdir -p "$PENNYKIT_HOME/nvim-starter/astronvim_v6"
+    mkdir -p "$PENNYKIT_HOME/nvim-starter/lazyvim"
+    ln -s "$PENNYKIT_HOME/nvim-starter/astronvim_v6" "$HOME/.config/nvim"
+    mkdir -p "$HOME/.local/share/nvim" "$HOME/.local/state/nvim" "$HOME/.cache/nvim"
+    run bash "$PENNYKIT_BIN" nvim <<< "2"
+    assert_success
+    [[ ! -d "$HOME/.local/share/nvim" ]]
+    [[ ! -d "$HOME/.local/state/nvim" ]]
+    [[ ! -d "$HOME/.cache/nvim" ]]
+}
+
+@test "cmd_nvim: disable removes symlink" {
+    mkdir -p "$PENNYKIT_HOME/nvim-starter/astronvim_v6"
+    mkdir -p "$PENNYKIT_HOME/nvim-starter/lazyvim"
+    mkdir -p "$PENNYKIT_HOME/nvim-starter/kickstart"
+    ln -s "$PENNYKIT_HOME/nvim-starter/astronvim_v6" "$HOME/.config/nvim"
+    # Option 3 is the find order: astronvim_v6 -> lazyvim -> kickstart -> "Disable nvim config" (index 4? let's verify)
+    # Actually with 3 dirs + "Disable" = 4 options, "Disable" is option 4
+    run bash "$PENNYKIT_BIN" nvim <<< "4"
+    assert_success
+    [[ ! -e "$HOME/.config/nvim" ]]
+}
+
+@test "cmd_nvim: shows available configs" {
+    mkdir -p "$PENNYKIT_HOME/nvim-starter/astronvim_v6"
+    mkdir -p "$PENNYKIT_HOME/nvim-starter/lazyvim"
+    run bash "$PENNYKIT_BIN" nvim <<< "1"
+    assert_success
+    assert_output --partial "astronvim_v6"
+    assert_output --partial "lazyvim"
+}
