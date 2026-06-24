@@ -493,9 +493,15 @@ cmd_doctor() {
 
     # Required binaries
     local binaries=("nvim" "git" "rg" "fzf" "tmux" "lazygit" "bat" "lf" "fd" "jq" "zoxide")
+    # Debian/Ubuntu renames: some upstream binaries have different names
+    local -A bin_fallback
+    bin_fallback["bat"]="batcat"
+    bin_fallback["fd"]="fdfind"
     for bin in "${binaries[@]}"; do
         if command -v "$bin" >/dev/null 2>&1; then
             echo "  ${GREEN}✓${RESET} Binary: $bin"
+        elif [[ -n "${bin_fallback[$bin]:-}" ]] && command -v "${bin_fallback[$bin]}" >/dev/null 2>&1; then
+            echo "  ${GREEN}✓${RESET} Binary: $bin (as ${bin_fallback[$bin]})"
         else
             echo "  ${YELLOW}⚠${RESET} Binary: $bin (not found)"
             ((++warnings))
