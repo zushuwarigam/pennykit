@@ -227,12 +227,19 @@ function M.picker()
           current_picker:refresh(make_finder(), { reset_prompt = false })
           -- Find the plugin in new results and select it
           if target_name then
-            local results = current_picker.finder.results
-            for i, entry in ipairs(results) do
-              if entry.value.name == target_name then
-                current_picker:set_selection(i - 1)
-                return
+            -- Use picker's internal find function
+            local found = false
+            for i = 0, current_picker.manager:num_results() - 1 do
+              local entry = current_picker.manager:GetEntry(i)
+              if entry and entry.value and entry.value.name == target_name then
+                current_picker:set_selection(i)
+                found = true
+                break
               end
+            end
+            if not found then
+              -- Fallback: just keep first entry selected
+              current_picker:set_selection(0)
             end
           end
         end
