@@ -169,10 +169,28 @@ function M.picker()
     return
   end
 
-  -- Track state locally
+  -- Track state locally (will be updated on toggle)
   local plugin_state = {}
   for _, p in ipairs(plugins) do
     plugin_state[p.name] = p.enabled
+  end
+
+  -- Helper to create finder with current state
+  local function make_finder()
+    return finders.new_table {
+      results = plugins,
+      entry_maker = function(entry)
+        local enabled = plugin_state[entry.name]
+        local status = enabled and "✓" or "✗"
+        local display = string.format(" [%s] %s", status, entry.name)
+        if entry.description ~= "" then display = display .. " — " .. entry.description end
+        return {
+          value = entry,
+          display = display,
+          ordinal = entry.name,
+        }
+      end,
+    }
   end
 
   -- Create custom picker
@@ -180,22 +198,7 @@ function M.picker()
     .new({}, {
       prompt_title = "PennyKit Plugins",
       results_title = string.format("%d plugins (synced: %d new)", #plugins, stats.added),
-      finder = finders.new_table {
-        results = plugins,
-        entry_maker = function(entry)
-          local enabled = plugin_state[entry.name]
-          local status = enabled and "✓" or "✗"
-          local display = string.format(" [%s] %s", status, entry.name)
-          if entry.description ~= "" then display = display .. " — " .. entry.description end
-          return {
-            value = entry,
-            display = display,
-            ordinal = entry.name,
-            -- For sorting: enabled plugins first
-            ordinal_sort = (enabled and 0 or 1) .. entry.name,
-          }
-        end,
-      },
+      finder = make_finder(),
       sorter = conf.generic_sorter {},
       layout_strategy = "vertical",
       layout_config = {
@@ -206,17 +209,12 @@ function M.picker()
           height = 0.85,
         },
       },
-      -- Multi-select with Tab/S-Tab
       selection_strategy = "reset",
       attach_mappings = function(prompt_bufnr, map)
-        -- Helper to update display
-        local function update_display(selection)
-          local plugin = selection.value
-          local enabled = plugin_state[plugin.name]
-          local status = enabled and "✓" or "✗"
-          local new_display = string.format(" [%s] %s", status, plugin.name)
-          if plugin.description ~= "" then new_display = new_display .. " — " .. plugin.description end
-          selection.display = new_display
+        -- Helper to refresh picker display
+        local function refresh_picker()
+          local current_picker = action_state.get_current_picker(prompt_bufnr)
+          current_picker:refresh(make_finder(), { reset_prompt = true })
         end
 
         -- Toggle current selection with <Tab> in insert mode
@@ -226,8 +224,7 @@ function M.picker()
             local plugin = selection.value
             plugin_state[plugin.name] = not plugin_state[plugin.name]
             pk.set_enabled(plugin.name, plugin_state[plugin.name])
-            update_display(selection)
-            actions.move_selection_next(prompt_bufnr)
+            refresh_picker()
             local status = plugin_state[plugin.name] and "enabled" or "disabled"
             vim.notify(string.format("%s: %s", plugin.name, status), vim.log.levels.INFO)
           end
@@ -240,8 +237,7 @@ function M.picker()
             local plugin = selection.value
             plugin_state[plugin.name] = not plugin_state[plugin.name]
             pk.set_enabled(plugin.name, plugin_state[plugin.name])
-            update_display(selection)
-            actions.move_selection_next(prompt_bufnr)
+            refresh_picker()
             local status = plugin_state[plugin.name] and "enabled" or "disabled"
             vim.notify(string.format("%s: %s", plugin.name, status), vim.log.levels.INFO)
           end
@@ -255,9 +251,7 @@ function M.picker()
               pk.set_enabled(p.name, true)
             end
           end
-          -- Refresh picker
-          local current_picker = action_state.get_current_picker(prompt_bufnr)
-          current_picker:refresh()
+          refresh_picker()
           vim.notify("All plugins enabled", vim.log.levels.INFO)
         end)
 
@@ -269,8 +263,7 @@ function M.picker()
               pk.set_enabled(p.name, false)
             end
           end
-          local current_picker = action_state.get_current_picker(prompt_bufnr)
-          current_picker:refresh()
+          refresh_picker()
           vim.notify("All plugins disabled", vim.log.levels.INFO)
         end)
 
@@ -377,7 +370,8 @@ end
 
 --- Show status of all plugins
 function M.show_status()
-  local registry = pk.load_registry()
+  -- Always load fresh from disk
+  local registry = pk.load_registry(true)
   local plugins_dir = vim.fn.stdpath "config" .. "/lua/plugins"
   local files = vim.fn.glob(plugins_dir .. "/*.lua", false, true)
 
@@ -390,11 +384,9 @@ function M.show_status()
     "  PennyKit Plugin Status",
     "  ═══════════════════════════════════════════════════",
     "",
-    "  Registry: lua/pennykit/plugin_registry.json",
+    "  [✓] = enabled  [✗] = disabled",
     "",
-    "  [✓] = enabled  [✗] = disabled  [?] = not in registry",
-    "",
-    "  Enabled plugins:",
+    "  Enabled:",
     "  ────────────────────────────────────────────────────",
   }
 
@@ -410,8 +402,9 @@ function M.show_status()
         enabled = entry.enabled
         source = entry.source or "static"
       else
-        enabled = true -- default
+        enabled = true -- default: not in registry = enabled
         source = "untracked"
+        untracked_count = untracked_count + 1
       end
       table.insert(all_plugins, { name = name, enabled = enabled, source = source })
     end
@@ -420,7 +413,7 @@ function M.show_status()
   -- Sort by name
   table.sort(all_plugins, function(a, b) return a.name < b.name end)
 
-  -- Group enabled and disabled
+  -- Show enabled plugins
   for _, p in ipairs(all_plugins) do
     if p.enabled then
       enabled_count = enabled_count + 1
@@ -428,10 +421,15 @@ function M.show_status()
     end
   end
 
+  if enabled_count == 0 then
+    table.insert(lines, "    (none)")
+  end
+
   table.insert(lines, "")
-  table.insert(lines, "  Disabled plugins:")
+  table.insert(lines, "  Disabled:")
   table.insert(lines, "  ────────────────────────────────────────────────────")
 
+  -- Show disabled plugins
   for _, p in ipairs(all_plugins) do
     if not p.enabled then
       disabled_count = disabled_count + 1
@@ -439,10 +437,16 @@ function M.show_status()
     end
   end
 
+  if disabled_count == 0 then
+    table.insert(lines, "    (none)")
+  end
+
   table.insert(lines, "")
-  table.insert(lines, string.format("  Total: %d enabled, %d disabled, %d total", enabled_count, disabled_count, #all_plugins))
+  table.insert(lines, string.format("  Total: %d enabled, %d disabled, %d untracked", enabled_count, disabled_count, untracked_count))
   table.insert(lines, "")
-  table.insert(lines, "  Use :PKPlugins to toggle plugins with Telescope")
+  table.insert(lines, "  Commands:")
+  table.insert(lines, "    :PKPlugins    - Toggle plugins with Telescope")
+  table.insert(lines, "    :PKPluginSync - Sync registry with lua/plugins/")
   table.insert(lines, "")
 
   -- Create floating window
