@@ -225,21 +225,15 @@ function M.picker()
           local selection = action_state.get_selected_entry()
           local target_name = selection and selection.value.name
           current_picker:refresh(make_finder(), { reset_prompt = false })
-          -- Find the plugin in new results and select it
+          -- Find the plugin in new results using iterator
           if target_name then
-            -- Use picker's internal find function
-            local found = false
-            for i = 0, current_picker.manager:num_results() - 1 do
-              local entry = current_picker.manager:GetEntry(i)
+            local idx = 0
+            for entry in current_picker.manager:iter() do
               if entry and entry.value and entry.value.name == target_name then
-                current_picker:set_selection(i)
-                found = true
-                break
+                current_picker:set_selection(idx)
+                return
               end
-            end
-            if not found then
-              -- Fallback: just keep first entry selected
-              current_picker:set_selection(0)
+              idx = idx + 1
             end
           end
         end
