@@ -216,10 +216,25 @@ function M.picker()
       },
       selection_strategy = "reset",
       attach_mappings = function(prompt_bufnr, map)
+        -- Track changes to apply on close
+        local changes = {} -- { [name] = enabled_state }
+
         -- Helper to refresh picker display
         local function refresh_picker()
           local current_picker = action_state.get_current_picker(prompt_bufnr)
           current_picker:refresh(make_finder(), { reset_prompt = true })
+        end
+
+        -- Helper to apply all pending changes
+        local function apply_changes()
+          local applied = 0
+          for name, enabled in pairs(changes) do
+            pk.set_enabled(name, enabled)
+            applied = applied + 1
+          end
+          if applied > 0 then
+            vim.notify(string.format("Applied %d plugin changes", applied), vim.log.levels.INFO)
+          end
         end
 
         -- Toggle current selection with <Tab> in insert mode
@@ -227,11 +242,12 @@ function M.picker()
           local selection = action_state.get_selected_entry()
           if selection then
             local plugin = selection.value
-            plugin_state[plugin.name] = not plugin_state[plugin.name]
-            pk.set_enabled(plugin.name, plugin_state[plugin.name])
+            local new_state = not plugin_state[plugin.name]
+            plugin_state[plugin.name] = new_state
+            changes[plugin.name] = new_state
             refresh_picker()
-            local status = plugin_state[plugin.name] and "enabled" or "disabled"
-            vim.notify(string.format("%s: %s", plugin.name, status), vim.log.levels.INFO)
+            local status = new_state and "+" or "-"
+            vim.notify(string.format("[%s] %s", status, plugin.name), vim.log.levels.INFO)
           end
         end)
 
@@ -240,11 +256,12 @@ function M.picker()
           local selection = action_state.get_selected_entry()
           if selection then
             local plugin = selection.value
-            plugin_state[plugin.name] = not plugin_state[plugin.name]
-            pk.set_enabled(plugin.name, plugin_state[plugin.name])
+            local new_state = not plugin_state[plugin.name]
+            plugin_state[plugin.name] = new_state
+            changes[plugin.name] = new_state
             refresh_picker()
-            local status = plugin_state[plugin.name] and "enabled" or "disabled"
-            vim.notify(string.format("%s: %s", plugin.name, status), vim.log.levels.INFO)
+            local status = new_state and "+" or "-"
+            vim.notify(string.format("[%s] %s", status, plugin.name), vim.log.levels.INFO)
           end
         end)
 
@@ -253,7 +270,7 @@ function M.picker()
           for _, p in ipairs(plugins) do
             if not plugin_state[p.name] then
               plugin_state[p.name] = true
-              pk.set_enabled(p.name, true)
+              changes[p.name] = true
             end
           end
           refresh_picker()
@@ -265,18 +282,29 @@ function M.picker()
           for _, p in ipairs(plugins) do
             if plugin_state[p.name] then
               plugin_state[p.name] = false
-              pk.set_enabled(p.name, false)
+              changes[p.name] = false
             end
           end
           refresh_picker()
           vim.notify("All plugins disabled", vim.log.levels.INFO)
         end)
 
-        -- Close on Enter and auto-sync
+        -- Close on Enter: apply changes and sync
         actions.select_default:replace(function()
+          apply_changes()
           actions.close(prompt_bufnr)
           vim.notify("Running :Lazy sync...", vim.log.levels.INFO)
           vim.cmd("Lazy sync")
+        end)
+
+        -- Close on Escape: apply changes without sync
+        map("i", "<Esc>", function()
+          apply_changes()
+          actions.close(prompt_bufnr)
+        end)
+        map("n", "<Esc>", function()
+          apply_changes()
+          actions.close(prompt_bufnr)
         end)
 
         -- Show help
