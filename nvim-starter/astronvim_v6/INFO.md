@@ -276,7 +276,6 @@ Interactive plugin management with persistent registry. All plugins can be enabl
 | `:PKPluginDisable` | Disable an enabled plugin |
 | `:PKPluginToggle` | Toggle plugin enabled/disabled |
 | `:PKPluginDescribe` | Edit plugin description |
-| `:PKToolAdd` | Add external tool (non-Neovim) |
 
 ### Key Mappings
 
@@ -288,7 +287,6 @@ Interactive plugin management with persistent registry. All plugins can be enabl
 | `<Leader>pd` | Disable plugin |
 | `<Leader>pt` | Toggle plugin |
 | `<Leader>pD` | Describe plugin |
-| `<Leader>pT` | Add external tool |
 
 ### How it works
 
@@ -321,10 +319,11 @@ Edit plugin files directly in `lua/plugins/` to add:
 - `cmd = "..."` for command-based loading
 - `ft = "..."` for filetype-based loading
 
-### External tools
+### System packages
 
-Non-Neovim packages tracked in the registry:
-- `sharkdp/vivid` - Themeable LS_COLORS generator (install via `cargo install vivid`)
+External tools (vivid, fzf, lazygit, etc.) are managed by PennyKit, not the nvim plugin manager:
+- Install: `add_vivid` or run `./install`
+- Config: `packages/extern.packages`
 
 ## Tips & Tricks
 

@@ -32,7 +32,3 @@ end, { desc = "Edit plugin description" })
 vim.api.nvim_create_user_command('PKPluginSync', function()
   plugin_manager.sync_plugins()
 end, { desc = "Sync registry with lua/plugins/ directory" })
-
-vim.api.nvim_create_user_command('PKToolAdd', function()
-  plugin_manager.add_external_tool()
-end, { desc = "Add external tool (non-Neovim package)" })

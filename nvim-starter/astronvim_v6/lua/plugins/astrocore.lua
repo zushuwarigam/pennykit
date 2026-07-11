@@ -97,7 +97,6 @@ return {
         ["<Leader>pd"] = { "<cmd>PKPluginDisable<cr>", desc = "Disable plugin" },
         ["<Leader>pt"] = { "<cmd>PKPluginToggle<cr>", desc = "Toggle plugin" },
         ["<Leader>pD"] = { "<cmd>PKPluginDescribe<cr>", desc = "Describe plugin" },
-        ["<Leader>pT"] = { "<cmd>PKToolAdd<cr>", desc = "Add external tool" },
         ["<Tab>"] = { "<cmd>bnext<CR>", desc = "Next buffer" },
         ["<S-Tab>"] = { "<cmd>bprev<CR>", desc = "Previous buffer" },
         ["<M-Up>"] = { function() vim.cmd("resize +2") end, desc = "Increase window height" },

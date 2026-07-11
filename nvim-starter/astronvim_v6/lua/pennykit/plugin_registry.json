@@ -1,10 +1,3 @@
 {
-  "plugins": {
-    "sharkdp/vivid": {
-      "enabled": true,
-      "description": "Themeable LS_COLORS generator for ls output",
-      "source": "external",
-      "type": "tool"
-    }
-  }
+  "plugins": {}
 }
