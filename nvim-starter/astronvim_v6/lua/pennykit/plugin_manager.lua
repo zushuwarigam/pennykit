@@ -219,14 +219,22 @@ function M.picker()
         -- Track changes to apply on close
         local changes = {} -- { [name] = enabled_state }
 
-        -- Helper to refresh picker display without losing selection
+        -- Helper to refresh picker and stay on same plugin
         local function refresh_picker()
           local current_picker = action_state.get_current_picker(prompt_bufnr)
-          -- Get current row index before refresh
-          local row = current_picker:get_selection_row()
+          local selection = action_state.get_selected_entry()
+          local target_name = selection and selection.value.name
           current_picker:refresh(make_finder(), { reset_prompt = false })
-          -- Try to restore selection to same row
-          pcall(function() current_picker:set_selection(row) end)
+          -- Find the plugin in new results and select it
+          if target_name then
+            local results = current_picker.finder.results
+            for i, entry in ipairs(results) do
+              if entry.value.name == target_name then
+                current_picker:set_selection(i - 1)
+                return
+              end
+            end
+          end
         end
 
         -- Helper to apply all pending changes
