@@ -218,11 +218,25 @@ function M.picker()
       attach_mappings = function(prompt_bufnr, map)
         -- Track changes to apply on close
         local changes = {} -- { [name] = enabled_state }
+        local last_selection_name = nil -- track current selection
 
-        -- Helper to refresh picker display
+        -- Helper to refresh picker display without losing selection
         local function refresh_picker()
           local current_picker = action_state.get_current_picker(prompt_bufnr)
-          current_picker:refresh(make_finder(), { reset_prompt = true })
+          local selection = action_state.get_selected_entry()
+          local current_name = selection and selection.value.name or last_selection_name
+          current_picker:refresh(make_finder(), { reset_prompt = false })
+          -- Restore selection to same plugin
+          if current_name then
+            local state = current_picker.manager.get_selection_state()
+            local results = current_picker.manager.get_results()
+            for i, entry in ipairs(results) do
+              if entry.value.name == current_name then
+                current_picker:set_selection(i - 1)
+                break
+              end
+            end
+          end
         end
 
         -- Helper to apply all pending changes
@@ -242,12 +256,13 @@ function M.picker()
           local selection = action_state.get_selected_entry()
           if selection then
             local plugin = selection.value
+            last_selection_name = plugin.name
             local new_state = not plugin_state[plugin.name]
             plugin_state[plugin.name] = new_state
             changes[plugin.name] = new_state
             refresh_picker()
-            local status = new_state and "+" or "-"
-            vim.notify(string.format("[%s] %s", status, plugin.name), vim.log.levels.INFO)
+            local status = new_state and "enabled" or "disabled"
+            vim.notify(string.format("%s: %s", plugin.name, status), vim.log.levels.INFO)
           end
         end)
 
@@ -256,12 +271,13 @@ function M.picker()
           local selection = action_state.get_selected_entry()
           if selection then
             local plugin = selection.value
+            last_selection_name = plugin.name
             local new_state = not plugin_state[plugin.name]
             plugin_state[plugin.name] = new_state
             changes[plugin.name] = new_state
             refresh_picker()
-            local status = new_state and "+" or "-"
-            vim.notify(string.format("[%s] %s", status, plugin.name), vim.log.levels.INFO)
+            local status = new_state and "enabled" or "disabled"
+            vim.notify(string.format("%s: %s", plugin.name, status), vim.log.levels.INFO)
           end
         end)
 
