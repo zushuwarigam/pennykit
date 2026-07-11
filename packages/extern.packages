@@ -28,6 +28,10 @@ function add_dive() {
     if ! command -v dive >/dev/null; then
         local DIVE_VERSION
         DIVE_VERSION=$(_curl -sL "https://api.github.com/repos/wagoodman/dive/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+        if [[ -z "$DIVE_VERSION" ]]; then
+            echo "  ERROR: Failed to get dive version from GitHub API"
+            return 1
+        fi
         _install_dive "$DIVE_VERSION"
     fi
 }
@@ -37,6 +41,10 @@ function update_dive() {
     if command -v dive >/dev/null; then
         local DIVE_VERSION
         DIVE_VERSION=$(_curl -sL "https://api.github.com/repos/wagoodman/dive/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+        if [[ -z "$DIVE_VERSION" ]]; then
+            echo "  ERROR: Failed to get dive version from GitHub API"
+            return 1
+        fi
         _install_dive "$DIVE_VERSION"
     fi
 }
@@ -145,6 +153,10 @@ function add_hadolint() {
     if ! command -v hadolint >/dev/null; then
         local HADOLINT_VERSION
         HADOLINT_VERSION=$(_curl -sL "https://api.github.com/repos/hadolint/hadolint/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+        if [[ -z "$HADOLINT_VERSION" ]]; then
+            echo "  ERROR: Failed to get hadolint version from GitHub API"
+            return 1
+        fi
         _install_hadolint "$HADOLINT_VERSION" || return 1
     fi
 }
@@ -154,6 +166,10 @@ function update_hadolint() {
     if command -v hadolint >/dev/null; then
         local HADOLINT_VERSION
         HADOLINT_VERSION=$(_curl -sL "https://api.github.com/repos/hadolint/hadolint/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+        if [[ -z "$HADOLINT_VERSION" ]]; then
+            echo "  ERROR: Failed to get hadolint version from GitHub API"
+            return 1
+        fi
         _install_hadolint "$HADOLINT_VERSION" || return 1
     fi
 }
@@ -165,6 +181,10 @@ function add_lazydocker() {
     if ! command -v lazydocker >/dev/null; then
         local LD_VERSION
         LD_VERSION=$(_curl -sL "https://api.github.com/repos/jesseduffield/lazydocker/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+        if [[ -z "$LD_VERSION" ]]; then
+            echo "  ERROR: Failed to get lazydocker version from GitHub API"
+            return 1
+        fi
         local archive="lazydocker_${LD_VERSION}_Linux_x86_64.tar.gz"
         _curl --output-dir "/tmp" -fOL "https://github.com/jesseduffield/lazydocker/releases/download/v${LD_VERSION}/${archive}"
         _curl --output-dir "/tmp" -fOL "https://github.com/jesseduffield/lazydocker/releases/download/v${LD_VERSION}/checksums.txt"
@@ -183,6 +203,10 @@ function update_lazydocker() {
     if command -v lazydocker >/dev/null; then
         local LD_VERSION
         LD_VERSION=$(_curl -sL "https://api.github.com/repos/jesseduffield/lazydocker/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+        if [[ -z "$LD_VERSION" ]]; then
+            echo "  ERROR: Failed to get lazydocker version from GitHub API"
+            return 1
+        fi
         local archive="lazydocker_${LD_VERSION}_Linux_x86_64.tar.gz"
         _curl --output-dir "/tmp" -fOL "https://github.com/jesseduffield/lazydocker/releases/download/v${LD_VERSION}/${archive}"
         _curl --output-dir "/tmp" -fOL "https://github.com/jesseduffield/lazydocker/releases/download/v${LD_VERSION}/checksums.txt"
@@ -203,6 +227,10 @@ function add_lazygit() {
     if ! command -v lazygit >/dev/null; then
         local LG_VERSION
         LG_VERSION=$(_curl -sL "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+        if [[ -z "$LG_VERSION" ]]; then
+            echo "  ERROR: Failed to get lazygit version from GitHub API"
+            return 1
+        fi
         local archive="/tmp/lazygit_${LG_VERSION}_linux_x86_64.tar.gz"
         local checksums="/tmp/lazygit_checksums.txt"
         _curl --output-dir "/tmp" -fOL "https://github.com/jesseduffield/lazygit/releases/download/v${LG_VERSION}/lazygit_${LG_VERSION}_linux_x86_64.tar.gz"
@@ -223,6 +251,10 @@ function update_lazygit() {
     if command -v lazygit >/dev/null; then
         local LG_VERSION
         LG_VERSION=$(_curl -sL "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+        if [[ -z "$LG_VERSION" ]]; then
+            echo "  ERROR: Failed to get lazygit version from GitHub API"
+            return 1
+        fi
         local archive="/tmp/lazygit_${LG_VERSION}_linux_x86_64.tar.gz"
         local checksums="/tmp/lazygit_checksums.txt"
         _curl --output-dir "/tmp" -fOL "https://github.com/jesseduffield/lazygit/releases/download/v${LG_VERSION}/lazygit_${LG_VERSION}_linux_x86_64.tar.gz"
@@ -245,6 +277,10 @@ function add_nvim() {
     if ! command -v nvim >/dev/null; then
         local nvim_version
         nvim_version=$(_curl -sL "https://api.github.com/repos/neovim/neovim/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+        if [[ -z "$nvim_version" ]]; then
+            echo "  ERROR: Failed to get nvim version from GitHub API"
+            return 1
+        fi
         _curl --output-dir "/tmp" -fOL "https://github.com/neovim/neovim/releases/download/v${nvim_version}/nvim-linux-x86_64.tar.gz"
         _curl --output-dir "/tmp" -fOL "https://github.com/neovim/neovim/releases/download/v${nvim_version}/SHA256SUMS.txt" || true
         if [[ -f /tmp/SHA256SUMS.txt ]]; then
@@ -272,6 +308,10 @@ function update_nvim() {
     if command -v nvim >/dev/null; then
         local nvim_version
         nvim_version=$(_curl -sL "https://api.github.com/repos/neovim/neovim/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+        if [[ -z "$nvim_version" ]]; then
+            echo "  ERROR: Failed to get nvim version from GitHub API"
+            return 1
+        fi
         _curl --output-dir "/tmp" -fOL "https://github.com/neovim/neovim/releases/download/v${nvim_version}/nvim-linux-x86_64.tar.gz"
         _curl --output-dir "/tmp" -fOL "https://github.com/neovim/neovim/releases/download/v${nvim_version}/SHA256SUMS.txt" || true
         if [[ -f /tmp/SHA256SUMS.txt ]]; then
@@ -445,6 +485,10 @@ function add_vivid() {
     if ! command -v vivid >/dev/null; then
         local VIVID_VERSION
         VIVID_VERSION=$(_curl -sL "https://api.github.com/repos/sharkdp/vivid/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+        if [[ -z "$VIVID_VERSION" ]]; then
+            echo "  ERROR: Failed to get vivid version from GitHub API"
+            return 1
+        fi
         _curl --output-dir "/tmp" -fOL "https://github.com/sharkdp/vivid/releases/download/v${VIVID_VERSION}/vivid_${VIVID_VERSION}_amd64.deb"
         _curl --output-dir "/tmp" -fOL "https://github.com/sharkdp/vivid/releases/download/v${VIVID_VERSION}/vivid_${VIVID_VERSION}_amd64.deb.sha256" || true
         _verify_or_warn_sha256 "/tmp/vivid_${VIVID_VERSION}_amd64.deb" "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256" || { rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb" "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256"; return 1; }
@@ -461,6 +505,10 @@ function update_vivid() {
     if command -v vivid >/dev/null; then
         local VIVID_VERSION
         VIVID_VERSION=$(_curl -sL "https://api.github.com/repos/sharkdp/vivid/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+        if [[ -z "$VIVID_VERSION" ]]; then
+            echo "  ERROR: Failed to get vivid version from GitHub API"
+            return 1
+        fi
         _curl --output-dir "/tmp" -fOL "https://github.com/sharkdp/vivid/releases/download/v${VIVID_VERSION}/vivid_${VIVID_VERSION}_amd64.deb"
         _curl --output-dir "/tmp" -fOL "https://github.com/sharkdp/vivid/releases/download/v${VIVID_VERSION}/vivid_${VIVID_VERSION}_amd64.deb.sha256" || true
         _verify_or_warn_sha256 "/tmp/vivid_${VIVID_VERSION}_amd64.deb" "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256" || { rm -f "/tmp/vivid_${VIVID_VERSION}_amd64.deb" "/tmp/vivid_${VIVID_VERSION}_amd64.deb.sha256"; return 1; }
