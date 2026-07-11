@@ -368,7 +368,7 @@ function M.add_plugin()
   end)
 end
 
---- Show status of all plugins (interactive window)
+--- Show status of all plugins (interactive multi-column window)
 function M.show_status()
   -- Always load fresh from disk
   local registry = pk.load_registry(true)
@@ -399,35 +399,10 @@ function M.show_status()
     return a.name < b.name
   end)
 
-  -- Build display lines
-  local lines = {}
+  -- Count stats
   local enabled_count = 0
   local disabled_count = 0
-
-  -- Header
-  table.insert(lines, "")
-  table.insert(lines, "  PennyKit Plugins")
-  table.insert(lines, "  ═══════════════════════════════════════════════════")
-  table.insert(lines, "")
-
-  -- Find max name length for alignment
-  local max_name = 0
   for _, p in ipairs(all_plugins) do
-    if #p.name > max_name then max_name = #p.name end
-  end
-  max_name = math.min(max_name, 25)
-
-  -- Build plugin lines
-  for _, p in ipairs(all_plugins) do
-    local icon = p.enabled and "✓" or "✗"
-    local name_part = string.format("%-" .. max_name .. "s", p.name)
-    local line = string.format("  %s %s", icon, name_part)
-    if p.description ~= "" then
-      local desc = p.description
-      if #desc > 30 then desc = desc:sub(1, 27) .. "..." end
-      line = line .. "  " .. desc
-    end
-    table.insert(lines, line)
     if p.enabled then
       enabled_count = enabled_count + 1
     else
@@ -435,16 +410,68 @@ function M.show_status()
     end
   end
 
+  -- Find max name length for alignment
+  local max_name = 0
+  for _, p in ipairs(all_plugins) do
+    if #p.name > max_name then max_name = #p.name end
+  end
+  max_name = math.min(max_name, 22)
+
+  -- Column width: icon + space + name + padding
+  local col_width = 4 + max_name
+
+  -- Determine number of columns based on plugin count and screen width
+  local num_cols = 1
+  if #all_plugins > 12 then
+    local max_cols = math.floor((vim.o.columns - 4) / (col_width + 2))
+    num_cols = math.min(max_cols, math.ceil(#all_plugins / 12))
+    num_cols = math.max(num_cols, 1)
+  end
+
+  -- Arrange plugins into columns (fill by rows first for better readability)
+  local rows_per_col = math.ceil(#all_plugins / num_cols)
+  local columns = {}
+  for c = 1, num_cols do
+    columns[c] = {}
+  end
+  for i, p in ipairs(all_plugins) do
+    local col = math.ceil(i / rows_per_col)
+    local row = ((i - 1) % rows_per_col) + 1
+    columns[col][row] = p
+  end
+
+  -- Build display lines
+  local lines = {}
+  local total_width = col_width * num_cols + (num_cols - 1) * 2
+
+  -- Header
+  table.insert(lines, "")
+  table.insert(lines, "  PennyKit Plugins")
+  table.insert(lines, "  " .. string.rep("═", total_width))
+  table.insert(lines, "")
+
+  -- Build multi-column lines
+  for row = 1, rows_per_col do
+    local line_parts = {}
+    for col = 1, num_cols do
+      local p = columns[col][row]
+      if p then
+        local icon = p.enabled and "✓" or "✗"
+        local cell = string.format("%s %-" .. max_name .. "s", icon, p.name)
+        table.insert(line_parts, cell)
+      else
+        table.insert(line_parts, string.rep(" ", max_name + 2))
+      end
+    end
+    table.insert(lines, "  " .. table.concat(line_parts, "  "))
+  end
+
   -- Footer
   table.insert(lines, "")
-  table.insert(lines, "  ────────────────────────────────────────────────────")
+  table.insert(lines, "  " .. string.rep("─", total_width))
   table.insert(lines, string.format("  %d enabled  │  %d disabled  │  %d total", enabled_count, disabled_count, #all_plugins))
   table.insert(lines, "")
-  table.insert(lines, "  Keymaps:")
-  table.insert(lines, "    <CR>  Toggle plugin")
-  table.insert(lines, "    R     Refresh status")
-  table.insert(lines, "    P     Open plugin picker")
-  table.insert(lines, "    q     Close")
+  table.insert(lines, "  <CR> toggle  │  R refresh  │  P picker  │  q close")
   table.insert(lines, "")
 
   -- Create floating window
@@ -454,34 +481,52 @@ function M.show_status()
   vim.bo[buf].buftype = "nofile"
   vim.bo[buf].filetype = "pennykit-status"
 
-  -- Calculate width based on content
-  local width = 60
-  for _, line in ipairs(lines) do
-    if #line + 4 > width then width = math.min(#line + 4, 80) end
-  end
+  -- Calculate width based on columns
+  local width = total_width + 4
+  width = math.max(width, 50)
+  width = math.min(width, vim.o.columns - 4)
 
   local height = #lines
-  local row = math.floor((vim.o.lines - height) / 2)
-  local col = math.floor((vim.o.columns - width) / 2)
+  local row_pos = math.floor((vim.o.lines - height) / 2)
+  local col_pos = math.floor((vim.o.columns - width) / 2)
 
   local win = vim.api.nvim_open_win(buf, true, {
     relative = "editor",
     width = width,
     height = height,
-    row = row,
-    col = col,
+    row = row_pos,
+    col = col_pos,
     style = "minimal",
     border = "rounded",
     title = " Plugin Status ",
     title_pos = "center",
   })
 
-  -- Get plugin name from cursor position
+  -- Get plugin name from cursor position (handles multi-column)
   local function get_plugin_at_cursor()
     local cursor = vim.api.nvim_win_get_cursor(win)[1]
-    local line = lines[cursor]
-    if not line then return nil end
-    return line:match("^  [✓✗] (%S+)")
+    local line_text = lines[cursor] or ""
+
+    -- Single column: simple match
+    if num_cols == 1 then
+      return line_text:match("^  [✓✗] (%S+)")
+    end
+
+    -- Multi-column: calculate which column based on cursor byte position
+    local cursor_col = vim.api.nvim_win_get_cursor(win)[2]
+    local cell_start = 2 -- after "  "
+
+    for c = 1, num_cols do
+      local cell_end = cell_start + col_width
+      if cursor_col >= cell_start and cursor_col < cell_end then
+        -- Extract name from this cell
+        local cell_text = line_text:sub(cell_start + 1, cell_end)
+        local name = cell_text:match("[✓✗] (%S+)")
+        return name
+      end
+      cell_start = cell_end + 2 -- +2 for "  " separator
+    end
+    return nil
   end
 
   -- Keymaps
