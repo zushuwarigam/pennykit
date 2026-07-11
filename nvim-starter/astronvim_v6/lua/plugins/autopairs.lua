@@ -1,6 +1,6 @@
 -- Autopairs Custom Configuration
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("autopairs") then return { enabled = false } end
+if ok and not pk.is_enabled("autopairs") then return false end
 
 ---@type LazySpec
 return {

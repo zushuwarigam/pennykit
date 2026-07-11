@@ -4,7 +4,7 @@
 -- as nvim-treesitter simply provides a download utility for parsers
 
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("treesitter") then return { enabled = false } end
+if ok and not pk.is_enabled("treesitter") then return false end
 
 ---@type LazySpec
 return {

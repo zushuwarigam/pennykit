@@ -1,5 +1,5 @@
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("lf") then return { enabled = false } end
+if ok and not pk.is_enabled("lf") then return false end
 
 return {
   "lmburns/lf.nvim",

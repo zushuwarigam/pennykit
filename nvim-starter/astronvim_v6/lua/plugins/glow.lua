@@ -1,5 +1,5 @@
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("glow") then return { enabled = false } end
+if ok and not pk.is_enabled("glow") then return false end
 
 return {
   "MeanderingProgrammer/render-markdown.nvim",

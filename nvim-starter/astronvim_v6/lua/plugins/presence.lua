@@ -1,6 +1,6 @@
 -- Discord Rich Presence
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("presence") then return { enabled = false } end
+if ok and not pk.is_enabled("presence") then return false end
 
 ---@type LazySpec
 return {

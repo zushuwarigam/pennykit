@@ -3,7 +3,7 @@
 -- Each plugin should be in its own file for easier management
 
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("user") then return { enabled = false } end
+if ok and not pk.is_enabled("user") then return false end
 
 ---@type LazySpec
 return {

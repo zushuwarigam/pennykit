@@ -1,5 +1,5 @@
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("oil") then return { enabled = false } end
+if ok and not pk.is_enabled("oil") then return false end
 
 return {
   "stevearc/oil.nvim",

@@ -1,6 +1,6 @@
 -- LSP Signature Help
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("lsp_signature") then return { enabled = false } end
+if ok and not pk.is_enabled("lsp_signature") then return false end
 
 ---@type LazySpec
 return {

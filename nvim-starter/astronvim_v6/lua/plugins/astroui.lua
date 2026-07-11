@@ -6,7 +6,7 @@
 local ok, theme = pcall(require, "_local_theme")
 
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("astroui") then return { enabled = false } end
+if ok and not pk.is_enabled("astroui") then return false end
 
 ---@type LazySpec
 return {

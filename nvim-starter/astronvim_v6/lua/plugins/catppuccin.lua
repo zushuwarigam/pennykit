@@ -1,5 +1,5 @@
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("catppuccin") then return { enabled = false } end
+if ok and not pk.is_enabled("catppuccin") then return false end
 
 local ok, theme = pcall(require, "_local_theme")
 if ok and theme.colorscheme ~= "catppuccin" then return {} end

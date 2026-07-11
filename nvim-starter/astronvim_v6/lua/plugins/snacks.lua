@@ -1,6 +1,6 @@
 -- Snacks.nvim (Dashboard, Notifications, etc.)
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("snacks") then return { enabled = false } end
+if ok and not pk.is_enabled("snacks") then return false end
 
 ---@type LazySpec
 return {

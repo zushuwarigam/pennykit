@@ -1,7 +1,7 @@
 -- if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
 
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("astrocore_rooter") then return { enabled = false } end
+if ok and not pk.is_enabled("astrocore_rooter") then return false end
 
 return {
   "AstroNvim/astrocore",

@@ -1,6 +1,6 @@
 -- https://github.com/basecamp/omarchy/discussions/4899
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("tmux-navigation") then return { enabled = false } end
+if ok and not pk.is_enabled("tmux-navigation") then return false end
 
 return {
   "christoomey/vim-tmux-navigator",

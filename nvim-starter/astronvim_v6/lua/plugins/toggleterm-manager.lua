@@ -1,5 +1,5 @@
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("toggleterm-manager") then return { enabled = false } end
+if ok and not pk.is_enabled("toggleterm-manager") then return false end
 
 return {
   "ryanmsnyder/toggleterm-manager.nvim",
