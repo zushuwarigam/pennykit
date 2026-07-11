@@ -61,13 +61,20 @@ function M.sync_plugins()
     local name = vim.fn.fnamemodify(f, ":t:r")
     -- Skip pennykit internal files
     if name ~= "init" then
+      -- Don't overwrite existing entries (especially external tools)
       if not registry.plugins[name] then
         registry.plugins[name] = {
           enabled = true,
           description = "",
           source = "static",
+          type = "plugin",
         }
         added = added + 1
+      elseif registry.plugins[name].type == "tool" then
+        -- Skip external tools, don't mark as static
+      elseif not registry.plugins[name].type then
+        -- Add type field to existing entries
+        registry.plugins[name].type = "plugin"
       end
     end
   end
@@ -129,6 +136,28 @@ function M.list_plugins()
     end
   end
   table.insert(lines, "")
+
+  -- Show external tools
+  local external_tools = {}
+  for name, entry in pairs(registry.plugins) do
+    if entry.type == "tool" then
+      table.insert(external_tools, { name = name, entry = entry })
+    end
+  end
+  table.sort(external_tools, function(a, b) return a.name < b.name end)
+
+  table.insert(lines, "  External tools (added via :PKToolAdd):")
+  table.insert(lines, "  ─────────────────────────────────────")
+  if #external_tools == 0 then
+    table.insert(lines, "  (none)")
+  else
+    for _, p in ipairs(external_tools) do
+      local status = p.entry.enabled and "✓" or "✗"
+      local desc = p.entry.description ~= "" and (" — " .. p.entry.description) or ""
+      table.insert(lines, string.format("  [%s] %s%s", status, p.name, desc))
+    end
+  end
+  table.insert(lines, "")
   table.insert(lines, "  Press q to close")
 
   M.create_float(lines, { title = " Plugin Manager - List ", height = math.min(#lines, 40) })
@@ -158,6 +187,7 @@ function M.add_plugin()
       enabled = true,
       description = "",
       source = "user",
+      type = "plugin",
     }
     pk.save_registry(registry)
 
@@ -277,6 +307,38 @@ function M.toggle_plugin()
 
     local status = new_state and "enabled" or "disabled"
     vim.notify(status .. ": " .. choice .. "\nRun :Lazy sync to apply", vim.log.levels.INFO)
+  end)
+end
+
+--- Add external tool (non-Neovim package)
+function M.add_external_tool()
+  vim.ui.input({ prompt = "Tool name or GitHub URL: " }, function(input)
+    if not input or input == "" then
+      vim.notify("Cancelled", vim.log.levels.INFO)
+      return
+    end
+
+    -- Parse URL to get name
+    local name = input:gsub("^https?://github%.com/", ""):gsub("%.git$", ""):gsub("/$", "")
+
+    local registry = pk.load_registry()
+
+    -- Check if already exists
+    if registry.plugins[name] then
+      vim.notify("Tool " .. name .. " already exists", vim.log.levels.WARN)
+      return
+    end
+
+    -- Add to registry
+    registry.plugins[name] = {
+      enabled = true,
+      description = "",
+      source = "external",
+      type = "tool",
+    }
+    pk.save_registry(registry)
+
+    vim.notify("Added external tool: " .. name, vim.log.levels.INFO)
   end)
 end
 

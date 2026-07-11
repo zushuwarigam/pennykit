@@ -276,6 +276,7 @@ Interactive plugin management with persistent registry. All plugins can be enabl
 | `:PKPluginDisable` | Disable an enabled plugin |
 | `:PKPluginToggle` | Toggle plugin enabled/disabled |
 | `:PKPluginDescribe` | Edit plugin description |
+| `:PKToolAdd` | Add external tool (non-Neovim) |
 
 ### Key Mappings
 
@@ -287,6 +288,7 @@ Interactive plugin management with persistent registry. All plugins can be enabl
 | `<Leader>pd` | Disable plugin |
 | `<Leader>pt` | Toggle plugin |
 | `<Leader>pD` | Describe plugin |
+| `<Leader>pT` | Add external tool |
 
 ### How it works
 
@@ -318,6 +320,11 @@ Edit plugin files directly in `lua/plugins/` to add:
 - `event = "..."` for lazy-loading
 - `cmd = "..."` for command-based loading
 - `ft = "..."` for filetype-based loading
+
+### External tools
+
+Non-Neovim packages tracked in the registry:
+- `sharkdp/vivid` - Themeable LS_COLORS generator (install via `cargo install vivid`)
 
 ## Tips & Tricks
 
