@@ -368,85 +368,83 @@ function M.add_plugin()
   end)
 end
 
---- Show status of all plugins
+--- Show status of all plugins (interactive window)
 function M.show_status()
   -- Always load fresh from disk
   local registry = pk.load_registry(true)
   local plugins_dir = vim.fn.stdpath "config" .. "/lua/plugins"
   local files = vim.fn.glob(plugins_dir .. "/*.lua", false, true)
 
-  local enabled_count = 0
-  local disabled_count = 0
-  local untracked_count = 0
-
-  local lines = {
-    "",
-    "  PennyKit Plugin Status",
-    "  ═══════════════════════════════════════════════════",
-    "",
-    "  [✓] = enabled  [✗] = disabled",
-    "",
-    "  Enabled:",
-    "  ────────────────────────────────────────────────────",
-  }
-
-  -- Collect all plugins
+  -- Collect all plugins with details
   local all_plugins = {}
   for _, f in ipairs(files) do
     local name = vim.fn.fnamemodify(f, ":t:r")
     if name ~= "init" and not M.is_core_plugin(name) then
       local entry = registry.plugins[name]
-      local enabled
-      local source
+      local enabled, description
       if entry then
         enabled = entry.enabled
-        source = entry.source or "static"
+        description = entry.description or ""
       else
-        enabled = true -- default: not in registry = enabled
-        source = "untracked"
-        untracked_count = untracked_count + 1
+        enabled = true
+        description = ""
       end
-      table.insert(all_plugins, { name = name, enabled = enabled, source = source })
+      table.insert(all_plugins, { name = name, enabled = enabled, description = description })
     end
   end
 
-  -- Sort by name
-  table.sort(all_plugins, function(a, b) return a.name < b.name end)
+  -- Sort: enabled first, then alphabetically
+  table.sort(all_plugins, function(a, b)
+    if a.enabled ~= b.enabled then return a.enabled end
+    return a.name < b.name
+  end)
 
-  -- Show enabled plugins
+  -- Build display lines
+  local lines = {}
+  local enabled_count = 0
+  local disabled_count = 0
+
+  -- Header
+  table.insert(lines, "")
+  table.insert(lines, "  PennyKit Plugins")
+  table.insert(lines, "  ═══════════════════════════════════════════════════")
+  table.insert(lines, "")
+
+  -- Find max name length for alignment
+  local max_name = 0
   for _, p in ipairs(all_plugins) do
+    if #p.name > max_name then max_name = #p.name end
+  end
+  max_name = math.min(max_name, 25)
+
+  -- Build plugin lines
+  for _, p in ipairs(all_plugins) do
+    local icon = p.enabled and "✓" or "✗"
+    local name_part = string.format("%-" .. max_name .. "s", p.name)
+    local line = string.format("  %s %s", icon, name_part)
+    if p.description ~= "" then
+      local desc = p.description
+      if #desc > 30 then desc = desc:sub(1, 27) .. "..." end
+      line = line .. "  " .. desc
+    end
+    table.insert(lines, line)
     if p.enabled then
       enabled_count = enabled_count + 1
-      table.insert(lines, string.format("    ✓ %s", p.name))
-    end
-  end
-
-  if enabled_count == 0 then
-    table.insert(lines, "    (none)")
-  end
-
-  table.insert(lines, "")
-  table.insert(lines, "  Disabled:")
-  table.insert(lines, "  ────────────────────────────────────────────────────")
-
-  -- Show disabled plugins
-  for _, p in ipairs(all_plugins) do
-    if not p.enabled then
+    else
       disabled_count = disabled_count + 1
-      table.insert(lines, string.format("    ✗ %s", p.name))
     end
   end
 
-  if disabled_count == 0 then
-    table.insert(lines, "    (none)")
-  end
-
+  -- Footer
   table.insert(lines, "")
-  table.insert(lines, string.format("  Total: %d enabled, %d disabled, %d untracked", enabled_count, disabled_count, untracked_count))
+  table.insert(lines, "  ────────────────────────────────────────────────────")
+  table.insert(lines, string.format("  %d enabled  │  %d disabled  │  %d total", enabled_count, disabled_count, #all_plugins))
   table.insert(lines, "")
-  table.insert(lines, "  Commands:")
-  table.insert(lines, "    :PKPlugins    - Toggle plugins with Telescope")
-  table.insert(lines, "    :PKPluginSync - Sync registry with lua/plugins/")
+  table.insert(lines, "  Keymaps:")
+  table.insert(lines, "    <CR>  Toggle plugin")
+  table.insert(lines, "    R     Refresh status")
+  table.insert(lines, "    P     Open plugin picker")
+  table.insert(lines, "    q     Close")
   table.insert(lines, "")
 
   -- Create floating window
@@ -456,7 +454,12 @@ function M.show_status()
   vim.bo[buf].buftype = "nofile"
   vim.bo[buf].filetype = "pennykit-status"
 
-  local width = 55
+  -- Calculate width based on content
+  local width = 60
+  for _, line in ipairs(lines) do
+    if #line + 4 > width then width = math.min(#line + 4, 80) end
+  end
+
   local height = #lines
   local row = math.floor((vim.o.lines - height) / 2)
   local col = math.floor((vim.o.columns - width) / 2)
@@ -473,8 +476,33 @@ function M.show_status()
     title_pos = "center",
   })
 
+  -- Get plugin name from cursor position
+  local function get_plugin_at_cursor()
+    local cursor = vim.api.nvim_win_get_cursor(win)[1]
+    local line = lines[cursor]
+    if not line then return nil end
+    return line:match("^  [✓✗] (%S+)")
+  end
+
+  -- Keymaps
   vim.keymap.set("n", "q", function() vim.api.nvim_win_close(win, true) end, { buffer = buf, nowait = true })
   vim.keymap.set("n", "<Esc>", function() vim.api.nvim_win_close(win, true) end, { buffer = buf, nowait = true })
+
+  vim.keymap.set("n", "<CR>", function()
+    local name = get_plugin_at_cursor()
+    if name then
+      local current = pk.is_enabled(name)
+      pk.set_enabled(name, not current)
+      M.show_status() -- Refresh
+    end
+  end, { buffer = buf, nowait = true })
+
+  vim.keymap.set("n", "R", function() M.show_status() end, { buffer = buf, nowait = true })
+
+  vim.keymap.set("n", "P", function()
+    vim.api.nvim_win_close(win, true)
+    M.picker()
+  end, { buffer = buf, nowait = true })
 end
 
 --- Show help for plugin management
@@ -488,7 +516,7 @@ function M.show_help()
     "  ────────────────────────────────────────────────────",
     "  1. Each plugin has its own file in lua/plugins/",
     "  2. Each file has a guard clause that checks registry:",
-    "     if not pk.is_enabled(\"name\") then return { enabled = false } end",
+    "     enabled = ok and pk.is_enabled(\"name\")",
     "  3. Registry stores enabled/disabled state",
     "  4. Default: plugins NOT in registry are ENABLED",
     "",
