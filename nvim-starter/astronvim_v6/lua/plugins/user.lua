@@ -1,12 +1,13 @@
+local ok, pk = pcall(require, "pennykit")
+
 -- User Plugin Overrides
 -- Add your custom plugin configurations here
 -- Each plugin should be in its own file for easier management
 
-local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("user") then return false end
 
 ---@type LazySpec
 return {
   -- Disable better-escape.nvim (example)
-  { "max397574/better-escape.nvim", enabled = false },
+  { "max397574/better-escape.nvim",
+    enabled = ok and pk.is_enabled("user"), enabled = false },
 }

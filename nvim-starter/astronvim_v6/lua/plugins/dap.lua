@@ -1,8 +1,9 @@
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("dap") then return false end
+
 
 return {
   "mfussenegger/nvim-dap",
+    enabled = ok and pk.is_enabled("dap"),
   config = function(plugin, opts)
     require("astronvim.plugins.configs.nvim-dap")(plugin, opts)
 

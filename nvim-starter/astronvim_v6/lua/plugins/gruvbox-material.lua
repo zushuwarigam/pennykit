@@ -1,11 +1,12 @@
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("gruvbox-material") then return false end
+
 
 local ok, theme = pcall(require, "_local_theme")
 if ok and theme.colorscheme ~= "gruvbox-material" then return {} end
 return {
     {
       'sainnhe/gruvbox-material',
+      enabled = ok and pk.is_enabled("gruvbox-material"),
       lazy = false,
       priority = 1000,
       config = function()

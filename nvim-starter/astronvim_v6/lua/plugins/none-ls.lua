@@ -1,13 +1,14 @@
+local ok, pk = pcall(require, "pennykit")
+
 if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
 
-local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("none-ls") then return false end
 
 -- Customize None-ls sources (formatters, linters)
 
 ---@type LazySpec
 return {
   "nvimtools/none-ls.nvim",
+    enabled = ok and pk.is_enabled("none-ls"),
   opts = function(_, opts)
     -- local null_ls = require "null-ls"
 

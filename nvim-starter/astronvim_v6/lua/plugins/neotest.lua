@@ -1,8 +1,9 @@
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("neotest") then return false end
+
 
 return {
   "nvim-neotest/neotest",
+    enabled = ok and pk.is_enabled("neotest"),
   dependencies = {
     "nvim-neotest/nvim-nio",
     "nvim-lua/plenary.nvim",

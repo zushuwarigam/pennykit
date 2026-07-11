@@ -1,11 +1,12 @@
--- Autopairs Custom Configuration
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("autopairs") then return false end
+
+-- Autopairs Custom Configuration
 
 ---@type LazySpec
 return {
   {
     "windwp/nvim-autopairs",
+    enabled = ok and pk.is_enabled("autopairs"),
     config = function(plugin, opts)
       require "astronvim.plugins.configs.nvim-autopairs"(plugin, opts)
       local npairs = require "nvim-autopairs"

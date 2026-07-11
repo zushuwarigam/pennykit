@@ -1,9 +1,10 @@
--- ~/.config/astronvim/lua/plugins/go.lua
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("go") then return false end
+
+-- ~/.config/astronvim/lua/plugins/go.lua
 
 return {
   "ray-x/go.nvim",
+    enabled = ok and pk.is_enabled("go"),
   dependencies = { "ray-x/guihua.lua" },
   ft = { "go", "gomod", "gosum", "gowork" },   -- lazy load on Go files
   build = ':lua require("go.install").update_all_sync()',

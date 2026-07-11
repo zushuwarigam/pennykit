@@ -1,3 +1,5 @@
+local ok, pk = pcall(require, "pennykit")
+
 -- AstroUI provides the basis for configuring the AstroNvim User Interface
 -- Configuration documentation can be found with `:h astroui`
 -- NOTE: We highly recommend setting up the Lua Language Server (`:LspInstall lua_ls`)
@@ -5,12 +7,11 @@
 
 local ok, theme = pcall(require, "_local_theme")
 
-local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("astroui") then return false end
 
 ---@type LazySpec
 return {
   "AstroNvim/astroui",
+    enabled = ok and pk.is_enabled("astroui"),
   ---@type AstroUIOpts
   opts = {
     -- change colorscheme

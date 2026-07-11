@@ -1,8 +1,9 @@
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("hex") then return false end
+
 
 return {
   "RaafatTurki/hex.nvim",
+    enabled = ok and pk.is_enabled("hex"),
   cmd = { "HexDump", "HexAssemble", "HexToggle" }, -- 🔑 Lazy-load on command
   config = function()
     require("hex").setup({

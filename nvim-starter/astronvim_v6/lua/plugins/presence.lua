@@ -1,8 +1,9 @@
--- Discord Rich Presence
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("presence") then return false end
+
+-- Discord Rich Presence
 
 ---@type LazySpec
 return {
   "andweeb/presence.nvim",
+    enabled = ok and pk.is_enabled("presence"),
 }

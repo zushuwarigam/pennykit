@@ -1,8 +1,9 @@
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("markdown-preview") then return false end
+
 
 return {
   "iamcco/markdown-preview.nvim",
+    enabled = ok and pk.is_enabled("markdown-preview"),
   cmd = { "MarkdownPreview", "MarkdownPreviewStop", "MarkdownPreviewToggle" },
   ft = "markdown",
   build = function()

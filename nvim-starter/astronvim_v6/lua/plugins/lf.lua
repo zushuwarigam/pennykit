@@ -1,8 +1,9 @@
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("lf") then return false end
+
 
 return {
   "lmburns/lf.nvim",
+    enabled = ok and pk.is_enabled("lf"),
   dependencies = { "nvim-lua/plenary.nvim", "akinsho/toggleterm.nvim" },
   config = function()
     require("lf").setup({

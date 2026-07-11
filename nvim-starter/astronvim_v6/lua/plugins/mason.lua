@@ -1,13 +1,14 @@
+local ok, pk = pcall(require, "pennykit")
+
 -- Customize Mason
 
-local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("mason") then return false end
 
 ---@type LazySpec
 return {
   -- use mason-tool-installer for automatically installing Mason packages
   {
     "WhoIsSethDaniel/mason-tool-installer.nvim",
+    enabled = ok and pk.is_enabled("mason"),
     -- overrides `require("mason-tool-installer").setup(...)`
     opts = {
       -- Make sure to use the names found in `:Mason`

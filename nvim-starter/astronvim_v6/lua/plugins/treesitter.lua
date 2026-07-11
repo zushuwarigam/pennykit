@@ -1,14 +1,15 @@
+local ok, pk = pcall(require, "pennykit")
+
 -- Customize Treesitter
 -- --------------------
 -- Treesitter customizations are handled with AstroCore
 -- as nvim-treesitter simply provides a download utility for parsers
 
-local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("treesitter") then return false end
 
 ---@type LazySpec
 return {
   "AstroNvim/astrocore",
+    enabled = ok and pk.is_enabled("treesitter"),
   ---@type AstroCoreOpts
   opts = {
     treesitter = {

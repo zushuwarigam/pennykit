@@ -1,10 +1,11 @@
+local ok, pk = pcall(require, "pennykit")
+
 if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
 
-local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("languagetool") then return false end
 
 return {
   "liba2k/languagetool.nvim",
+    enabled = ok and pk.is_enabled("languagetool"),
   opts = {
     server_url = vim.env.LANGUAGE_TOOLS or "http://lt.bme.local",
     language = "en-US"

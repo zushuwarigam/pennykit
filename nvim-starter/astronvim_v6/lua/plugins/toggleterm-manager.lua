@@ -1,8 +1,9 @@
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("toggleterm-manager") then return false end
+
 
 return {
   "ryanmsnyder/toggleterm-manager.nvim",
+    enabled = ok and pk.is_enabled("toggleterm-manager"),
   dependencies = {
     "akinsho/nvim-toggleterm.lua",
     "nvim-telescope/telescope.nvim",

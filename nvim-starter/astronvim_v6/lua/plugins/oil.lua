@@ -1,8 +1,9 @@
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("oil") then return false end
+
 
 return {
   "stevearc/oil.nvim",
+    enabled = ok and pk.is_enabled("oil"),
   dependencies = { "nvim-tree/nvim-web-devicons" },
   lazy = false,
   opts = {

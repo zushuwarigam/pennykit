@@ -1,14 +1,15 @@
+local ok, pk = pcall(require, "pennykit")
+
 -- AstroCore provides a central place to modify mappings, vim options, autocommands, and more!
 -- Configuration documentation can be found with `:h astrocore`
 -- NOTE: We highly recommend setting up the Lua Language Server (`:LspInstall lua_ls`)
 --       as this provides autocomplete and documentation while editing
 
-local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("astrocore") then return false end
 
 ---@type LazySpec
 return {
   "AstroNvim/astrocore",
+    enabled = ok and pk.is_enabled("astrocore"),
   ---@type AstroCoreOpts
   opts = {
     -- Configure core features of AstroNvim

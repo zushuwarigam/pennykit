@@ -1,11 +1,12 @@
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("godoc") then return false end
+
 
 ---@type LazySpec
 return {
   -- Godoc
   {
     "fredrikaverpil/godoc.nvim",
+    enabled = ok and pk.is_enabled("godoc"),
     version = "*",
     dependencies = {
       { "nvim-telescope/telescope.nvim" }, -- optional

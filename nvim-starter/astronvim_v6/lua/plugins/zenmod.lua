@@ -1,10 +1,10 @@
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("zenmod") then return false end
 
 ---@type LazySpec
 return {
   {
     "folke/zen-mode.nvim",
+    enabled = ok and pk.is_enabled("zenmod"),
     opts = {
       window = {
         backdrop = 0.95,
@@ -27,7 +27,7 @@ return {
         wezterm = {
           enabled = false,
           -- can be either an absolute font size or the number of incremental steps
-          font = "+4", -- (10% increase per step)
+          font = "+4", -- (10% per step)
         },
       },
     },
