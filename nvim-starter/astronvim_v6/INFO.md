@@ -514,33 +514,54 @@ init.lua → lazy_setup.lua
 ```
 
 ### Plugin directory (`lua/plugins/`)
+
+Each plugin has its own file for easy management with PennyKit.
+
+#### Core AstroNvim (managed by AstroNvim)
 | File | Purpose |
 |------|---------|
-| `astrocore.lua` | Core options, keymaps, diagnostics, rooter |
+| `astrocore.lua` | Core options, keymaps, diagnostics |
+| `astrocore_rooter.lua` | Project root detection |
 | `astrolsp.lua` | LSP servers (gopls, clangd, ruff, ltex) |
 | `astroui.lua` | UI, colorscheme, icons |
 | `mason.lua` | Auto-installer for LSPs, formatters, debuggers |
 | `treesitter.lua` | Syntax highlighting parsers |
-| `dap.lua` | Debug adapters (Python, C/C++, Go) |
+
+#### User Plugins (managed by PennyKit)
+| File | Purpose |
+|------|---------|
 | `go.lua` | Go tooling (go.nvim) |
+| `dap.lua` | Debug adapters (Python, C/C++, Go) |
+| `neotest.lua` | Interactive test runner |
+| `rest.lua` | REST API client |
 | `codecompanion.lua` | AI chat assistant |
 | `hex.lua` | Hex viewer for binary analysis |
-| `rest.lua` | REST API client |
 | `logreview.lua` | Log file highlighting |
-| `glow.lua` | Inline markdown rendering via render-markdown.nvim |
+| `glow.lua` | Inline markdown rendering |
 | `oil.lua` | File system as buffer navigation |
-| `neotest.lua` | Interactive test runner |
+| `lf.lua` | lf file manager |
+| `godoc.lua` | Go documentation browser |
 | `markdown-preview.lua` | Live markdown browser preview |
 | `tmux-navigation.lua` | `<C-h/j/k/l>` tmux pane navigation |
 | `toggleterm-manager.lua` | Terminal manager |
-| `lf.lua` | lf file manager |
-| `godoc.lua` | Go documentation browser |
-| `languagetool.lua` | LanguageTool grammar checker (disabled) |
-| `user.lua` | User plugin overrides (disabled) |
-| `catppuccin.lua` | Catppuccin theme config |
-| `gruvbox-material.lua` | Default gruvbox-material theme |
-| `tokyonight.lua` | Tokyo Night theme config |
 | `none-ls.lua` | null-ls formatter/linter sources |
 | `zenmod.lua` | Zen mode (focused writing) |
+| `languagetool.lua` | LanguageTool grammar checker |
+| `luasnip.lua` | LuaSnip custom configuration |
+| `autopairs.lua` | Autopairs custom configuration |
+| `lsp_signature.lua` | LSP signature help |
+| `snacks.lua` | Snacks.nvim (dashboard, notifications) |
+| `presence.lua` | Discord Rich Presence |
+| `user.lua` | User plugin overrides (disabled) |
+
+#### Colorschemes
+| File | Purpose |
+|------|---------|
+| `gruvbox-material.lua` | Default gruvbox-material theme |
+| `catppuccin.lua` | Catppuccin theme config |
+| `tokyonight.lua` | Tokyo Night theme config |
+| `nord.lua` | Nord theme config |
+| `dracula.lua` | Dracula theme config |
+| `solarized.lua` | Solarized theme config |
 
 Happy coding!

@@ -39,7 +39,6 @@ local CORE_PLUGINS = {
   ["hrsh7th/cmp-nvim-lsp"] = true,
   ["hrsh7th/cmp-buffer"] = true,
   ["hrsh7th/cmp-path"] = true,
-  ["L3MON4D3/LuaSnip"] = true,
   ["saadparwaiz1/cmp_luasnip"] = true,
   ["numToStr/Comment.nvim"] = true,
   ["echasnovski/mini.pairs"] = true,
@@ -56,6 +55,12 @@ local CORE_PLUGINS = {
   ["akinsho/toggleterm.nvim"] = true,
   ["tiagovla/scope.nvim"] = true,
   ["wthollingsworth/cmp-nvim-tags"] = true,
+  -- PennyKit managed (these are config files, not separate plugins)
+  ["L3MON4D3/LuaSnip"] = true, -- configured in luasnip.lua
+  ["windwp/nvim-autopairs"] = true, -- configured in autopairs.lua
+  ["ray-x/lsp_signature.nvim"] = true, -- configured in lsp_signature.lua
+  ["folke/snacks.nvim"] = true, -- configured in snacks.lua
+  ["andweeb/presence.nvim"] = true, -- configured in presence.lua
 }
 
 --- Check if a plugin is a core AstroNvim plugin
