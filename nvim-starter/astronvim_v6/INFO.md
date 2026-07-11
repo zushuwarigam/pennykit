@@ -292,7 +292,7 @@ Interactive plugin management with Telescope UI. Auto-syncs on open. Core AstroN
 | `<Tab>` | Toggle current plugin (moves to next) |
 | `<C-e>` | Enable all plugins |
 | `<C-d>` | Disable all plugins |
-| `<CR>` | Close picker |
+| `<CR>` | Close picker & run `:Lazy sync` |
 | `<Esc>` | Close picker |
 | `<C-h>` | Show help |
 
@@ -344,6 +344,8 @@ if ok and not pk.is_enabled("plugin-name") then return { enabled = false } end
   }
 }
 ```
+
+**Note:** When you close the picker with `<CR>`, `:Lazy sync` runs automatically to apply changes.
 
 ### Registry location
 

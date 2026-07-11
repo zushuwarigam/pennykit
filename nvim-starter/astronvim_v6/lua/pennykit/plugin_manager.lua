@@ -281,10 +281,11 @@ function M.picker()
           vim.notify("All plugins disabled", vim.log.levels.INFO)
         end)
 
-        -- Close on Enter
+        -- Close on Enter and auto-sync
         actions.select_default:replace(function()
           actions.close(prompt_bufnr)
-          vim.notify("Changes applied. Restart or run :Lazy sync to apply.", vim.log.levels.INFO)
+          vim.notify("Running :Lazy sync...", vim.log.levels.INFO)
+          vim.cmd("Lazy sync")
         end)
 
         -- Show help
@@ -296,7 +297,7 @@ function M.picker()
             "  <Tab>      Toggle current plugin",
             "  <C-e>      Enable all plugins",
             "  <C-d>      Disable all plugins",
-            "  <CR>       Close picker",
+            "  <CR>       Close & run :Lazy sync",
             "  <Esc>      Close picker",
             "",
             "  Plugins marked [✓] are enabled",
@@ -508,7 +509,8 @@ function M.show_help()
     "  <C-e>          Enable all plugins",
     "  <C-d>          Disable all plugins",
     "  <C-h>          Show this help",
-    "  <CR> / <Esc>   Close picker",
+    "  <CR>           Close & run :Lazy sync",
+    "  <Esc>          Close picker",
     "",
     "  Registry location:",
     "  ────────────────────────────────────────────────────",
@@ -519,8 +521,7 @@ function M.show_help()
     "  1. Open picker: <Leader>pp",
     "  2. Find plugin: type name to filter",
     "  3. Toggle: press <Tab>",
-    "  4. Close: press <CR>",
-    "  5. Restart Neovim or run :Lazy sync",
+    "  4. Close: press <CR> (auto-syncs)",
     "",
   }
 
