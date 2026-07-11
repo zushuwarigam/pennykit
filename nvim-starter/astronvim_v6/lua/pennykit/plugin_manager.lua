@@ -148,21 +148,8 @@ function M.get_manageable_plugins()
   return plugins
 end
 
---- Create Telescope picker for plugin management
+--- Custom floating window picker for plugin management
 function M.picker()
-  local ok, telescope = pcall(require, "telescope")
-  if not ok then
-    vim.notify("Telescope not available", vim.log.levels.ERROR)
-    return
-  end
-
-  local pickers = require "telescope.pickers"
-  local finders = require "telescope.finders"
-  local conf = require("telescope.config").values
-  local actions = require "telescope.actions"
-  local action_state = require "telescope.actions.state"
-  local make_entry = require "telescope.make_entry"
-
   -- Auto-sync first
   local stats = M.sync_plugins()
 
@@ -174,191 +161,218 @@ function M.picker()
     return
   end
 
-  -- Track state locally (will be updated on toggle)
+  -- Sort: enabled first, then alphabetically
+  table.sort(plugins, function(a, b)
+    if a.enabled ~= b.enabled then return a.enabled end
+    return a.name < b.name
+  end)
+
+  -- Track state
   local plugin_state = {}
   for _, p in ipairs(plugins) do
     plugin_state[p.name] = p.enabled
   end
 
-  -- Helper to create finder with current state
-  local function make_finder()
-    return finders.new_table {
-      results = plugins,
-      entry_maker = function(entry)
-        local enabled = plugin_state[entry.name]
-        local status = enabled and "✓" or "✗"
-        local display = string.format(" [%s] %s", status, entry.name)
-        if entry.description ~= "" then display = display .. " — " .. entry.description end
-        return {
-          value = entry,
-          display = display,
-          ordinal = entry.name,
-        }
-      end,
-    }
+  -- Track pending changes
+  local changes = {}
+  local cursor_line = 1
+
+  -- Calculate layout
+  local max_name = 0
+  for _, p in ipairs(plugins) do
+    max_name = math.max(max_name, #p.name)
+  end
+  local win_width = math.min(80, math.max(50, max_name + 30))
+  local win_height = math.min(#plugins + 6, vim.o.lines - 4)
+  local win_width_actual = math.min(win_width, vim.o.columns - 4)
+  local row = math.floor((vim.o.lines - win_height) / 2)
+  local col = math.floor((vim.o.columns - win_width_actual) / 2)
+
+  -- Create buffer
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.bo[buf].buftype = "nofile"
+  vim.bo[buf].modifiable = false
+
+  -- Create window
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative = "editor",
+    width = win_width_actual,
+    height = win_height,
+    row = row,
+    col = col,
+    style = "minimal",
+    border = "rounded",
+    title = string.format(" PennyKit Plugins (%d) ", #plugins),
+    title_pos = "center",
+  })
+
+  -- Build display lines
+  local function build_lines()
+    local lines = {}
+    -- Header
+    table.insert(lines, string.format(" %d plugins synced, %d new", #plugins, stats.added))
+    table.insert(lines, string.rep("─", win_width_actual - 2))
+    table.insert(lines, "")
+    -- Plugins
+    for i, p in ipairs(plugins) do
+      local enabled = plugin_state[p.name]
+      local status = enabled and "✓" or "✗"
+      local line = string.format("  [%s] %-" .. max_name .. "s", status, p.name)
+      if p.description ~= "" then
+        line = line .. "  " .. p.description
+      end
+      table.insert(lines, line)
+    end
+    -- Footer
+    table.insert(lines, "")
+    table.insert(lines, string.rep("─", win_width_actual - 2))
+    table.insert(lines, " Tab:toggle  E:all on  D:all off  CR:apply+sync  q:quit")
+    return lines
   end
 
-  -- Create custom picker
-  pickers
-    .new({}, {
-      prompt_title = "PennyKit Plugins",
-      results_title = string.format("%d plugins (synced: %d new)", #plugins, stats.added),
-      finder = make_finder(),
-      sorter = conf.generic_sorter {},
-      layout_strategy = "vertical",
-      layout_config = {
-        vertical = {
-          prompt_position = "top",
-          preview_cutoff = 0,
-          width = 0.85,
-          height = 0.85,
-        },
-      },
-      selection_strategy = "reset",
-      attach_mappings = function(prompt_bufnr, map)
-        -- Track changes to apply on close
-        local changes = {} -- { [name] = enabled_state }
+  -- Render
+  local function render()
+    vim.bo[buf].modifiable = true
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, build_lines())
+    vim.bo[buf].modifiable = false
+    -- Set cursor to plugin line (header is 3 lines)
+    pcall(vim.api.nvim_win_set_cursor, win, { cursor_line + 3, 0 })
+  end
 
-        -- Helper to refresh picker and stay on same plugin
-        local function refresh_picker()
-          local current_picker = action_state.get_current_picker(prompt_bufnr)
-          local selection = action_state.get_selected_entry()
-          local target_name = selection and selection.value.name
-          current_picker:refresh(make_finder(), { reset_prompt = false })
-          -- Find the plugin in new results using iterator
-          if target_name then
-            local idx = 0
-            for entry in current_picker.manager:iter() do
-              if entry and entry.value and entry.value.name == target_name then
-                current_picker:set_selection(idx)
-                return
-              end
-              idx = idx + 1
-            end
-          end
-        end
+  -- Apply changes
+  local function apply_changes()
+    local applied = 0
+    for name, enabled in pairs(changes) do
+      pk.set_enabled(name, enabled)
+      applied = applied + 1
+    end
+    if applied > 0 then
+      vim.notify(string.format("Applied %d plugin changes", applied), vim.log.levels.INFO)
+    end
+  end
 
-        -- Helper to apply all pending changes
-        local function apply_changes()
-          local applied = 0
-          for name, enabled in pairs(changes) do
-            pk.set_enabled(name, enabled)
-            applied = applied + 1
-          end
-          if applied > 0 then
-            vim.notify(string.format("Applied %d plugin changes", applied), vim.log.levels.INFO)
-          end
-        end
+  -- Toggle plugin at cursor
+  local function toggle()
+    local lnum = vim.api.nvim_win_get_cursor(win)[1]
+    local plugin_idx = lnum - 3 -- offset for header
+    if plugin_idx < 1 or plugin_idx > #plugins then return end
+    local plugin = plugins[plugin_idx]
+    local new_state = not plugin_state[plugin.name]
+    plugin_state[plugin.name] = new_state
+    changes[plugin.name] = new_state
+    cursor_line = lnum
+    render()
+    local status = new_state and "enabled" or "disabled"
+    vim.notify(string.format("%s: %s", plugin.name, status), vim.log.levels.INFO)
+  end
 
-        -- Toggle current selection with <Tab> in insert mode
-        map("i", "<Tab>", function()
-          local selection = action_state.get_selected_entry()
-          if selection then
-            local plugin = selection.value
-            local new_state = not plugin_state[plugin.name]
-            plugin_state[plugin.name] = new_state
-            changes[plugin.name] = new_state
-            refresh_picker()
-            local status = new_state and "enabled" or "disabled"
-            vim.notify(string.format("%s: %s", plugin.name, status), vim.log.levels.INFO)
-          end
-        end)
+  -- Enable all
+  local function enable_all()
+    for _, p in ipairs(plugins) do
+      if not plugin_state[p.name] then
+        plugin_state[p.name] = true
+        changes[p.name] = true
+      end
+    end
+    render()
+    vim.notify("All plugins enabled", vim.log.levels.INFO)
+  end
 
-        -- Toggle current selection with <Tab> in normal mode
-        map("n", "<Tab>", function()
-          local selection = action_state.get_selected_entry()
-          if selection then
-            local plugin = selection.value
-            local new_state = not plugin_state[plugin.name]
-            plugin_state[plugin.name] = new_state
-            changes[plugin.name] = new_state
-            refresh_picker()
-            local status = new_state and "enabled" or "disabled"
-            vim.notify(string.format("%s: %s", plugin.name, status), vim.log.levels.INFO)
-          end
-        end)
+  -- Disable all
+  local function disable_all()
+    for _, p in ipairs(plugins) do
+      if plugin_state[p.name] then
+        plugin_state[p.name] = false
+        changes[p.name] = false
+      end
+    end
+    render()
+    vim.notify("All plugins disabled", vim.log.levels.INFO)
+  end
 
-        -- Enable all
-        map("i", "<C-e>", function()
-          for _, p in ipairs(plugins) do
-            if not plugin_state[p.name] then
-              plugin_state[p.name] = true
-              changes[p.name] = true
-            end
-          end
-          refresh_picker()
-          vim.notify("All plugins enabled", vim.log.levels.INFO)
-        end)
+  -- Close picker
+  local function close()
+    vim.api.nvim_win_close(win, true)
+  end
 
-        -- Disable all
-        map("i", "<C-d>", function()
-          for _, p in ipairs(plugins) do
-            if plugin_state[p.name] then
-              plugin_state[p.name] = false
-              changes[p.name] = false
-            end
-          end
-          refresh_picker()
-          vim.notify("All plugins disabled", vim.log.levels.INFO)
-        end)
+  -- Close and apply
+  local function close_and_apply()
+    apply_changes()
+    close()
+    vim.notify("Running :Lazy sync...", vim.log.levels.INFO)
+    vim.cmd("Lazy sync")
+  end
 
-        -- Close on Enter: apply changes and sync
-        actions.select_default:replace(function()
-          apply_changes()
-          actions.close(prompt_bufnr)
-          vim.notify("Running :Lazy sync...", vim.log.levels.INFO)
-          vim.cmd("Lazy sync")
-        end)
+  -- Close without sync
+  local function close_and_quit()
+    apply_changes()
+    close()
+  end
 
-        -- Close on Escape: apply changes without sync
-        map("i", "<Esc>", function()
-          apply_changes()
-          actions.close(prompt_bufnr)
-        end)
-        map("n", "<Esc>", function()
-          apply_changes()
-          actions.close(prompt_bufnr)
-        end)
-
-        -- Show help
-        map("i", "<C-h>", function()
-          local help_text = {
-            "",
-            "PennyKit Plugin Manager - Help",
-            "",
-            "  <Tab>      Toggle current plugin",
-            "  <C-e>      Enable all plugins",
-            "  <C-d>      Disable all plugins",
-            "  <CR>       Close & run :Lazy sync",
-            "  <Esc>      Close picker",
-            "",
-            "  Plugins marked [✓] are enabled",
-            "  Plugins marked [✗] are disabled",
-            "",
-          }
-          local buf = vim.api.nvim_create_buf(false, true)
-          vim.api.nvim_buf_set_lines(buf, 0, -1, false, help_text)
-          vim.bo[buf].modifiable = false
-          vim.bo[buf].buftype = "nofile"
-          vim.api.nvim_open_win(buf, true, {
-            relative = "editor",
-            width = 45,
-            height = #help_text,
-            row = 5,
-            col = 5,
-            style = "minimal",
-            border = "rounded",
-            title = " Help ",
-            title_pos = "center",
-          })
-          vim.keymap.set("n", "q", function() vim.cmd("close") end, { buffer = buf })
-          vim.keymap.set("n", "<Esc>", function() vim.cmd("close") end, { buffer = buf })
-        end)
-
-        return true
-      end,
+  -- Show help
+  local function show_help()
+    local help_text = {
+      "",
+      "  PennyKit Plugin Manager - Help",
+      "",
+      "  Navigation:
+      "    j/k       Move up/down",
+      "    <Tab>     Toggle current plugin",
+      "",
+      "  Actions:
+      "    E         Enable all plugins",
+      "    D         Disable all plugins",
+      "    <CR>      Apply changes & run :Lazy sync",
+      "    q         Apply changes & close",
+      "",
+      "  Plugins marked [✓] are enabled",
+      "  Plugins marked [✗] are disabled",
+      "",
+    }
+    local help_buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_lines(help_buf, 0, -1, false, help_text)
+    vim.bo[help_buf].modifiable = false
+    vim.api.nvim_open_win(help_buf, true, {
+      relative = "editor",
+      width = 45,
+      height = #help_text,
+      row = 5,
+      col = 5,
+      style = "minimal",
+      border = "rounded",
+      title = " Help ",
+      title_pos = "center",
     })
-    :find()
+    vim.keymap.set("n", "q", function() vim.cmd("close") end, { buffer = help_buf })
+    vim.keymap.set("n", "<Esc>", function() vim.cmd("close") end, { buffer = help_buf })
+  end
+
+  -- Set keymaps
+  local opts = { buffer = buf, nowait = true, silent = true }
+  vim.keymap.set("n", "<Tab>", toggle, opts)
+  vim.keymap.set("n", "j", function()
+    local lnum = vim.api.nvim_win_get_cursor(win)[1]
+    if lnum < #plugins + 2 then -- +2 for header, +1 for last line
+      cursor_line = lnum + 1
+      vim.api.nvim_win_set_cursor(win, { cursor_line, 0 })
+    end
+  end, opts)
+  vim.keymap.set("n", "k", function()
+    local lnum = vim.api.nvim_win_get_cursor(win)[1]
+    if lnum > 4 then -- header is 3 lines
+      cursor_line = lnum - 1
+      vim.api.nvim_win_set_cursor(win, { cursor_line, 0 })
+    end
+  end, opts)
+  vim.keymap.set("n", "E", enable_all, opts)
+  vim.keymap.set("n", "D", disable_all, opts)
+  vim.keymap.set("n", "<CR>", close_and_apply, opts)
+  vim.keymap.set("n", "q", close_and_quit, opts)
+  vim.keymap.set("n", "<Esc>", close_and_quit, opts)
+  vim.keymap.set("n", "h", show_help, opts)
+
+  -- Initial render
+  render()
 end
 
 --- Add plugin (user plugins only)
