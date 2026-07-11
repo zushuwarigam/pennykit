@@ -490,7 +490,7 @@ function M.show_help()
     "  How plugins work:",
     "  ────────────────────────────────────────────────────",
     "  1. Each plugin has its own file in lua/plugins/",
-    "  2. Each file has a guard clause that checks registry:
+    "  2. Each file has a guard clause that checks registry:",
     "     if not pk.is_enabled(\"name\") then return { enabled = false } end",
     "  3. Registry stores enabled/disabled state",
     "  4. Default: plugins NOT in registry are ENABLED",
