@@ -1,11 +1,8 @@
-local ok, pk = pcall(require, "pennykit")
-
 -- if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
 
 
 return {
   "AstroNvim/astrocore",
-    enabled = ok and pk.is_enabled("astrocore_rooter"),
   ---@type AstroCoreOpts
   opts = {
     -- Configure project root detection, check status with `:AstroRootInfo`
