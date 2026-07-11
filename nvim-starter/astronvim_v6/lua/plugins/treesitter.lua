@@ -1,5 +1,3 @@
-local ok, pk = pcall(require, "pennykit")
-
 -- Customize Treesitter
 -- --------------------
 -- Treesitter customizations are handled with AstroCore
@@ -9,7 +7,6 @@ local ok, pk = pcall(require, "pennykit")
 ---@type LazySpec
 return {
   "AstroNvim/astrocore",
-    enabled = ok and pk.is_enabled("treesitter"),
   ---@type AstroCoreOpts
   opts = {
     treesitter = {
