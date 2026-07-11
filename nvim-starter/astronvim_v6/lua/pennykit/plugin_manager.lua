@@ -16,6 +16,7 @@ local CORE_PLUGINS = {
   ["astroui"] = true,
   ["treesitter"] = true,
   ["mason"] = true,
+  ["dap"] = true, -- required by mason-nvim-dap.nvim
   -- AstroNvim plugin IDs (for reference)
   ["AstroNvim/astrocore"] = true,
   ["AstroNvim/astrolsp"] = true,
@@ -66,6 +67,10 @@ local CORE_PLUGINS = {
   ["ray-x/lsp_signature.nvim"] = true, -- configured in lsp_signature.lua
   ["folke/snacks.nvim"] = true, -- configured in snacks.lua
   ["andweeb/presence.nvim"] = true, -- configured in presence.lua
+  -- DAP ecosystem (required by mason-nvim-dap.nvim)
+  ["mfussenegger/nvim-dap"] = true,
+  ["rcarriga/nvim-dap-ui"] = true,
+  ["nvim-neotest/nvim-nio"] = true,
 }
 
 --- Check if a plugin is a core AstroNvim plugin
