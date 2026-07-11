@@ -9,10 +9,10 @@ return {
     enabled = ok and pk.is_enabled("godoc"),
     version = "*",
     dependencies = {
-      { "nvim-telescope/telescope.nvim" }, -- optional
-      { "folke/snacks.nvim" }, -- optional
-      { "echasnovski/mini.pick" }, -- optional
-      { "ibhagwan/fzf-lua" }, -- optional
+      { "nvim-telescope/telescope.nvim", optional = true },
+      { "folke/snacks.nvim", optional = true },
+      { "echasnovski/mini.pick", optional = true },
+      { "ibhagwan/fzf-lua", optional = true },
       {
         "nvim-treesitter/nvim-treesitter",
         opts = {

@@ -14,7 +14,6 @@ return {
         table.insert(opts.ensure_installed, "http")
       end,
     },
-    "j-hui/fidget.nvim",
     "nvim-neotest/nvim-nio",
     {
       "manoelcampos/xml2lua",
