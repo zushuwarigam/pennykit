@@ -67,24 +67,15 @@ local CORE_PLUGINS = {
 ---@param plugin_name string
 ---@return boolean
 function M.is_core_plugin(plugin_name)
-  -- Check exact match
+  -- Check exact match in CORE_PLUGINS table
   if CORE_PLUGINS[plugin_name] then return true end
 
   -- Check if it's an AstroNvim plugin (by prefix)
   if plugin_name:match("^AstroNvim/") then return true end
 
-  -- Check common core plugins by name
-  local core_names = {
-    "astrocore", "astrolsp", "astroui", "astrotheme",
-    "neo-tree", "telescope", "which-key", "mason",
-    "plenary", "nui", "nvim-web-devicons", "mini.icons",
-    "treesitter", "nvim-cmp", "luasnip", "gitsigns",
-    "bufferline", "toggleterm", "alpha-nvim", "scope",
-  }
-
-  for _, core_name in ipairs(core_names) do
-    if plugin_name:match(core_name) then return true end
-  end
+  -- NOTE: We do NOT use substring matching here
+  -- Each plugin file (like luasnip.lua, autopairs.lua) should be manageable
+  -- Only plugins explicitly in CORE_PLUGINS or with AstroNvim/ prefix are core
 
   return false
 end
@@ -100,7 +91,8 @@ end
 --- Sync registry with lua/plugins/ directory
 --- Scans all .lua files and adds missing ones to registry
 function M.sync_plugins()
-  local registry = pk.load_registry()
+  -- Always load fresh from disk
+  local registry = pk.load_registry(true)
   local plugins_dir = vim.fn.stdpath "config" .. "/lua/plugins"
   local files = vim.fn.glob(plugins_dir .. "/*.lua", false, true)
 
@@ -131,7 +123,8 @@ end
 --- Get all manageable plugins (non-core) from registry
 ---@return table[]
 function M.get_manageable_plugins()
-  local registry = pk.load_registry()
+  -- Always load fresh from disk
+  local registry = pk.load_registry(true)
   local plugins = {}
 
   for name, entry in pairs(registry.plugins) do

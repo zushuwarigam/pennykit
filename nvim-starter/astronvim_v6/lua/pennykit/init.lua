@@ -10,9 +10,12 @@ local registry_path = vim.fn.stdpath "config" .. "/lua/pennykit/plugin_registry.
 local _registry = nil
 
 --- Load registry from disk
+---@param force? boolean Force reload from disk
 ---@return table
-function M.load_registry()
-  if _registry then return _registry end
+function M.load_registry(force)
+  -- Return cached version if available and not forcing reload
+  if _registry and not force then return _registry end
+  
   local file = io.open(registry_path, "r")
   if not file then
     _registry = { plugins = {} }
@@ -52,7 +55,8 @@ end
 ---@param plugin_name string
 ---@return boolean
 function M.is_enabled(plugin_name)
-  local registry = M.load_registry()
+  -- Always load fresh from disk to get current state
+  local registry = M.load_registry(true)
   -- If plugin not in registry, default to enabled
   if not registry.plugins[plugin_name] then return true end
   return registry.plugins[plugin_name].enabled == true
@@ -62,7 +66,8 @@ end
 ---@param plugin_name string
 ---@param enabled boolean
 function M.set_enabled(plugin_name, enabled)
-  local registry = M.load_registry()
+  -- Always load fresh from disk to avoid stale cache
+  local registry = M.load_registry(true)
   if not registry.plugins[plugin_name] then
     registry.plugins[plugin_name] = {
       enabled = enabled,
