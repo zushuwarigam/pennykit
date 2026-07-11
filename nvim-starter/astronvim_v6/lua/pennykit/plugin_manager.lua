@@ -315,11 +315,11 @@ function M.picker()
       "",
       "  PennyKit Plugin Manager - Help",
       "",
-      "  Navigation:
+      "  Navigation:",
       "    j/k       Move up/down",
       "    <Tab>     Toggle current plugin",
       "",
-      "  Actions:
+      "  Actions:",
       "    E         Enable all plugins",
       "    D         Disable all plugins",
       "    <CR>      Apply changes & run :Lazy sync",
