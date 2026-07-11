@@ -265,50 +265,70 @@ Tools auto-installed by `mason-tool-installer`:
 
 ## PennyKit Plugin Manager
 
-Interactive plugin management with persistent registry. All plugins can be enabled/disabled without deleting files.
+Interactive plugin management with Telescope UI. Auto-syncs on open. Core AstroNvim plugins are excluded.
 
 | Command | Action |
 |---------|--------|
-| `:PKPluginSync` | Sync registry with `lua/plugins/` directory |
-| `:PKPluginList` | Show all plugins with enabled/disabled status |
+| `:PKPlugins` | Open Telescope picker (auto-syncs first) |
 | `:PKPluginAdd` | Add a new user plugin |
-| `:PKPluginEnable` | Enable a disabled plugin |
-| `:PKPluginDisable` | Disable an enabled plugin |
-| `:PKPluginToggle` | Toggle plugin enabled/disabled |
-| `:PKPluginDescribe` | Edit plugin description |
+| `:PKPluginSync` | Sync registry with `lua/plugins/` directory |
 
 ### Key Mappings
 
 | Key | Action |
 |-----|--------|
-| `<Leader>pp` | List plugins |
+| `<Leader>pp` | Open PennyKit plugin picker |
 | `<Leader>pa` | Add plugin |
-| `<Leader>pe` | Enable plugin |
-| `<Leader>pd` | Disable plugin |
-| `<Leader>pt` | Toggle plugin |
-| `<Leader>pD` | Describe plugin |
+| `<Leader>ps` | Sync plugins |
+
+### Telescope Keymaps (in picker)
+
+| Key | Action |
+|-----|--------|
+| `<Space>` | Toggle plugin enabled/disabled |
+| `<C-space>` | Toggle plugin (insert mode) |
+| `<C-e>` | Enable all visible plugins |
+| `<C-d>` | Disable all visible plugins |
+| `<CR>` | Close picker |
+| `<Esc>` | Close picker |
 
 ### How it works
 
-1. **First time**: Run `:PKPluginSync` to populate registry from `lua/plugins/`
+1. **Opening picker**: Run `:PKPlugins` or `<Leader>pp`
+   - Auto-syncs registry with `lua/plugins/` directory
+   - Filters out core AstroNvim plugins
+   - Shows only user-configurable plugins
 
-2. **Adding a plugin**: Enter `user/repo` or full GitHub URL
+2. **Toggling plugins**: Press `<Space>` to toggle enabled/disabled
+   - Updates registry immediately
+   - Changes take effect after restart or `:Lazy sync`
+
+3. **Adding a plugin**: Enter `user/repo` or full GitHub URL
    - Creates `lua/plugins/<name>.lua` with the plugin spec
-   - Adds to registry (`lua/pennykit/plugin_registry.json`)
+   - Adds to registry
    - Run `:Lazy sync` to install
 
-3. **Disabling a plugin**: Select from list
-   - Sets `enabled = false` in registry
-   - Plugin file is kept (not deleted)
-   - Run `:Lazy sync` to unload
+### Plugin Guard Clause
 
-4. **Enabling a plugin**: Select from disabled list
-   - Sets `enabled = true` in registry
-   - Run `:Lazy sync` to load
+Each plugin file uses this pattern:
+```lua
+local ok, pk = pcall(require, "pennykit")
+if ok and not pk.is_enabled("plugin-name") then return { enabled = false } end
+```
+
+This tells lazy.nvim to not load the plugin when disabled.
 
 ### Registry location
 
 `~/.config/nvim/lua/pennykit/plugin_registry.json`
+
+### Core Plugins (excluded from picker)
+
+These are managed by AstroNvim, not PennyKit:
+- astrocore, astrolsp, astroui, astrotheme
+- telescope, which-key, mason, neo-tree
+- treesitter, nvim-cmp, gitsigns, bufferline
+- All other AstroNvim/AstroCommunity plugins
 
 ### Customizing plugins
 

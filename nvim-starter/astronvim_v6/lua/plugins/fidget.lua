@@ -1,5 +1,5 @@
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("fidget") then return {} end
+if ok and not pk.is_enabled("fidget") then return { enabled = false } end
 
 return {
   "j-hui/fidget.nvim",

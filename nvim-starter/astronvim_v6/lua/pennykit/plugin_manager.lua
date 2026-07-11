@@ -1,52 +1,95 @@
--- PennyKit Plugin Manager
+-- PennyKit Plugin Manager with Telescope integration
 -- Interactive plugin management for AstroNvim
--- Commands: :PKPluginAdd, :PKPluginDisable, :PKPluginToggle, :PKPluginList, :PKPluginSync
+-- Commands: :PKPluginSync, :PKPlugins (Telescope picker)
 
 local M = {}
 local pk = require "pennykit"
+
+--- Core AstroNvim plugins to exclude from user management
+--- These are managed by AstroNvim itself, not by PennyKit
+local CORE_PLUGINS = {
+  -- AstroNvim core
+  ["AstroNvim/astrocore"] = true,
+  ["AstroNvim/astrocore_rooter"] = true,
+  ["AstroNvim/astrolsp"] = true,
+  ["AstroNvim/astroui"] = true,
+  ["AstroNvim/astroui-colors"] = true,
+  ["AstroNvim/astrotheme"] = true,
+  ["AstroNvim/neo-tree.nvim"] = true,
+  ["AstroNvim/telescope.nvim"] = true,
+  ["AstroNvim/which-key.nvim"] = true,
+  ["AstroNvim/mason.nvim"] = true,
+  ["AstroNvim/mason-lspconfig.nvim"] = true,
+  ["AstroNvim/mason-null-ls.nvim"] = true,
+  ["AstroNvim/mason-nvim-dap.nvim"] = true,
+  -- Common core dependencies
+  ["nvim-lua/plenary.nvim"] = true,
+  ["nvim-tree/nvim-web-devicons"] = true,
+  ["MunifTanjim/nui.nvim"] = true,
+  ["nvim-neo-tree/neo-tree.nvim"] = true,
+  ["nvim-telescope/telescope.nvim"] = true,
+  ["echasnovski/mini.icons"] = true,
+  ["folke/which-key.nvim"] = true,
+  ["folke/lazy.nvim"] = true,
+  ["folke/trouble.nvim"] = true,
+  ["folke/todo-comments.nvim"] = true,
+  ["lewis6991/gitsigns.nvim"] = true,
+  ["nvim-treesitter/nvim-treesitter"] = true,
+  ["hrsh7th/nvim-cmp"] = true,
+  ["hrsh7th/cmp-nvim-lsp"] = true,
+  ["hrsh7th/cmp-buffer"] = true,
+  ["hrsh7th/cmp-path"] = true,
+  ["L3MON4D3/LuaSnip"] = true,
+  ["saadparwaiz1/cmp_luasnip"] = true,
+  ["numToStr/Comment.nvim"] = true,
+  ["echasnovski/mini.pairs"] = true,
+  ["lukas-reineke/indent-blankline.nvim"] = true,
+  ["akinsho/bufferline.nvim"] = true,
+  ["famiu/bufdelete.nvim"] = true,
+  ["goolord/alpha-nvim"] = true,
+  ["renerocksai/telekasten.nvim"] = true,
+  ["folke/persistence.nvim"] = true,
+  ["Wansmer/treesj"] = true,
+  ["axieax/urlview.nvim"] = true,
+  ["chrisgrieser/nvim-early-retirement"] = true,
+  ["max397574/better-escape.nvim"] = true,
+  ["akinsho/toggleterm.nvim"] = true,
+  ["tiagovla/scope.nvim"] = true,
+  ["wthollingsworth/cmp-nvim-tags"] = true,
+}
+
+--- Check if a plugin is a core AstroNvim plugin
+---@param plugin_name string
+---@return boolean
+function M.is_core_plugin(plugin_name)
+  -- Check exact match
+  if CORE_PLUGINS[plugin_name] then return true end
+
+  -- Check if it's an AstroNvim plugin (by prefix)
+  if plugin_name:match("^AstroNvim/") then return true end
+
+  -- Check common core plugins by name
+  local core_names = {
+    "astrocore", "astrolsp", "astroui", "astrotheme",
+    "neo-tree", "telescope", "which-key", "mason",
+    "plenary", "nui", "nvim-web-devicons", "mini.icons",
+    "treesitter", "nvim-cmp", "luasnip", "gitsigns",
+    "bufferline", "toggleterm", "alpha-nvim", "scope",
+  }
+
+  for _, core_name in ipairs(core_names) do
+    if plugin_name:match(core_name) then return true end
+  end
+
+  return false
+end
 
 --- Get plugin name from filename
 ---@param filename string
 ---@return string
 function M.filename_to_name(filename)
-  -- Convert "__" back to "/" for display
   local name = filename:gsub("%.lua$", "")
   return name
-end
-
---- Create a floating window with buffer content
----@param lines string[]
----@param opts? table
-function M.create_float(lines, opts)
-  opts = opts or {}
-  local buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-  vim.bo[buf].modifiable = false
-  vim.bo[buf].buftype = "nofile"
-  vim.bo[buf].filetype = "pennykit-plugin-list"
-
-  local width = opts.width or math.min(vim.o.columns - 4, 80)
-  local height = math.min(#lines, opts.height or vim.o.lines - 4)
-  local row = math.floor((vim.o.lines - height) / 2)
-  local col = math.floor((vim.o.columns - width) / 2)
-
-  local win = vim.api.nvim_open_win(buf, true, {
-    relative = "editor",
-    width = width,
-    height = height,
-    row = row,
-    col = col,
-    style = "minimal",
-    border = "rounded",
-    title = opts.title or " Plugin Manager ",
-    title_pos = "center",
-  })
-
-  -- Keymaps for the float
-  vim.keymap.set("n", "q", function() vim.api.nvim_win_close(win, true) end, { buffer = buf, nowait = true })
-  vim.keymap.set("n", "<Esc>", function() vim.api.nvim_win_close(win, true) end, { buffer = buf, nowait = true })
-
-  return buf, win
 end
 
 --- Sync registry with lua/plugins/ directory
@@ -57,10 +100,11 @@ function M.sync_plugins()
   local files = vim.fn.glob(plugins_dir .. "/*.lua", false, true)
 
   local added = 0
+  local skipped = 0
   for _, f in ipairs(files) do
     local name = vim.fn.fnamemodify(f, ":t:r")
-    -- Skip pennykit internal files
-    if name ~= "init" then
+    -- Skip pennykit internal files and core plugins
+    if name ~= "init" and not M.is_core_plugin(name) then
       -- Don't overwrite existing entries
       if not registry.plugins[name] then
         registry.plugins[name] = {
@@ -70,72 +114,194 @@ function M.sync_plugins()
         }
         added = added + 1
       end
+    else
+      skipped = skipped + 1
     end
   end
 
   pk.save_registry(registry)
-  vim.notify("Synced plugins: " .. added .. " new, " .. #files .. " total", vim.log.levels.INFO)
+  return { added = added, total = #files - skipped, skipped = skipped }
 end
 
---- Show list of all plugins
-function M.list_plugins()
+--- Get all manageable plugins (non-core) from registry
+---@return table[]
+function M.get_manageable_plugins()
   local registry = pk.load_registry()
-  local lines = {
-    "╔══════════════════════════════════════════════════════════════╗",
-    "║                    PennyKit Plugin Manager                   ║",
-    "╚══════════════════════════════════════════════════════════════╝",
-    "",
-  }
-
-  -- Group plugins by source
-  local static_plugins = {}
-  local user_plugins = {}
+  local plugins = {}
 
   for name, entry in pairs(registry.plugins) do
-    if entry.source == "user" then
-      table.insert(user_plugins, { name = name, entry = entry })
-    else
-      table.insert(static_plugins, { name = name, entry = entry })
+    if not M.is_core_plugin(name) then
+      table.insert(plugins, {
+        name = name,
+        enabled = entry.enabled,
+        description = entry.description or "",
+        source = entry.source or "static",
+        entry = entry,
+      })
     end
   end
 
-  -- Sort each group
-  table.sort(static_plugins, function(a, b) return a.name < b.name end)
-  table.sort(user_plugins, function(a, b) return a.name < b.name end)
-
-  -- Show static plugins
-  table.insert(lines, "  Static plugins (lua/plugins/):")
-  table.insert(lines, "  ─────────────────────────────────────")
-  if #static_plugins == 0 then
-    table.insert(lines, "  (run :PKPluginSync to populate)")
-  else
-    for _, p in ipairs(static_plugins) do
-      local status = p.entry.enabled and "✓" or "✗"
-      local desc = p.entry.description ~= "" and (" — " .. p.entry.description) or ""
-      table.insert(lines, string.format("  [%s] %s%s", status, p.name, desc))
-    end
-  end
-  table.insert(lines, "")
-
-  -- Show user plugins
-  table.insert(lines, "  User plugins (added via :PKPluginAdd):")
-  table.insert(lines, "  ─────────────────────────────────────")
-  if #user_plugins == 0 then
-    table.insert(lines, "  (none)")
-  else
-    for _, p in ipairs(user_plugins) do
-      local status = p.entry.enabled and "✓" or "✗"
-      local desc = p.entry.description ~= "" and (" — " .. p.entry.description) or ""
-      table.insert(lines, string.format("  [%s] %s%s", status, p.name, desc))
-    end
-  end
-  table.insert(lines, "")
-  table.insert(lines, "  Press q to close")
-
-  M.create_float(lines, { title = " Plugin Manager - List ", height = math.min(#lines, 40) })
+  table.sort(plugins, function(a, b) return a.name < b.name end)
+  return plugins
 end
 
---- Interactive add plugin (user plugins only)
+--- Create Telescope picker for plugin management
+function M.picker()
+  local ok, telescope = pcall(require, "telescope")
+  if not ok then
+    vim.notify("Telescope not available", vim.log.levels.ERROR)
+    return
+  end
+
+  local pickers = require "telescope.pickers"
+  local finders = require "telescope.finders"
+  local conf = require("telescope.config").values
+  local actions = require "telescope.actions"
+  local action_state = require "telescope.actions.state"
+
+  -- Auto-sync first
+  local stats = M.sync_plugins()
+
+  -- Get manageable plugins
+  local plugins = M.get_manageable_plugins()
+
+  if #plugins == 0 then
+    vim.notify("No plugins found to manage", vim.log.levels.INFO)
+    return
+  end
+
+  -- Create custom picker
+  pickers
+    .new({}, {
+      prompt_title = "PennyKit Plugins (synced: " .. stats.added .. " new)",
+      finder = finders.new_table {
+        results = plugins,
+        entry_maker = function(entry)
+          local status = entry.enabled and "✓" or "✗"
+          local display = string.format("[%s] %s", status, entry.name)
+          if entry.description ~= "" then display = display .. " — " .. entry.description end
+          return {
+            value = entry,
+            display = display,
+            ordinal = entry.name,
+          }
+        end,
+      },
+      sorter = conf.generic_sorter {},
+      layout_strategy = "vertical",
+      layout_config = {
+        vertical = {
+          prompt_position = "top",
+          preview_cutoff = 0,
+          width = 0.8,
+          height = 0.8,
+        },
+      },
+      attach_mappings = function(prompt_bufnr, map)
+        -- Toggle selection (space)
+        map("i", "<C-space>", function()
+          local selection = action_state.get_selected_entry()
+          if selection then
+            local plugin = selection.value
+            local new_state = not plugin.enabled
+            pk.set_enabled(plugin.name, new_state)
+
+            -- Update the display
+            local new_status = new_state and "✓" or "✗"
+            local new_display = string.format("[%s] %s", new_status, plugin.name)
+            if plugin.description ~= "" then new_display = new_display .. " — " .. plugin.description end
+
+            selection.display = new_display
+            plugin.enabled = new_state
+
+            -- Refresh the picker
+            actions.refresh(prompt_bufnr)
+
+            local status_text = new_state and "enabled" or "disabled"
+            vim.notify(plugin.name .. " " .. status_text, vim.log.levels.INFO)
+          end
+        end)
+
+        -- Toggle selection (normal mode space)
+        map("n", "<space>", function()
+          local selection = action_state.get_selected_entry()
+          if selection then
+            local plugin = selection.value
+            local new_state = not plugin.enabled
+            pk.set_enabled(plugin.name, new_state)
+
+            local new_status = new_state and "✓" or "✗"
+            local new_display = string.format("[%s] %s", new_status, plugin.name)
+            if plugin.description ~= "" then new_display = new_display .. " — " .. plugin.description end
+
+            selection.display = new_display
+            plugin.enabled = new_state
+
+            actions.refresh(prompt_bufnr)
+
+            local status_text = new_state and "enabled" or "disabled"
+            vim.notify(plugin.name .. " " .. status_text, vim.log.levels.INFO)
+          end
+        end)
+
+        -- Enable all visible
+        map("i", "<C-e>", function()
+          local picker = action_state.get_current_picker(prompt_bufnr)
+          local manager = picker.manager
+          if manager then
+            for _, entry in ipairs(manager.get_results(manager)) do
+              if entry.value and not entry.value.enabled then
+                pk.set_enabled(entry.value.name, true)
+                entry.value.enabled = true
+                local new_display = string.format("[✓] %s", entry.value.name)
+                if entry.value.description ~= "" then
+                  new_display = new_display .. " — " .. entry.value.description
+                end
+                entry.display = new_display
+              end
+            end
+            actions.refresh(prompt_bufnr)
+            vim.notify("All plugins enabled", vim.log.levels.INFO)
+          end
+        end)
+
+        -- Disable all visible
+        map("i", "<C-d>", function()
+          local picker = action_state.get_current_picker(prompt_bufnr)
+          local manager = picker.manager
+          if manager then
+            for _, entry in ipairs(manager.get_results(manager)) do
+              if entry.value and entry.value.enabled then
+                pk.set_enabled(entry.value.name, false)
+                entry.value.enabled = false
+                local new_display = string.format("[✗] %s", entry.value.name)
+                if entry.value.description ~= "" then
+                  new_display = new_display .. " — " .. entry.value.description
+                end
+                entry.display = new_display
+              end
+            end
+            actions.refresh(prompt_bufnr)
+            vim.notify("All plugins disabled", vim.log.levels.INFO)
+          end
+        end)
+
+        -- Close and notify to restart
+        actions.select_default:replace(function()
+          local selection = action_state.get_selected_entry()
+          actions.close(prompt_bufnr)
+          if selection then
+            vim.notify("Changes applied. Run :Lazy sync to install/remove plugins if needed.", vim.log.levels.INFO)
+          end
+        end)
+
+        return true
+      end,
+    })
+    :find()
+end
+
+--- Add plugin (user plugins only)
 function M.add_plugin()
   vim.ui.input({ prompt = "Plugin URL or shorthand (e.g., user/repo): " }, function(input)
     if not input or input == "" then
@@ -146,11 +312,17 @@ function M.add_plugin()
     -- Parse URL to get plugin name
     local name = input:gsub("^https?://github%.com/", ""):gsub("%.git$", ""):gsub("/$", "")
 
+    -- Check if it's a core plugin
+    if M.is_core_plugin(name) then
+      vim.notify("Cannot add core AstroNvim plugin: " .. name, vim.log.levels.WARN)
+      return
+    end
+
     local registry = pk.load_registry()
 
     -- Check if already exists
     if registry.plugins[name] then
-      vim.notify("Plugin " .. name .. " already exists (use :PKPluginToggle to enable/disable)", vim.log.levels.WARN)
+      vim.notify("Plugin " .. name .. " already exists (use :PKPlugins to enable/disable)", vim.log.levels.WARN)
       return
     end
 
@@ -179,142 +351,6 @@ function M.add_plugin()
     end
 
     vim.notify("Added plugin: " .. name .. "\nRun :Lazy sync to install", vim.log.levels.INFO)
-  end)
-end
-
---- Interactive disable plugin (sets enabled = false, keeps file)
-function M.disable_plugin()
-  local registry = pk.load_registry()
-  local names = {}
-
-  for name, entry in pairs(registry.plugins) do
-    if entry.enabled then table.insert(names, name) end
-  end
-
-  if #names == 0 then
-    vim.notify("No enabled plugins to disable", vim.log.levels.INFO)
-    return
-  end
-
-  table.sort(names)
-  vim.ui.select(names, {
-    prompt = "Select plugin to disable:",
-    format_item = function(item)
-      local entry = registry.plugins[item]
-      local desc = entry.description ~= "" and (" — " .. entry.description) or ""
-      return string.format("%s%s", item, desc)
-    end,
-  }, function(choice)
-    if not choice then
-      vim.notify("Cancelled", vim.log.levels.INFO)
-      return
-    end
-
-    pk.set_enabled(choice, false)
-    vim.notify("Disabled: " .. choice .. "\nRun :Lazy sync to apply", vim.log.levels.INFO)
-  end)
-end
-
---- Interactive enable plugin (sets enabled = true)
-function M.enable_plugin()
-  local registry = pk.load_registry()
-  local names = {}
-
-  for name, entry in pairs(registry.plugins) do
-    if not entry.enabled then table.insert(names, name) end
-  end
-
-  if #names == 0 then
-    vim.notify("No disabled plugins to enable", vim.log.levels.INFO)
-    return
-  end
-
-  table.sort(names)
-  vim.ui.select(names, {
-    prompt = "Select plugin to enable:",
-    format_item = function(item)
-      local entry = registry.plugins[item]
-      local desc = entry.description ~= "" and (" — " .. entry.description) or ""
-      return string.format("%s%s", item, desc)
-    end,
-  }, function(choice)
-    if not choice then
-      vim.notify("Cancelled", vim.log.levels.INFO)
-      return
-    end
-
-    pk.set_enabled(choice, true)
-    vim.notify("Enabled: " .. choice .. "\nRun :Lazy sync to apply", vim.log.levels.INFO)
-  end)
-end
-
---- Interactive toggle plugin enable/disable
-function M.toggle_plugin()
-  local registry = pk.load_registry()
-  local names = vim.tbl_keys(registry.plugins)
-
-  if #names == 0 then
-    vim.notify("No plugins found. Run :PKPluginSync first.", vim.log.levels.INFO)
-    return
-  end
-
-  table.sort(names)
-  vim.ui.select(names, {
-    prompt = "Select plugin to toggle:",
-    format_item = function(item)
-      local entry = registry.plugins[item]
-      local status = entry.enabled and "✓" or "✗"
-      local desc = entry.description ~= "" and (" — " .. entry.description) or ""
-      return string.format("[%s] %s%s", status, item, desc)
-    end,
-  }, function(choice)
-    if not choice then
-      vim.notify("Cancelled", vim.log.levels.INFO)
-      return
-    end
-
-    local new_state = not registry.plugins[choice].enabled
-    pk.set_enabled(choice, new_state)
-
-    local status = new_state and "enabled" or "disabled"
-    vim.notify(status .. ": " .. choice .. "\nRun :Lazy sync to apply", vim.log.levels.INFO)
-  end)
-end
-
---- Edit plugin description
-function M.edit_plugin_description()
-  local registry = pk.load_registry()
-  local names = vim.tbl_keys(registry.plugins)
-
-  if #names == 0 then
-    vim.notify("No plugins found. Run :PKPluginSync first.", vim.log.levels.INFO)
-    return
-  end
-
-  table.sort(names)
-  vim.ui.select(names, {
-    prompt = "Select plugin to describe:",
-    format_item = function(item)
-      local entry = registry.plugins[item]
-      local desc = entry.description ~= "" and entry.description or "(no description)"
-      return string.format("%s — %s", item, desc)
-    end,
-  }, function(choice)
-    if not choice then
-      vim.notify("Cancelled", vim.log.levels.INFO)
-      return
-    end
-
-    vim.ui.input({
-      prompt = "Description for " .. choice .. ":",
-      default = registry.plugins[choice].description or "",
-    }, function(input)
-      if input then
-        registry.plugins[choice].description = input
-        pk.save_registry(registry)
-        vim.notify("Updated description for " .. choice, vim.log.levels.INFO)
-      end
-    end)
   end)
 end
 

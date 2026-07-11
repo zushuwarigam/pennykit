@@ -19,7 +19,7 @@ local en_words = load_wordlist "en.utf-8.add"
 local ru_words = load_wordlist "ru.utf-8.add"
 
 local ok, pk = pcall(require, "pennykit")
-if ok and not pk.is_enabled("astrolsp") then return {} end
+if ok and not pk.is_enabled("astrolsp") then return { enabled = false } end
 
 ---@type LazySpec
 return {
