@@ -7,13 +7,19 @@ local pk = require "pennykit"
 
 --- Core AstroNvim plugins to exclude from user management
 --- These are managed by AstroNvim itself, not by PennyKit
+--- NOTE: File names (without .lua) must be listed here to exclude from picker
 local CORE_PLUGINS = {
-  -- AstroNvim core
+  -- AstroNvim core (file names)
+  ["astrocore"] = true,
+  ["astrocore_rooter"] = true,
+  ["astrolsp"] = true,
+  ["astroui"] = true,
+  ["treesitter"] = true,
+  ["mason"] = true,
+  -- AstroNvim plugin IDs (for reference)
   ["AstroNvim/astrocore"] = true,
-  ["AstroNvim/astrocore_rooter"] = true,
   ["AstroNvim/astrolsp"] = true,
   ["AstroNvim/astroui"] = true,
-  ["AstroNvim/astroui-colors"] = true,
   ["AstroNvim/astrotheme"] = true,
   ["AstroNvim/neo-tree.nvim"] = true,
   ["AstroNvim/telescope.nvim"] = true,
@@ -26,7 +32,6 @@ local CORE_PLUGINS = {
   ["nvim-lua/plenary.nvim"] = true,
   ["nvim-tree/nvim-web-devicons"] = true,
   ["MunifTanjim/nui.nvim"] = true,
-  ["nvim-neo-tree/neo-tree.nvim"] = true,
   ["nvim-telescope/telescope.nvim"] = true,
   ["echasnovski/mini.icons"] = true,
   ["folke/which-key.nvim"] = true,
