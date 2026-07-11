@@ -94,6 +94,8 @@ return {
         ["<Leader>pp"] = { "<cmd>PKPlugins<cr>", desc = "PennyKit plugins" },
         ["<Leader>pa"] = { "<cmd>PKPluginAdd<cr>", desc = "Add plugin" },
         ["<Leader>ps"] = { "<cmd>PKPluginSync<cr>", desc = "Sync plugins" },
+        ["<Leader>pi"] = { "<cmd>PKPluginStatus<cr>", desc = "Plugin status" },
+        ["<Leader>ph"] = { "<cmd>PKPluginHelp<cr>", desc = "Plugin help" },
         ["<Tab>"] = { "<cmd>bnext<CR>", desc = "Next buffer" },
         ["<S-Tab>"] = { "<cmd>bprev<CR>", desc = "Previous buffer" },
         ["<M-Up>"] = { function() vim.cmd("resize +2") end, desc = "Increase window height" },

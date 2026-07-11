@@ -381,4 +381,173 @@ function M.add_plugin()
   end)
 end
 
+--- Show status of all plugins
+function M.show_status()
+  local registry = pk.load_registry()
+  local plugins_dir = vim.fn.stdpath "config" .. "/lua/plugins"
+  local files = vim.fn.glob(plugins_dir .. "/*.lua", false, true)
+
+  local enabled_count = 0
+  local disabled_count = 0
+  local untracked_count = 0
+
+  local lines = {
+    "",
+    "  PennyKit Plugin Status",
+    "  ═══════════════════════════════════════════════════",
+    "",
+    "  Registry: lua/pennykit/plugin_registry.json",
+    "",
+    "  [✓] = enabled  [✗] = disabled  [?] = not in registry",
+    "",
+    "  Enabled plugins:",
+    "  ────────────────────────────────────────────────────",
+  }
+
+  -- Collect all plugins
+  local all_plugins = {}
+  for _, f in ipairs(files) do
+    local name = vim.fn.fnamemodify(f, ":t:r")
+    if name ~= "init" and not M.is_core_plugin(name) then
+      local entry = registry.plugins[name]
+      local enabled
+      local source
+      if entry then
+        enabled = entry.enabled
+        source = entry.source or "static"
+      else
+        enabled = true -- default
+        source = "untracked"
+      end
+      table.insert(all_plugins, { name = name, enabled = enabled, source = source })
+    end
+  end
+
+  -- Sort by name
+  table.sort(all_plugins, function(a, b) return a.name < b.name end)
+
+  -- Group enabled and disabled
+  for _, p in ipairs(all_plugins) do
+    if p.enabled then
+      enabled_count = enabled_count + 1
+      table.insert(lines, string.format("    ✓ %s", p.name))
+    end
+  end
+
+  table.insert(lines, "")
+  table.insert(lines, "  Disabled plugins:")
+  table.insert(lines, "  ────────────────────────────────────────────────────")
+
+  for _, p in ipairs(all_plugins) do
+    if not p.enabled then
+      disabled_count = disabled_count + 1
+      table.insert(lines, string.format("    ✗ %s", p.name))
+    end
+  end
+
+  table.insert(lines, "")
+  table.insert(lines, string.format("  Total: %d enabled, %d disabled, %d total", enabled_count, disabled_count, #all_plugins))
+  table.insert(lines, "")
+  table.insert(lines, "  Use :PKPlugins to toggle plugins with Telescope")
+  table.insert(lines, "")
+
+  -- Create floating window
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.bo[buf].modifiable = false
+  vim.bo[buf].buftype = "nofile"
+  vim.bo[buf].filetype = "pennykit-status"
+
+  local width = 55
+  local height = #lines
+  local row = math.floor((vim.o.lines - height) / 2)
+  local col = math.floor((vim.o.columns - width) / 2)
+
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative = "editor",
+    width = width,
+    height = height,
+    row = row,
+    col = col,
+    style = "minimal",
+    border = "rounded",
+    title = " Plugin Status ",
+    title_pos = "center",
+  })
+
+  vim.keymap.set("n", "q", function() vim.api.nvim_win_close(win, true) end, { buffer = buf, nowait = true })
+  vim.keymap.set("n", "<Esc>", function() vim.api.nvim_win_close(win, true) end, { buffer = buf, nowait = true })
+end
+
+--- Show help for plugin management
+function M.show_help()
+  local help_lines = {
+    "",
+    "  PennyKit Plugin Manager - Help",
+    "  ═══════════════════════════════════════════════════",
+    "",
+    "  How plugins work:",
+    "  ────────────────────────────────────────────────────",
+    "  1. Each plugin has its own file in lua/plugins/",
+    "  2. Each file has a guard clause that checks registry:
+    "     if not pk.is_enabled(\"name\") then return { enabled = false } end",
+    "  3. Registry stores enabled/disabled state",
+    "  4. Default: plugins NOT in registry are ENABLED",
+    "",
+    "  Commands:",
+    "  ────────────────────────────────────────────────────",
+    "  :PKPlugins      Open Telescope picker (auto-syncs)",
+    "  :PKPluginAdd    Add a new plugin",
+    "  :PKPluginSync   Sync registry with lua/plugins/",
+    "  :PKPluginStatus Show enabled/disabled status",
+    "  :PKPluginHelp   Show this help",
+    "",
+    "  Telescope keymaps (in :PKPlugins):",
+    "  ────────────────────────────────────────────────────",
+    "  <Tab>          Toggle current plugin",
+    "  <C-e>          Enable all plugins",
+    "  <C-d>          Disable all plugins",
+    "  <C-h>          Show this help",
+    "  <CR> / <Esc>   Close picker",
+    "",
+    "  Registry location:",
+    "  ────────────────────────────────────────────────────",
+    "  lua/pennykit/plugin_registry.json",
+    "",
+    "  Example workflow:",
+    "  ────────────────────────────────────────────────────",
+    "  1. Open picker: <Leader>pp",
+    "  2. Find plugin: type name to filter",
+    "  3. Toggle: press <Tab>",
+    "  4. Close: press <CR>",
+    "  5. Restart Neovim or run :Lazy sync",
+    "",
+  }
+
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, help_lines)
+  vim.bo[buf].modifiable = false
+  vim.bo[buf].buftype = "nofile"
+
+  local width = 55
+  local height = #help_lines
+  local row = math.floor((vim.o.lines - height) / 2)
+  local col = math.floor((vim.o.columns - width) / 2)
+
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative = "editor",
+    width = width,
+    height = height,
+    row = row,
+    col = col,
+    style = "minimal",
+    border = "rounded",
+    title = " Help ",
+    title_pos = "center",
+  })
+
+  vim.keymap.set("n", "q", function() vim.api.nvim_win_close(win, true) end, { buffer = buf, nowait = true })
+  vim.keymap.set("n", "<Esc>", function() vim.api.nvim_win_close(win, true) end, { buffer = buf, nowait = true })
+end
+
 return M

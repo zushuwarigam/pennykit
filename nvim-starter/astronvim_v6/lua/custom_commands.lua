@@ -20,3 +20,11 @@ vim.api.nvim_create_user_command('PKPluginSync', function()
     vim.log.levels.INFO
   )
 end, { desc = "Sync registry with lua/plugins/ directory" })
+
+vim.api.nvim_create_user_command('PKPluginStatus', function()
+  plugin_manager.show_status()
+end, { desc = "Show plugin enabled/disabled status" })
+
+vim.api.nvim_create_user_command('PKPluginHelp', function()
+  plugin_manager.show_help()
+end, { desc = "Show PennyKit plugin manager help" })

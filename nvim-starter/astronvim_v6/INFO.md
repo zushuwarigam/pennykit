@@ -272,6 +272,8 @@ Interactive plugin management with Telescope UI. Auto-syncs on open. Core AstroN
 | `:PKPlugins` | Open Telescope picker (auto-syncs first) |
 | `:PKPluginAdd` | Add a new user plugin |
 | `:PKPluginSync` | Sync registry with `lua/plugins/` directory |
+| `:PKPluginStatus` | Show enabled/disabled status |
+| `:PKPluginHelp` | Show help |
 
 ### Key Mappings
 
@@ -280,6 +282,8 @@ Interactive plugin management with Telescope UI. Auto-syncs on open. Core AstroN
 | `<Leader>pp` | Open PennyKit plugin picker |
 | `<Leader>pa` | Add plugin |
 | `<Leader>ps` | Sync plugins |
+| `<Leader>pi` | Show plugin status |
+| `<Leader>ph` | Show help |
 
 ### Telescope Keymaps (in picker)
 
@@ -308,15 +312,38 @@ Interactive plugin management with Telescope UI. Auto-syncs on open. Core AstroN
    - Adds to registry
    - Run `:Lazy sync` to install
 
-### Plugin Guard Clause
+### How Plugin Checking Works
 
-Each plugin file uses this pattern:
+Each plugin file has a guard clause at the top:
+
 ```lua
 local ok, pk = pcall(require, "pennykit")
 if ok and not pk.is_enabled("plugin-name") then return { enabled = false } end
 ```
 
-This tells lazy.nvim to not load the plugin when disabled.
+**Flow:**
+1. lazy.nvim loads all files from `lua/plugins/`
+2. Each file runs its guard clause
+3. `pk.is_enabled()` checks the registry:
+   - Plugin NOT in registry → **enabled** (default)
+   - Plugin IN registry → returns `registry.plugins[name].enabled`
+4. If disabled, returns `{ enabled = false }` → lazy.nvim skips plugin
+
+**Registry:** `lua/pennykit/plugin_registry.json`
+- Stores which plugins are enabled/disabled
+- Created by `:PKPluginSync` or `:PKPlugins`
+- Modified by toggling in Telescope picker
+
+**Example:**
+```json
+{
+  "plugins": {
+    "catppuccin": { "enabled": false },
+    "go": { "enabled": true },
+    "languagetool": { "enabled": false }
+  }
+}
+```
 
 ### Registry location
 
