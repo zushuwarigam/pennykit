@@ -260,7 +260,7 @@ function M.picker()
     local new_state = not plugin_state[plugin.name]
     plugin_state[plugin.name] = new_state
     changes[plugin.name] = new_state
-    cursor_line = lnum
+    cursor_line = plugin_idx -- store plugin index, not line number
     render()
     local status = new_state and "enabled" or "disabled"
     vim.notify(string.format("%s: %s", plugin.name, status), vim.log.levels.INFO)
@@ -351,17 +351,15 @@ function M.picker()
   local opts = { buffer = buf, nowait = true, silent = true }
   vim.keymap.set("n", "<Tab>", toggle, opts)
   vim.keymap.set("n", "j", function()
-    local lnum = vim.api.nvim_win_get_cursor(win)[1]
-    if lnum < #plugins + 2 then -- +2 for header, +1 for last line
-      cursor_line = lnum + 1
-      vim.api.nvim_win_set_cursor(win, { cursor_line, 0 })
+    if cursor_line < #plugins then
+      cursor_line = cursor_line + 1
+      vim.api.nvim_win_set_cursor(win, { cursor_line + 3, 0 })
     end
   end, opts)
   vim.keymap.set("n", "k", function()
-    local lnum = vim.api.nvim_win_get_cursor(win)[1]
-    if lnum > 4 then -- header is 3 lines
-      cursor_line = lnum - 1
-      vim.api.nvim_win_set_cursor(win, { cursor_line, 0 })
+    if cursor_line > 1 then
+      cursor_line = cursor_line - 1
+      vim.api.nvim_win_set_cursor(win, { cursor_line + 3, 0 })
     end
   end, opts)
   vim.keymap.set("n", "E", enable_all, opts)
