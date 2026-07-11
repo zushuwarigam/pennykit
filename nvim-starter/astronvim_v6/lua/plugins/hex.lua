@@ -1,3 +1,6 @@
+local ok, pk = pcall(require, "pennykit")
+if ok and not pk.is_enabled("hex") then return {} end
+
 return {
   "RaafatTurki/hex.nvim",
   cmd = { "HexDump", "HexAssemble", "HexToggle" }, -- 🔑 Lazy-load on command

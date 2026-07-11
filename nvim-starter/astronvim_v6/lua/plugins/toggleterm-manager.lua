@@ -1,3 +1,6 @@
+local ok, pk = pcall(require, "pennykit")
+if ok and not pk.is_enabled("toggleterm-manager") then return {} end
+
 return {
   "ryanmsnyder/toggleterm-manager.nvim",
   dependencies = {

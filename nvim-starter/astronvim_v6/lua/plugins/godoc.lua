@@ -1,3 +1,6 @@
+local ok, pk = pcall(require, "pennykit")
+if ok and not pk.is_enabled("godoc") then return {} end
+
 ---@type LazySpec
 return {
   -- Godoc

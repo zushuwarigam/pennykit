@@ -1,3 +1,6 @@
+local ok, pk = pcall(require, "pennykit")
+if ok and not pk.is_enabled("codecompanion") then return {} end
+
 return {
   "olimorris/codecompanion.nvim",
   dependencies = {

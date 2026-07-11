@@ -5,6 +5,9 @@
 
 local ok, theme = pcall(require, "_local_theme")
 
+local ok, pk = pcall(require, "pennykit")
+if ok and not pk.is_enabled("astroui") then return {} end
+
 ---@type LazySpec
 return {
   "AstroNvim/astroui",

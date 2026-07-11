@@ -1,3 +1,6 @@
+local ok, pk = pcall(require, "pennykit")
+if ok and not pk.is_enabled("rest") then return {} end
+
 return {
   "rest-nvim/rest.nvim",
   ft = "http",

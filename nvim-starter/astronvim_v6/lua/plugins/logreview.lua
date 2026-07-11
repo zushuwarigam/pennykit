@@ -1,3 +1,6 @@
+local ok, pk = pcall(require, "pennykit")
+if ok and not pk.is_enabled("logreview") then return {} end
+
 return {
   "andreshazard/vim-logreview",
   cmd = { "Logreview" },

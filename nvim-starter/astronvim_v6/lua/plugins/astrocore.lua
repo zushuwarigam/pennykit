@@ -3,6 +3,9 @@
 -- NOTE: We highly recommend setting up the Lua Language Server (`:LspInstall lua_ls`)
 --       as this provides autocomplete and documentation while editing
 
+local ok, pk = pcall(require, "pennykit")
+if ok and not pk.is_enabled("astrocore") then return {} end
+
 ---@type LazySpec
 return {
   "AstroNvim/astrocore",
@@ -83,9 +86,17 @@ return {
 
         -- setting a mapping to false will disable it
         -- ["<C-S>"] = false,
+        ["<leader>p"] = { name = "PennyKit/Plugins" },
         ["<leader>a"] = { name = "AI/CodeCompanion" },
         ["<Leader>aa"] = { "<cmd>CodeCompanionChat Toggle<cr>", desc = "Toggle Chat" },
         ["<Leader>ap"] = { "<cmd>CodeCompanionActions<cr>", desc = "Action Palette" },
+        -- Plugin Manager
+        ["<Leader>pp"] = { "<cmd>PKPluginList<cr>", desc = "List plugins" },
+        ["<Leader>pa"] = { "<cmd>PKPluginAdd<cr>", desc = "Add plugin" },
+        ["<Leader>pe"] = { "<cmd>PKPluginEnable<cr>", desc = "Enable plugin" },
+        ["<Leader>pd"] = { "<cmd>PKPluginDisable<cr>", desc = "Disable plugin" },
+        ["<Leader>pt"] = { "<cmd>PKPluginToggle<cr>", desc = "Toggle plugin" },
+        ["<Leader>pD"] = { "<cmd>PKPluginDescribe<cr>", desc = "Describe plugin" },
         ["<Tab>"] = { "<cmd>bnext<CR>", desc = "Next buffer" },
         ["<S-Tab>"] = { "<cmd>bprev<CR>", desc = "Previous buffer" },
         ["<M-Up>"] = { function() vim.cmd("resize +2") end, desc = "Increase window height" },

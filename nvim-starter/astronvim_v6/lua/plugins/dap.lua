@@ -1,3 +1,6 @@
+local ok, pk = pcall(require, "pennykit")
+if ok and not pk.is_enabled("dap") then return {} end
+
 return {
   "mfussenegger/nvim-dap",
   config = function(plugin, opts)

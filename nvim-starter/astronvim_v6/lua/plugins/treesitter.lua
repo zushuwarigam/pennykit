@@ -3,6 +3,9 @@
 -- Treesitter customizations are handled with AstroCore
 -- as nvim-treesitter simply provides a download utility for parsers
 
+local ok, pk = pcall(require, "pennykit")
+if ok and not pk.is_enabled("treesitter") then return {} end
+
 ---@type LazySpec
 return {
   "AstroNvim/astrocore",

@@ -1,5 +1,8 @@
 -- Customize Mason
 
+local ok, pk = pcall(require, "pennykit")
+if ok and not pk.is_enabled("mason") then return {} end
+
 ---@type LazySpec
 return {
   -- use mason-tool-installer for automatically installing Mason packages

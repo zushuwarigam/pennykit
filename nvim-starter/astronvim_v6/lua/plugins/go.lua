@@ -1,4 +1,7 @@
 -- ~/.config/astronvim/lua/plugins/go.lua
+local ok, pk = pcall(require, "pennykit")
+if ok and not pk.is_enabled("go") then return {} end
+
 return {
   "ray-x/go.nvim",
   dependencies = { "ray-x/guihua.lua" },
