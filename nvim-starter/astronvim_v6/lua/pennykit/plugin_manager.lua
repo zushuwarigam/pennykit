@@ -158,6 +158,7 @@ function M.picker()
   local conf = require("telescope.config").values
   local actions = require "telescope.actions"
   local action_state = require "telescope.actions.state"
+  local make_entry = require "telescope.make_entry"
 
   -- Auto-sync first
   local stats = M.sync_plugins()
@@ -170,20 +171,30 @@ function M.picker()
     return
   end
 
+  -- Track state locally
+  local plugin_state = {}
+  for _, p in ipairs(plugins) do
+    plugin_state[p.name] = p.enabled
+  end
+
   -- Create custom picker
   pickers
     .new({}, {
-      prompt_title = "PennyKit Plugins (synced: " .. stats.added .. " new)",
+      prompt_title = "PennyKit Plugins",
+      results_title = string.format("%d plugins (synced: %d new)", #plugins, stats.added),
       finder = finders.new_table {
         results = plugins,
         entry_maker = function(entry)
-          local status = entry.enabled and "✓" or "✗"
-          local display = string.format("[%s] %s", status, entry.name)
+          local enabled = plugin_state[entry.name]
+          local status = enabled and "✓" or "✗"
+          local display = string.format(" [%s] %s", status, entry.name)
           if entry.description ~= "" then display = display .. " — " .. entry.description end
           return {
             value = entry,
             display = display,
             ordinal = entry.name,
+            -- For sorting: enabled plugins first
+            ordinal_sort = (enabled and 0 or 1) .. entry.name,
           }
         end,
       },
@@ -193,106 +204,117 @@ function M.picker()
         vertical = {
           prompt_position = "top",
           preview_cutoff = 0,
-          width = 0.8,
-          height = 0.8,
+          width = 0.85,
+          height = 0.85,
         },
       },
+      -- Multi-select with Tab/S-Tab
+      selection_strategy = "reset",
       attach_mappings = function(prompt_bufnr, map)
-        -- Toggle selection (space)
-        map("i", "<C-space>", function()
+        -- Helper to update display
+        local function update_display(selection)
+          local plugin = selection.value
+          local enabled = plugin_state[plugin.name]
+          local status = enabled and "✓" or "✗"
+          local new_display = string.format(" [%s] %s", status, plugin.name)
+          if plugin.description ~= "" then new_display = new_display .. " — " .. plugin.description end
+          selection.display = new_display
+        end
+
+        -- Toggle current selection with <Tab> in insert mode
+        map("i", "<Tab>", function()
           local selection = action_state.get_selected_entry()
           if selection then
             local plugin = selection.value
-            local new_state = not plugin.enabled
-            pk.set_enabled(plugin.name, new_state)
-
-            -- Update the display
-            local new_status = new_state and "✓" or "✗"
-            local new_display = string.format("[%s] %s", new_status, plugin.name)
-            if plugin.description ~= "" then new_display = new_display .. " — " .. plugin.description end
-
-            selection.display = new_display
-            plugin.enabled = new_state
-
-            -- Refresh the picker
-            actions.refresh(prompt_bufnr)
-
-            local status_text = new_state and "enabled" or "disabled"
-            vim.notify(plugin.name .. " " .. status_text, vim.log.levels.INFO)
+            plugin_state[plugin.name] = not plugin_state[plugin.name]
+            pk.set_enabled(plugin.name, plugin_state[plugin.name])
+            update_display(selection)
+            actions.move_selection_next(prompt_bufnr)
+            local status = plugin_state[plugin.name] and "enabled" or "disabled"
+            vim.notify(string.format("%s: %s", plugin.name, status), vim.log.levels.INFO)
           end
         end)
 
-        -- Toggle selection (normal mode space)
-        map("n", "<space>", function()
+        -- Toggle current selection with <Tab> in normal mode
+        map("n", "<Tab>", function()
           local selection = action_state.get_selected_entry()
           if selection then
             local plugin = selection.value
-            local new_state = not plugin.enabled
-            pk.set_enabled(plugin.name, new_state)
-
-            local new_status = new_state and "✓" or "✗"
-            local new_display = string.format("[%s] %s", new_status, plugin.name)
-            if plugin.description ~= "" then new_display = new_display .. " — " .. plugin.description end
-
-            selection.display = new_display
-            plugin.enabled = new_state
-
-            actions.refresh(prompt_bufnr)
-
-            local status_text = new_state and "enabled" or "disabled"
-            vim.notify(plugin.name .. " " .. status_text, vim.log.levels.INFO)
+            plugin_state[plugin.name] = not plugin_state[plugin.name]
+            pk.set_enabled(plugin.name, plugin_state[plugin.name])
+            update_display(selection)
+            actions.move_selection_next(prompt_bufnr)
+            local status = plugin_state[plugin.name] and "enabled" or "disabled"
+            vim.notify(string.format("%s: %s", plugin.name, status), vim.log.levels.INFO)
           end
         end)
 
-        -- Enable all visible
+        -- Enable all
         map("i", "<C-e>", function()
-          local picker = action_state.get_current_picker(prompt_bufnr)
-          local manager = picker.manager
-          if manager then
-            for _, entry in ipairs(manager.get_results(manager)) do
-              if entry.value and not entry.value.enabled then
-                pk.set_enabled(entry.value.name, true)
-                entry.value.enabled = true
-                local new_display = string.format("[✓] %s", entry.value.name)
-                if entry.value.description ~= "" then
-                  new_display = new_display .. " — " .. entry.value.description
-                end
-                entry.display = new_display
-              end
+          for _, p in ipairs(plugins) do
+            if not plugin_state[p.name] then
+              plugin_state[p.name] = true
+              pk.set_enabled(p.name, true)
             end
-            actions.refresh(prompt_bufnr)
-            vim.notify("All plugins enabled", vim.log.levels.INFO)
           end
+          -- Refresh picker
+          local current_picker = action_state.get_current_picker(prompt_bufnr)
+          current_picker:refresh()
+          vim.notify("All plugins enabled", vim.log.levels.INFO)
         end)
 
-        -- Disable all visible
+        -- Disable all
         map("i", "<C-d>", function()
-          local picker = action_state.get_current_picker(prompt_bufnr)
-          local manager = picker.manager
-          if manager then
-            for _, entry in ipairs(manager.get_results(manager)) do
-              if entry.value and entry.value.enabled then
-                pk.set_enabled(entry.value.name, false)
-                entry.value.enabled = false
-                local new_display = string.format("[✗] %s", entry.value.name)
-                if entry.value.description ~= "" then
-                  new_display = new_display .. " — " .. entry.value.description
-                end
-                entry.display = new_display
-              end
+          for _, p in ipairs(plugins) do
+            if plugin_state[p.name] then
+              plugin_state[p.name] = false
+              pk.set_enabled(p.name, false)
             end
-            actions.refresh(prompt_bufnr)
-            vim.notify("All plugins disabled", vim.log.levels.INFO)
           end
+          local current_picker = action_state.get_current_picker(prompt_bufnr)
+          current_picker:refresh()
+          vim.notify("All plugins disabled", vim.log.levels.INFO)
         end)
 
-        -- Close and notify to restart
+        -- Close on Enter
         actions.select_default:replace(function()
-          local selection = action_state.get_selected_entry()
           actions.close(prompt_bufnr)
-          if selection then
-            vim.notify("Changes applied. Run :Lazy sync to install/remove plugins if needed.", vim.log.levels.INFO)
-          end
+          vim.notify("Changes applied. Restart or run :Lazy sync to apply.", vim.log.levels.INFO)
+        end)
+
+        -- Show help
+        map("i", "<C-h>", function()
+          local help_text = {
+            "",
+            "PennyKit Plugin Manager - Help",
+            "",
+            "  <Tab>      Toggle current plugin",
+            "  <C-e>      Enable all plugins",
+            "  <C-d>      Disable all plugins",
+            "  <CR>       Close picker",
+            "  <Esc>      Close picker",
+            "",
+            "  Plugins marked [✓] are enabled",
+            "  Plugins marked [✗] are disabled",
+            "",
+          }
+          local buf = vim.api.nvim_create_buf(false, true)
+          vim.api.nvim_buf_set_lines(buf, 0, -1, false, help_text)
+          vim.bo[buf].modifiable = false
+          vim.bo[buf].buftype = "nofile"
+          vim.api.nvim_open_win(buf, true, {
+            relative = "editor",
+            width = 45,
+            height = #help_text,
+            row = 5,
+            col = 5,
+            style = "minimal",
+            border = "rounded",
+            title = " Help ",
+            title_pos = "center",
+          })
+          vim.keymap.set("n", "q", function() vim.cmd("close") end, { buffer = buf })
+          vim.keymap.set("n", "<Esc>", function() vim.cmd("close") end, { buffer = buf })
         end)
 
         return true

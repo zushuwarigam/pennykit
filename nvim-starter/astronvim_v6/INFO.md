@@ -285,12 +285,12 @@ Interactive plugin management with Telescope UI. Auto-syncs on open. Core AstroN
 
 | Key | Action |
 |-----|--------|
-| `<Space>` | Toggle plugin enabled/disabled |
-| `<C-space>` | Toggle plugin (insert mode) |
-| `<C-e>` | Enable all visible plugins |
-| `<C-d>` | Disable all visible plugins |
+| `<Tab>` | Toggle current plugin (moves to next) |
+| `<C-e>` | Enable all plugins |
+| `<C-d>` | Disable all plugins |
 | `<CR>` | Close picker |
 | `<Esc>` | Close picker |
+| `<C-h>` | Show help |
 
 ### How it works
 
