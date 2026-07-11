@@ -218,25 +218,15 @@ function M.picker()
       attach_mappings = function(prompt_bufnr, map)
         -- Track changes to apply on close
         local changes = {} -- { [name] = enabled_state }
-        local last_selection_name = nil -- track current selection
 
         -- Helper to refresh picker display without losing selection
         local function refresh_picker()
           local current_picker = action_state.get_current_picker(prompt_bufnr)
-          local selection = action_state.get_selected_entry()
-          local current_name = selection and selection.value.name or last_selection_name
+          -- Get current row index before refresh
+          local row = current_picker:get_selection_row()
           current_picker:refresh(make_finder(), { reset_prompt = false })
-          -- Restore selection to same plugin
-          if current_name then
-            local state = current_picker.manager.get_selection_state()
-            local results = current_picker.manager.get_results()
-            for i, entry in ipairs(results) do
-              if entry.value.name == current_name then
-                current_picker:set_selection(i - 1)
-                break
-              end
-            end
-          end
+          -- Try to restore selection to same row
+          pcall(function() current_picker:set_selection(row) end)
         end
 
         -- Helper to apply all pending changes
@@ -256,7 +246,6 @@ function M.picker()
           local selection = action_state.get_selected_entry()
           if selection then
             local plugin = selection.value
-            last_selection_name = plugin.name
             local new_state = not plugin_state[plugin.name]
             plugin_state[plugin.name] = new_state
             changes[plugin.name] = new_state
@@ -271,7 +260,6 @@ function M.picker()
           local selection = action_state.get_selected_entry()
           if selection then
             local plugin = selection.value
-            last_selection_name = plugin.name
             local new_state = not plugin_state[plugin.name]
             plugin_state[plugin.name] = new_state
             changes[plugin.name] = new_state
