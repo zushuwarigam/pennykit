@@ -39,7 +39,18 @@ if [[ -n "${PENNYKIT_DRY_RUN:-}" ]]; then
 else
   _apt_install()  { DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a $SUDO apt-get install -qq -y --no-install-recommends --no-install-suggests "$@" 2>&1 | grep -v "already" || true; }
   _pipx_install() { pipx install "$@"; }
-  _npm_install()  { npm install "$@"; }
+  _npm_install()  {
+    local retries=3
+    for ((i=1; i<=retries; i++)); do
+      if npm install -g "$@"; then
+        return 0
+      fi
+      echo "  npm install failed (attempt $i/$retries), retrying..."
+      sleep 2
+    done
+    echo "  npm install failed after $retries attempts"
+    return 1
+  }
   _brew_install() { brew install "$@"; }
   _apt_update()   { DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a $SUDO apt-get update -qq; }
   _apt_upgrade()  { DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a $SUDO apt-get upgrade -qq -y; }
