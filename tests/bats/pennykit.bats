@@ -14,6 +14,9 @@ setup() {
     fi
 
     cp "$(dirname "$BATS_TEST_FILENAME")/../../lib/helpers.sh" "$PENNYKIT_HOME/lib/helpers.sh"
+    for cmd_file in $(dirname "$BATS_TEST_FILENAME")/../../lib/cmd_*.sh; do
+        cp "$cmd_file" "$PENNYKIT_HOME/lib/" 2>/dev/null || true
+    done
     echo "PENNYKIT_THEME_NAME=test" > "$PENNYKIT_HOME/configs/themes/test.conf"
     echo "PENNYKIT_THEME_NAME=luna" > "$PENNYKIT_HOME/configs/themes/luna.conf"
 }
@@ -124,7 +127,7 @@ setup() {
 
 @test "_nvim_config_type: returns 'none' when no config directory" {
     source "$PENNYKIT_HOME/lib/helpers.sh"
-    eval "$(sed -n '/^_nvim_config_type/,/^}/p' "$PENNYKIT_BIN")"
+    source "$PENNYKIT_HOME/lib/cmd_nvim.sh"
     run _nvim_config_type
     assert_success
     assert_output "none"
@@ -133,7 +136,7 @@ setup() {
 @test "_nvim_config_type: returns 'directory' when regular directory exists" {
     mkdir -p "$HOME/.config/nvim"
     source "$PENNYKIT_HOME/lib/helpers.sh"
-    eval "$(sed -n '/^_nvim_config_type/,/^}/p' "$PENNYKIT_BIN")"
+    source "$PENNYKIT_HOME/lib/cmd_nvim.sh"
     run _nvim_config_type
     assert_success
     assert_output "directory"
@@ -144,7 +147,7 @@ setup() {
     mkdir -p "$PENNYKIT_HOME/nvim-starter/astronvim_v6"
     ln -s "$PENNYKIT_HOME/nvim-starter/astronvim_v6" "$HOME/.config/nvim"
     source "$PENNYKIT_HOME/lib/helpers.sh"
-    eval "$(sed -n '/^_nvim_config_type/,/^}/p' "$PENNYKIT_BIN")"
+    source "$PENNYKIT_HOME/lib/cmd_nvim.sh"
     run _nvim_config_type
     assert_success
     assert_output "symlink"
@@ -155,7 +158,7 @@ setup() {
     mkdir -p "$BATS_TEST_TMPDIR/external"
     ln -s "$BATS_TEST_TMPDIR/external" "$HOME/.config/nvim"
     source "$PENNYKIT_HOME/lib/helpers.sh"
-    eval "$(sed -n '/^_nvim_config_type/,/^}/p' "$PENNYKIT_BIN")"
+    source "$PENNYKIT_HOME/lib/cmd_nvim.sh"
     run _nvim_config_type
     assert_success
     assert_output "external_symlink"

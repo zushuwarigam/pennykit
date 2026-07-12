@@ -6,7 +6,7 @@ setup() {
     export HOME="$BATS_TEST_TMPDIR/home"
     mkdir -p "$HOME"
 
-    INSTALL_SCRIPT="$(dirname "$BATS_TEST_FILENAME")/../../install"
+    INSTALL_SCRIPT="$(dirname "$BATS_TEST_FILENAME")/../../install.sh"
 }
 
 @test "install: exits with error when git clone fails (no network)" {
