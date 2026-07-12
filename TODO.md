@@ -40,10 +40,10 @@
 - [x] **`lazy-lock.json` is gitignored** — Removed `**/lazy-lock.json` from `.gitignore`; astronvim lock file now trackable
 - [x] **Git submodules drift** — Dead `.git` submodule directories removed; actual configs stay as-is
 - [x] **Container detection edge cases** — Centralized in `check_system.sh`, sourced from both `pennykit_install.sh` and `bin/pennykit`
-- [x] **Theme variables not centralized** — Resolved via `configs/theme_mapping.toml` + `scripts/apply_theme.py`; bash fallback kept for environments without python3
+- [x] **Theme variables not centralized** — Resolved via `configs/theme_mapping.toml` + `scripts/util/apply_theme.py`; bash fallback kept for environments without python3
 
 ## Documentation
 
-- [x] **Generate keymap reference from config** — Added `scripts/gen_keymap_ref.py` that scans `lua/plugins/*.lua` for `desc` fields and outputs a markdown table; documented in USE.md
+- [x] **Generate keymap reference from config** — Added `scripts/util/gen_keymap_ref.py` that scans `lua/plugins/*.lua` for `desc` fields and outputs a markdown table; documented in USE.md
 - [x] **Cross-starter compatibility matrix** — Documented in USE.md: shared features, per-starter unique features, switching instructions
 - [ ] **Docker workflow docs** — Add a dedicated section for the 4 Dockerfiles: which to use when, build args, volume mounts, how themes work inside containers

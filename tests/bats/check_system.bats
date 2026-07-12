@@ -10,7 +10,7 @@ setup() {
 source_detect_os() {
     local mock_osrelease="$1"
     local func
-    func=$(sed -n '/^detect_os/,/^}/p' "$(dirname "$BATS_TEST_FILENAME")/../../scripts/check_system.sh")
+    func=$(sed -n '/^detect_os/,/^}/p' "$(dirname "$BATS_TEST_FILENAME")/../../scripts/install/check_system.sh")
     if [[ -n "$mock_osrelease" ]]; then
         func="${func//\/etc\/os-release/$mock_osrelease}"
     fi

@@ -7,7 +7,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/zushuwarigam/pennykit/refs/h
 ## Tests
 
 ```bash
-bash scripts/run_tests.sh
+bash scripts/test/run_tests.sh
 ```
 
 Runs shellcheck → hadolint → [BATS](https://github.com/bats-core/bats-core) → pytest.

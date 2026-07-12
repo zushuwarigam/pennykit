@@ -18,7 +18,7 @@ source "$PENNYKIT_HOME/lib/helpers.sh"
 printf "### %s\n" "$(_readlinkf "$0")"
 
 # Detect OS and container
-source "$PENNYKIT_HOME/scripts/check_system.sh"
+source "$PENNYKIT_HOME/scripts/install/check_system.sh"
 
 cd "$PENNYKIT_HOME"
 
@@ -61,13 +61,13 @@ fi
 # Packages
 case "$PENNYKIT_OS_ID" in
   "debian")
-    ./scripts/package_installer.sh apt
+    ./scripts/install/package_installer.sh apt
     ;;
   "macos")
-    ./scripts/package_installer.sh brew
+    ./scripts/install/package_installer.sh brew
     ;;
   *) echo "Skipping other os..." && exit 1 ;;
 esac
 
 # Config package
-source ./scripts/package_configure.sh
+source ./scripts/install/package_configure.sh

@@ -37,7 +37,22 @@ Pennykit is a **development environment orchestrator** — a dotfiles manager th
 │   ├── package_configure.sh   # Sources configs/config.* → creates symlinks
 │   ├── apply_theme.py         # Python theme engine (reads TOML mapping)
 │   ├── run_tests.sh           # Test runner: shellcheck → hadolint → BATS → pytest
-│   └── build docker, verify, gen_keymap_ref, etc.
+│   ├── build/
+│   │   ├── build_docker-image.sh    # Docker image builder
+│   │   └── run_docker-container.sh  # Docker container runner
+│   ├── install/
+│   │   ├── package_installer.sh     # Pyramid installer
+│   │   ├── check_system.sh          # OS detection
+│   │   └── package_configure.sh     # Config symlinks
+│   ├── test/
+│   │   ├── run_tests.sh             # Test runner
+│   │   ├── test_docker_install.sh   # Docker install testing
+│   │   └── verify_docker_install.sh # Docker install verification
+│   └── util/
+│       ├── apply_theme.py           # Python theme engine
+│       ├── gen_keymap_ref.py        # Neovim keymap reference
+│       ├── dump_keymaps.lua         # Neovim keymap dumper
+│       └── get_packages.sh          # Package listing
 │
 ├── packages/
 │   ├── apt.{default,admin,dev,pentest}    # System packages per tier
@@ -88,16 +103,16 @@ User runs: bash install [-p all] [-r] [-f]
   │
   └── source pennykit_install.sh
         ├── source lib/helpers.sh           (#0: most-sourced file, 4x)
-        ├── source scripts/check_system.sh  (sets OS_ID + CODENAME)
+        ├── source scripts/install/check_system.sh  (sets OS_ID + CODENAME)
         ├── mkdir ~/.npm-global; npm config set prefix
         ├── If ROOTLESS: mkdir ~/.local/{bin,opt,go}
         │
         ├── CASE $PENNYKIT_OS_ID:
-        │     "debian" → ./scripts/package_installer.sh apt
-        │     "macos"  → ./scripts/package_installer.sh brew
+        │     "debian" → ./scripts/install/package_installer.sh apt
+        │     "macos"  → ./scripts/install/package_installer.sh brew
         │     *         → exit 1
         │
-        └── source ./scripts/package_configure.sh
+        └── source ./scripts/install/package_configure.sh
               └── source configs/config.* (one per app → creates symlinks)
 ```
 

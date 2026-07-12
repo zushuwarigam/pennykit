@@ -75,10 +75,10 @@
 
 ## Phase 2: High-Priority Infrastructure Gaps
 
-### Task 5: Test `scripts/package_configure.sh` (entirely)
+### Task 5: Test `scripts/install/package_configure.sh` (entirely)
 
 **Files:**
-- Source: `scripts/package_configure.sh`
+- Source: `scripts/install/package_configure.sh`
 - Test: `tests/bats/package_configure.bats` (new)
 
 **Use cases to test:**
@@ -109,7 +109,7 @@
 ### Task 7: Test `detect_os` — OS Detection
 
 **Files:**
-- Source: `scripts/check_system.sh`
+- Source: `scripts/install/check_system.sh`
 - Test: `tests/bats/check_system.bats` (new)
 
 **Use cases to test:**
@@ -127,7 +127,7 @@
 ### Task 8: Test pipx/npm layer processing
 
 **Files:**
-- Source: `scripts/package_installer.sh:133-167`
+- Source: `scripts/install/package_installer.sh:133-167`
 - Test: `tests/bats/package_installer.bats` (add to existing)
 
 **Use cases to test:**
@@ -180,7 +180,7 @@
 ### Task 11: Test Python theme engine edge cases
 
 **Files:**
-- Source: `scripts/apply_theme.py`
+- Source: `scripts/util/apply_theme.py`
 - Test: `tests/python/test_apply_theme.py` (add)
 
 **Use cases to test:**

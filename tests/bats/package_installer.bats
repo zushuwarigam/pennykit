@@ -22,19 +22,19 @@ PENNYKIT_EXTERN_DEFAULT=(dive)
 add_dive() { echo "Installing dive"; }
 EOF
 
-    INSTALLER="$PENNYKIT_HOME/../scripts/package_installer.sh"
+    INSTALLER="$PENNYKIT_HOME/../scripts/install/package_installer.sh"
     if [[ ! -f "$INSTALLER" ]]; then
-        INSTALLER="$(dirname "$BATS_TEST_FILENAME")/../../scripts/package_installer.sh"
+        INSTALLER="$(dirname "$BATS_TEST_FILENAME")/../../scripts/install/package_installer.sh"
     fi
 
-    cp "$(dirname "$BATS_TEST_FILENAME")/../../scripts/package_installer.sh" "$PENNYKIT_HOME/scripts/package_installer.sh"
-    cp "$(dirname "$BATS_TEST_FILENAME")/../../scripts/check_system.sh" "$PENNYKIT_HOME/scripts/check_system.sh" 2>/dev/null || true
+    cp "$(dirname "$BATS_TEST_FILENAME")/../../scripts/install/package_installer.sh" "$PENNYKIT_HOME/scripts/install/package_installer.sh"
+    cp "$(dirname "$BATS_TEST_FILENAME")/../../scripts/install/check_system.sh" "$PENNYKIT_HOME/scripts/install/check_system.sh" 2>/dev/null || true
 }
 
 @test "package_installer: dry-run prints commands without executing" {
     export PENNYKIT_DRY_RUN=1
     export PENNYKIT_PACKAGE_SET=DEFAULT
-    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    run bash "$PENNYKIT_HOME/scripts/install/package_installer.sh" apt
     assert_success
     assert_output --partial "DRY-RUN"
 }
@@ -42,7 +42,7 @@ EOF
 @test "package_installer: sources apt.default and processes layers" {
     export PENNYKIT_DRY_RUN=1
     export PENNYKIT_PACKAGE_SET=DEV
-    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    run bash "$PENNYKIT_HOME/scripts/install/package_installer.sh" apt
     assert_success
     assert_output --partial "DRY-RUN"
 }
@@ -52,7 +52,7 @@ EOF
     export PENNYKIT_PACKAGE_SET=DEFAULT
     mkdir -p "$PENNYKIT_HOME/configs"
     echo "dive" > "$PENNYKIT_HOME/configs/extern.skip"
-    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    run bash "$PENNYKIT_HOME/scripts/install/package_installer.sh" apt
     assert_success
 }
 
@@ -61,7 +61,7 @@ EOF
     export PENNYKIT_PACKAGE_SET=DEFAULT
     local rootless_dir="$BATS_TEST_TMPDIR/rootless-local"
     export PENNYKIT_LOCAL_DIR="$rootless_dir"
-    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    run bash "$PENNYKIT_HOME/scripts/install/package_installer.sh" apt
     assert_success
     assert [ -d "$rootless_dir/bin" ]
     assert [ -d "$rootless_dir/opt" ]
@@ -72,7 +72,7 @@ EOF
     export PENNYKIT_ROOTLESS=1
     export PENNYKIT_PACKAGE_SET=DEFAULT
     export PENNYKIT_LOCAL_DIR="$BATS_TEST_TMPDIR/rootless-local"
-    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    run bash "$PENNYKIT_HOME/scripts/install/package_installer.sh" apt
     assert_success
     assert_output --partial "ROOTLESS"
     assert_output --partial "Skipping apt install"
@@ -83,7 +83,7 @@ EOF
     export PENNYKIT_DRY_RUN=1
     export PENNYKIT_PACKAGE_SET=DEFAULT
     export PENNYKIT_LOCAL_DIR="$BATS_TEST_TMPDIR/rootless-local"
-    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    run bash "$PENNYKIT_HOME/scripts/install/package_installer.sh" apt
     assert_success
     # Rootless header is printed
     assert_output --partial "Rootless mode"
@@ -107,7 +107,7 @@ EOF
     cat > "$PENNYKIT_HOME/packages/apt.default" << 'EOF'
 PENNYKIT_APT_DEFAULT+=(bat)
 EOF
-    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    run bash "$PENNYKIT_HOME/scripts/install/package_installer.sh" apt
     assert_success
     assert_output --partial "bat via rootless alternative"
 }
@@ -123,7 +123,7 @@ declare -A _ROOTLESS_APT
 _ROOTLESS_APT[bat]=_apt_rootless_bat
 _apt_rootless_bat() { echo "  Installing bat"; }
 EOF
-    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    run bash "$PENNYKIT_HOME/scripts/install/package_installer.sh" apt
     assert_success
     # curl and git are in apt.default but not in _ROOTLESS_APT
     assert_output --partial "no rootless alternative"
@@ -138,7 +138,7 @@ EOF
     cat > "$PENNYKIT_HOME/packages/pipx.dev" << 'EOF'
 PENNYKIT_PIPX_DEV=(poetry black)
 EOF
-    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    run bash "$PENNYKIT_HOME/scripts/install/package_installer.sh" apt
     assert_success
     assert_output --partial "[DRY-RUN] pipx install poetry black"
 }
@@ -149,7 +149,7 @@ EOF
     cat > "$PENNYKIT_HOME/packages/pipx.admin" << 'EOF'
 PENNYKIT_PIPX_ADMIN=(httpie)
 EOF
-    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    run bash "$PENNYKIT_HOME/scripts/install/package_installer.sh" apt
     assert_success
     assert_output --partial "[DRY-RUN] pipx install httpie"
 }
@@ -160,7 +160,7 @@ EOF
     cat > "$PENNYKIT_HOME/packages/pipx.pentest" << 'EOF'
 PENNYKIT_PIPX_PENTEST=(sqlmap)
 EOF
-    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    run bash "$PENNYKIT_HOME/scripts/install/package_installer.sh" apt
     assert_success
     assert_output --partial "[DRY-RUN] pipx install sqlmap"
 }
@@ -177,10 +177,10 @@ EOF
     cat > "$PENNYKIT_HOME/packages/pipx.pentest" << 'EOF'
 PENNYKIT_PIPX_PENTEST=(common)
 EOF
-    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    run bash "$PENNYKIT_HOME/scripts/install/package_installer.sh" apt
     assert_success
     # "common" should appear only once
-    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    run bash "$PENNYKIT_HOME/scripts/install/package_installer.sh" apt
     assert_success
     # Count occurrences of "common" in pipx install calls
     local count
@@ -196,7 +196,7 @@ EOF
     cat > "$PENNYKIT_HOME/packages/npm.default" << 'EOF'
 PENNYKIT_NPM_DEFAULT=(tree-sitter-cli)
 EOF
-    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    run bash "$PENNYKIT_HOME/scripts/install/package_installer.sh" apt
     assert_success
     assert_output --partial "[DRY-RUN] npm install -g tree-sitter-cli"
 }
@@ -208,7 +208,7 @@ EOF
     cat > "$PENNYKIT_HOME/packages/npm.dev" << 'EOF'
 PENNYKIT_NPM_DEV=(typescript)
 EOF
-    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    run bash "$PENNYKIT_HOME/scripts/install/package_installer.sh" apt
     assert_success
     assert_output --partial "[DRY-RUN] npm install typescript"
 }
@@ -225,7 +225,7 @@ EOF
     cat > "$PENNYKIT_HOME/packages/npm.pentest" << 'EOF'
 PENNYKIT_NPM_PENTEST=(shared)
 EOF
-    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    run bash "$PENNYKIT_HOME/scripts/install/package_installer.sh" apt
     assert_success
     local count
     count=$(grep -c "npm install shared" <<< "$output" || true)
@@ -241,7 +241,7 @@ EOF
     cat > "$PENNYKIT_HOME/packages/npm.dev" << 'EOF'
 PENNYKIT_NPM_DEV=(typescript)
 EOF
-    run bash "$PENNYKIT_HOME/scripts/package_installer.sh" apt
+    run bash "$PENNYKIT_HOME/scripts/install/package_installer.sh" apt
     assert_success
     assert_output --partial "pipx install poetry"
     assert_output --partial "npm install typescript"

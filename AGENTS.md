@@ -7,14 +7,14 @@ Development environment orchestrator. Dotfiles manager with Neovim (3 starters: 
 ## Key commands
 
 ```bash
-bash scripts/run_tests.sh          # Full suite: shellcheck → hadolint → BATS → pytest
+bash scripts/test/run_tests.sh     # Full suite: shellcheck → hadolint → BATS → pytest
 python3 -m pytest tests/python/ -v -m "not slow"   # Python tests only (skip Docker builds)
 bats tests/bats/*.bats             # BATS tests only
 ```
 
 - Slow Docker build tests: `@pytest.mark.slow` — skipped by default, run with `-m "slow"`
 - BATS uses generated `tests/bats/test_helper/*/load.bash` (in `.gitignore`); install bats via `npm install` (in `package.json`)
-- Rootless mode: `PENNYKIT_ROOTLESS=1 bash scripts/package_installer.sh apt` skips apt tiers, installs extern packages to `~/.local/`
+- Rootless mode: `PENNYKIT_ROOTLESS=1 bash scripts/install/package_installer.sh apt` skips apt tiers, installs extern packages to `~/.local/`
 
 ## Project structure
 
@@ -36,20 +36,20 @@ DEFAULT always installed. `-p` flag selects higher tiers (ADMIN, DEV, PENTEST, A
 
 ## Architecture notes
 
-- **Theme system**: Python-first (`scripts/apply_theme.py` reads `configs/theme_mapping.toml`), falls back to bash sed in `bin/pennykit`. Needs Python 3.11+ or `tomli` package.
+- **Theme system**: Python-first (`scripts/util/apply_theme.py` reads `configs/theme_mapping.toml`), falls back to bash sed in `lib/cmd_theme.sh`. Needs Python 3.11+ or `tomli` package.
 - **External packages**: `packages/extern.packages` defines `add_<pkg>()` / `update_<pkg>()` functions. Deactivation via `configs/extern.skip`. Problematic state stored in `configs/extern.problematic`.
-- **OS detection**: `scripts/check_system.sh` sets `$PENNYKIT_OS_ID` (debian/macos/other) and `$PENNYKIT_OS_VERSION_CODENAME`. Controls conditional package paths (eza/rustup only on trixie; harlequin via pipx only on trixie).
-- **Docker**: Multi-stage builds (os → pkgs → nvim → runtime → dev). Use `docker compose up -d` or `scripts/build_docker-image.sh`. The `docker-compose.override.yml` sets build target to `dev`.
+- **OS detection**: `scripts/install/check_system.sh` sets `$PENNYKIT_OS_ID` (debian/macos/other) and `$PENNYKIT_OS_VERSION_CODENAME`. Controls conditional package paths (eza/rustup only on trixie; harlequin via pipx only on trixie).
+- **Docker**: Multi-stage builds (os → pkgs → nvim → runtime → dev). Use `docker compose up -d` or `scripts/build/build_docker-image.sh`. The `docker-compose.override.yml` sets build target to `dev`.
 - **Nvim config switching**: Clears `~/.local/share/nvim`, `~/.local/state/nvim`, `~/.cache/nvim` on switch.
 
 ## Conventions
 
 - Shell scripts: `set -euo pipefail`, pass `shellcheck --severity=style`
-- `PENNYKIT_DRY_RUN=1` env var prints install commands without executing (works for both `scripts/package_installer.sh` and `scripts/build_docker-image.sh`)
+- `PENNYKIT_DRY_RUN=1` env var prints install commands without executing (works for both `scripts/install/package_installer.sh` and `scripts/build/build_docker-image.sh`)
 - `_add_or_skip` wraps package install to check deactivation
 - `_is_deactivated` checks `configs/extern.skip` (one package name per line, `#` comments)
-- `scripts/get_packages.sh` lists all packages with descriptions (`grep -rnI "pkg.*desc"`)
-- Docker build verification: `scripts/verify_docker_install.sh` and `scripts/test_docker_install.sh` — output goes to `logs/`
+- `scripts/util/get_packages.sh` lists all packages with descriptions (`grep -rnI "pkg.*desc"`)
+- Docker build verification: `scripts/test/verify_docker_install.sh` and `scripts/test/test_docker_install.sh` — output goes to `logs/`
 
 ## Gotchas
 
@@ -60,5 +60,5 @@ DEFAULT always installed. `-p` flag selects higher tiers (ADMIN, DEV, PENTEST, A
 - Install script clones branch from `PENNYKIT_BRANCH` env var (defaults to `kit`)
 - Container detection reads `/etc/os-release`; Homebrew skipped on Linux unless `brew.on_linux` sourced
 - Vivid/LS_COLORS, harlequin, and bat aliases are patched via sed in `shell/exports.sh`/`shell/aliases.sh`
-- Blue screen during install: sudo's `env_reset` drops `DEBIAN_FRONTEND`/`DEBCONF_FRONTEND`. Every `$SUDO apt` call in `scripts/package_installer.sh` and `packages/extern.packages` must inline env vars: `$SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt ...`
+- Blue screen during install: sudo's `env_reset` drops `DEBIAN_FRONTEND`/`DEBCONF_FRONTEND`. Every `$SUDO apt` call in `scripts/install/package_installer.sh` and `packages/extern.packages` must inline env vars: `$SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt ...`
 - Rootless mode (`PENNYKIT_ROOTLESS=1`): apt tiers are skipped entirely. Extern packages (Go, Neovim, dive, vivid, ueberzugpp) install to `$PENNYKIT_LOCAL_DIR` (default `~/.local/`) instead of system paths. Set via `install.sh -r` or `PENNYKIT_ROOTLESS=1` env var.

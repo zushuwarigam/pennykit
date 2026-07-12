@@ -10,9 +10,9 @@ setup() {
     cp "$(dirname "$BATS_TEST_FILENAME")/../../lib/helpers.sh" "$PENNYKIT_HOME/lib/helpers.sh"
     cp "$(dirname "$BATS_TEST_FILENAME")/../../configs/config.nvim" "$PENNYKIT_HOME/configs/config.nvim"
 
-    CONFIGURE="$PENNYKIT_HOME/../scripts/package_configure.sh"
+    CONFIGURE="$PENNYKIT_HOME/../scripts/install/package_configure.sh"
     if [[ ! -f "$CONFIGURE" ]]; then
-        CONFIGURE="$(dirname "$BATS_TEST_FILENAME")/../../scripts/package_configure.sh"
+        CONFIGURE="$(dirname "$BATS_TEST_FILENAME")/../../scripts/install/package_configure.sh"
     fi
 }
 

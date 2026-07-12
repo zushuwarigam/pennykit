@@ -94,8 +94,8 @@ cmd_extern() {
             ;;
     esac
 
-    # shellcheck source=./scripts/check_system.sh
-    source "$PENNYKIT_HOME/scripts/check_system.sh" 2>/dev/null || true
+    # shellcheck source=./scripts/install/check_system.sh
+    source "$PENNYKIT_HOME/scripts/install/check_system.sh" 2>/dev/null || true
     # shellcheck source=./packages/extern.packages
     source "./packages/extern.packages"
 

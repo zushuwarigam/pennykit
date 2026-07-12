@@ -48,7 +48,7 @@ cmd_theme() {
 
     # Try Python-driven declarative apply (reads theme_mapping.toml)
     if command -v python3 >/dev/null 2>&1; then
-        if python3 scripts/apply_theme.py "$theme_name" $dry_run 2>/dev/null; then
+        if python3 scripts/util/apply_theme.py "$theme_name" $dry_run 2>/dev/null; then
             return
         fi
         echo "${YELLOW}Python apply failed, falling back to built-in...${RESET}"
