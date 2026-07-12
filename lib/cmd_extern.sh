@@ -38,6 +38,65 @@ cmd_extern() {
     local cmd="${1:-}"
     local set="${cmd:-default}"
 
+    # Show package list when no arguments provided
+    if [[ -z "$cmd" ]]; then
+        echo ""
+        echo "${BOLD}External packages${RESET}"
+        echo "${CYAN}━━━━━━━━━━━━━━━━━━━${RESET}"
+        
+        source "$PENNYKIT_HOME/packages/extern.packages" 2>/dev/null || true
+        
+        echo "${BOLD}DEFAULT:${RESET}"
+        for p in "${PENNYKIT_EXTERN_DEFAULT[@]}"; do
+            if command -v "$p" >/dev/null 2>&1; then
+                echo "  ${GREEN}✓${RESET} $p"
+            else
+                echo "  ${YELLOW}○${RESET} $p (not installed)"
+            fi
+        done
+        
+        echo "${BOLD}ADMIN:${RESET}"
+        for p in "${PENNYKIT_EXTERN_ADMIN[@]}"; do
+            if command -v "$p" >/dev/null 2>&1; then
+                echo "  ${GREEN}✓${RESET} $p"
+            else
+                echo "  ${YELLOW}○${RESET} $p (not installed)"
+            fi
+        done
+        
+        echo "${BOLD}DEV:${RESET}"
+        for p in "${PENNYKIT_EXTERN_DEV[@]}"; do
+            if command -v "$p" >/dev/null 2>&1; then
+                echo "  ${GREEN}✓${RESET} $p"
+            else
+                echo "  ${YELLOW}○${RESET} $p (not installed)"
+            fi
+        done
+        
+        echo "${BOLD}PENTEST:${RESET}"
+        for p in "${PENNYKIT_EXTERN_PENTEST[@]}"; do
+            if command -v "$p" >/dev/null 2>&1; then
+                echo "  ${GREEN}✓${RESET} $p"
+            else
+                echo "  ${YELLOW}○${RESET} $p (not installed)"
+            fi
+        done
+        
+        local deactivated=0
+        if [[ -f "$skip_file" ]]; then
+            while IFS= read -r line; do
+                [[ "$line" =~ ^# ]] && continue
+                [[ -z "$line" ]] && continue
+                ((++deactivated))
+            done < "$skip_file"
+        fi
+        [[ $deactivated -gt 0 ]] && echo "" && echo "  ${YELLOW}Deactivated: $deactivated packages${RESET}"
+        
+        echo ""
+        echo "Usage: pk extern [default|admin|dev|pentest|all|deactivate|activate|list-deactivated]"
+        return
+    fi
+
     case "$cmd" in
         deactivate)
             [[ -z "${2:-}" ]] && { echo "Usage: $(basename "$0") extern deactivate <package>"; exit 1; }
