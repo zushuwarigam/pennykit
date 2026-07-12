@@ -3,9 +3,11 @@ set -euo pipefail
 printf "### %s\n" "$(readlink -f "$0")"
 
 if command -v fzf >/dev/null; then
+    # Skip in non-interactive subshells (e.g. during install)
+    [[ $- == *i* ]] || return 0 2>/dev/null || exit 0
     if [[ "$(basename "$SHELL")" == "bash" ]]; then
-        eval "$(fzf --bash)"
+        eval "$(fzf --bash 2>/dev/null)" || true
     elif [[ "$(basename "$SHELL")" == "zsh" ]]; then
-        eval "$(fzf --zsh)"
+        eval "$(fzf --zsh 2>/dev/null)" || true
     fi
 fi
