@@ -22,9 +22,32 @@ source "$PENNYKIT_HOME/scripts/check_system.sh"
 
 cd "$PENNYKIT_HOME"
 
-# Ensure npm global prefix is user-local (avoids EACCES on npm install -g)
-mkdir -p "${HOME}/.npm-global"
-npm config set prefix "${HOME}/.npm-global"
+# Install NVM and latest Node.js if not already present
+NVM_DIR="${HOME}/.nvm"
+if [[ ! -d "$NVM_DIR" ]]; then
+  echo "Installing NVM..."
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.5/install.sh | bash
+fi
+
+# Source NVM and install latest Node.js
+# shellcheck disable=SC1091
+[[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
+if command -v nvm &>/dev/null; then
+  # Remove conflicting npm prefix if NVM is managing Node
+  npm config delete prefix 2>/dev/null || true
+  if [[ "$(nvm current 2>/dev/null)" == "system" ]] || ! nvm ls &>/dev/null 2>&1; then
+    echo "Installing latest Node.js via NVM..."
+    nvm install node
+    nvm alias default node
+  else
+    echo "Node.js already installed: $(nvm current)"
+  fi
+else
+  echo "WARNING: NVM not available, skipping Node.js install"
+  # Fall back to npm prefix if no NVM
+  mkdir -p "${HOME}/.npm-global"
+  npm config set prefix "${HOME}/.npm-global"
+fi
 
 # Rootless mode: skip apt, install extern packages to ~/.local/
 PENNYKIT_LOCAL_DIR="${PENNYKIT_LOCAL_DIR:-$HOME/.local}"
