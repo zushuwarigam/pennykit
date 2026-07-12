@@ -37,7 +37,7 @@ if [[ -f "${HOME}/.bashrc" ]]; then
     fi
 
     if ! grep -q "source.*pennykit" "${HOME}/.bashrc"; then
-        echo -e "\n[[ -f ~/.pennykit/pennykit.bash ]] && source \${HOME}/.pennykit/pennykit.bash" >> "${HOME}/.bashrc"
+        echo -e "\n[[ -f ~/.pennykit/shell/pennykit.bash ]] && source \${HOME}/.pennykit/shell/pennykit.bash" >> "${HOME}/.bashrc"
     fi
 
     sed -i 's/^OSH_THEME.*/OSH_THEME="duru"/g' "${HOME}/.bashrc"
@@ -68,7 +68,7 @@ if [[ -f "${HOME}/.zshrc" ]]; then
     fi
 
     if ! grep -q "source.*pennykit" "${HOME}/.zshrc"; then
-        echo -e "\n[[ -f ~/.pennykit/pennykit.zsh ]] && source \${HOME}/.pennykit/pennykit.zsh" >> "${HOME}/.zshrc"
+        echo -e "\n[[ -f ~/.pennykit/shell/pennykit.zsh ]] && source \${HOME}/.pennykit/shell/pennykit.zsh" >> "${HOME}/.zshrc"
     fi
 fi
 
