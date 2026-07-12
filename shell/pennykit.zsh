@@ -1,6 +1,6 @@
-source "${HOME}/.pennykit/pennykit_shell.exports"
-source "${HOME}/.pennykit/pennykit_shell.alias"
-source "${HOME}/.pennykit/pennykit_shell.functions"
+source "${HOME}/.pennykit/shell/exports.sh"
+source "${HOME}/.pennykit/shell/aliases.sh"
+source "${HOME}/.pennykit/shell/functions.sh"
 
 # clear screen
 bindkey -r "^[l"

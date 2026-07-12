@@ -145,20 +145,20 @@
 ### Task 9: Test shell integration files
 
 **Files:**
-- Source: `pennykit.bash`, `pennykit.zsh`, `pennykit_shell.exports`, `pennykit_shell.functions`
+- Source: `shell/pennykit.bash`, `shell/pennykit.zsh`, `shell/exports.sh`, `shell/functions.sh`
 - Test: `tests/bats/shell_integration.bats` (new)
 
 **Use cases to test:**
-- `pennykit.bash` sources all three sub-files
-- `pennykit.zsh` sources all three sub-files
-- `pennykit_shell.exports` sets PATH correctly (Go, local, Cargo, OPAM, npm, pennykit)
-- `pennykit_shell.exports` generates LS_COLORS via vivid
-- `pennykit_shell.alias` defines core aliases (v, vi, vim)
-- `pennykit_shell.alias` defines git/docker aliases
-- `pennykit_shell.functions` `mkcd` creates dir and switches
-- `pennykit_shell.functions` `bak` creates `.bak`
-- `pennykit_shell.functions` `note` with no args creates inbox entry
-- `pennykit_shell.functions` `note -d` appends timesheet
+- `shell/pennykit.bash` sources all three sub-files
+- `shell/pennykit.zsh` sources all three sub-files
+- `shell/exports.sh` sets PATH correctly (Go, local, Cargo, OPAM, npm, pennykit)
+- `shell/exports.sh` generates LS_COLORS via vivid
+- `shell/aliases.sh` defines core aliases (v, vi, vim)
+- `shell/aliases.sh` defines git/docker aliases
+- `shell/functions.sh` `mkcd` creates dir and switches
+- `shell/functions.sh` `bak` creates `.bak`
+- `shell/functions.sh` `note` with no args creates inbox entry
+- `shell/functions.sh` `note -d` appends timesheet
 
 ---
 

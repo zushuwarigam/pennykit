@@ -59,6 +59,6 @@ DEFAULT always installed. `-p` flag selects higher tiers (ADMIN, DEV, PENTEST, A
 - `python3` with tomllib required for theme apply; bash fallback is basic sed
 - Install script clones branch from `PENNYKIT_BRANCH` env var (defaults to `kit`)
 - Container detection reads `/etc/os-release`; Homebrew skipped on Linux unless `brew.on_linux` sourced
-- Vivid/LS_COLORS, harlequin, and bat aliases are patched via sed in `pennykit_shell.exports`/`.alias`
+- Vivid/LS_COLORS, harlequin, and bat aliases are patched via sed in `shell/exports.sh`/`shell/aliases.sh`
 - Blue screen during install: sudo's `env_reset` drops `DEBIAN_FRONTEND`/`DEBCONF_FRONTEND`. Every `$SUDO apt` call in `scripts/package_installer.sh` and `packages/extern.packages` must inline env vars: `$SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt ...`
 - Rootless mode (`PENNYKIT_ROOTLESS=1`): apt tiers are skipped entirely. Extern packages (Go, Neovim, dive, vivid, ueberzugpp) install to `$PENNYKIT_LOCAL_DIR` (default `~/.local/`) instead of system paths. Set via `install.sh -r` or `PENNYKIT_ROOTLESS=1` env var.

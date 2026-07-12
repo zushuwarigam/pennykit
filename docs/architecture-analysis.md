@@ -59,8 +59,12 @@ Pennykit is a **development environment orchestrator** — a dotfiles manager th
 │   ├── lazyvim/               # LazyVim starter
 │   └── kickstart/             # Minimal kickstart.nvim
 │
-├── pennykit_shell.{exports,alias,functions}  # Sourced by pennykit.bash/.zsh
-├── pennykit.bash / pennykit.zsh             # Shell integration entry points
+├── shell/
+│   ├── pennykit.bash          # Bash shell integration entry point
+│   ├── pennykit.zsh           # Zsh shell integration entry point
+│   ├── exports.sh             # Environment variables
+│   ├── aliases.sh             # Shell aliases
+│   └── functions.sh           # Shell functions
 │
 ├── Dockerfile.apt             # 5-stage build (os → pkgs → nvim → runtime → dev)
 ├── Dockerfile.brew            # 6-stage build (os → brew → pkgs → nvim → runtime → dev)
