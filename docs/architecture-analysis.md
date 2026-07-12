@@ -58,7 +58,7 @@ Pennykit is a **development environment orchestrator** — a dotfiles manager th
 │   ├── apt.{default,admin,dev,pentest}    # System packages per tier
 │   ├── npm.{default,admin,dev,pentest}    # npm global packages per tier
 │   ├── pipx.{admin,dev,pentest}           # pipx packages per tier
-│   ├── brew, brew.on_linux                # macOS Homebrew + Linux adapter
+│   ├── brew, brew.linux                   # macOS Homebrew + Linux adapter
 │   └── extern.packages                    # 14 external packages with add_/update_ functions
 │
 ├── configs/

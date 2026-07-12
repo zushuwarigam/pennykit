@@ -461,7 +461,7 @@ Theme configs are baked into the image during build. Add custom `.conf` files to
 
 Pennykit auto-detects the container environment:
 - Detects Debian vs Ubuntu via `/etc/os-release`
-- Skips Homebrew on Linux unless explicitly sourced (`brew.on_linux`)
+- Skips Homebrew on Linux unless explicitly sourced (`brew.linux`)
 - Skips cargo builds if `rustc` is unavailable
 - Adjusts package installation to match the OS
 
