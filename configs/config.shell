@@ -36,6 +36,10 @@ if [[ -f "${HOME}/.bashrc" ]]; then
         sed -i "s/export PENNYKIT_HOME=.*/export PENNYKIT_HOME=\"\$HOME\/.pennykit\"/g" "${HOME}/.bashrc"
     fi
 
+    # Update old paths to new paths
+    sed -i 's|~/.pennykit/pennykit\.bash|~/.pennykit/shell/pennykit.bash|g' "${HOME}/.bashrc" 2>/dev/null || true
+    sed -i 's|\.pennykit/pennykit\.bash|\.pennykit/shell/pennykit.bash|g' "${HOME}/.bashrc" 2>/dev/null || true
+    
     if ! grep -q "source.*pennykit" "${HOME}/.bashrc"; then
         echo -e "\n[[ -f ~/.pennykit/shell/pennykit.bash ]] && source \${HOME}/.pennykit/shell/pennykit.bash" >> "${HOME}/.bashrc"
     fi
@@ -67,6 +71,10 @@ if [[ -f "${HOME}/.zshrc" ]]; then
         sed -i "s/export PENNYKIT_HOME=.*/export PENNYKIT_HOME=\"\$HOME\/.pennykit\"/g" "${HOME}/.zshrc"
     fi
 
+    # Update old paths to new paths
+    sed -i 's|~/.pennykit/pennykit\.zsh|~/.pennykit/shell/pennykit.zsh|g' "${HOME}/.zshrc" 2>/dev/null || true
+    sed -i 's|\.pennykit/pennykit\.zsh|\.pennykit/shell/pennykit.zsh|g' "${HOME}/.zshrc" 2>/dev/null || true
+    
     if ! grep -q "source.*pennykit" "${HOME}/.zshrc"; then
         echo -e "\n[[ -f ~/.pennykit/shell/pennykit.zsh ]] && source \${HOME}/.pennykit/shell/pennykit.zsh" >> "${HOME}/.zshrc"
     fi
