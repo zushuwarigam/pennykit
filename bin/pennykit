@@ -27,6 +27,7 @@ Commands:
   nvim               Interactive nvim config switcher
   theme              Show current theme and available themes
   theme <name>       Apply a theme (e.g. $(basename "$0") theme catppuccin)
+  extern                   List all external packages and their status
   extern [set]             Update external packages (set: default|admin|dev|pentest|all)
   extern deactivate <pkg>  Deactivate a package (skip install/update)
   extern activate <pkg>    Reactivate a deactivated package
