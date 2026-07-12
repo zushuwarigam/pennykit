@@ -20,14 +20,15 @@ bats tests/bats/*.bats             # BATS tests only
 
 | Path | Purpose |
 |------|---------|
-| `bin/pennykit` | CLI entry point |
+| `bin/pennykit` | CLI entry point (thin dispatcher) |
 | `lib/helpers.sh` | Shared: `_curl`, `_wget`, `_verify_sha256`, `_is_deactivated`, colored output |
 | `scripts/` | Build, install, theme, test, config, Docker |
 | `packages/` | `apt.{default,dev,admin,pentest}`, `npm.{default,...}`, `pipx.{default,...}`, `brew`, `extern.packages` |
 | `configs/` | Per-app configs + `themes/` + `theme_mapping.toml` + `extern.skip` (deactivated pkgs) |
 | `nvim-starter/` | `astronvim_v6/`, `lazyvim/`, `kickstart/`, `vimrc.base` |
-| `pennykit_shell.{exports,alias,functions}` | Sourced by `pennykit.bash`/`pennykit.zsh` |
-| `config` | Docker build config: sets `PROJECT_NAME`, `PK_BASE_IMAGE_NAME`, `PK_BASE_IMAGE_TAG` |
+| `shell/` | Shell integration: `pennykit.bash`, `pennykit.zsh`, `exports.sh`, `aliases.sh`, `functions.sh` |
+| `docker.config` | Docker build config: sets `PROJECT_NAME`, `PK_BASE_IMAGE_NAME`, `PK_BASE_IMAGE_TAG` |
+| `install.sh` | Bootstrap script: clones repo and runs `pennykit_install.sh` |
 
 ## Package layers
 
@@ -60,4 +61,4 @@ DEFAULT always installed. `-p` flag selects higher tiers (ADMIN, DEV, PENTEST, A
 - Container detection reads `/etc/os-release`; Homebrew skipped on Linux unless `brew.on_linux` sourced
 - Vivid/LS_COLORS, harlequin, and bat aliases are patched via sed in `pennykit_shell.exports`/`.alias`
 - Blue screen during install: sudo's `env_reset` drops `DEBIAN_FRONTEND`/`DEBCONF_FRONTEND`. Every `$SUDO apt` call in `scripts/package_installer.sh` and `packages/extern.packages` must inline env vars: `$SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt ...`
-- Rootless mode (`PENNYKIT_ROOTLESS=1`): apt tiers are skipped entirely. Extern packages (Go, Neovim, dive, vivid, ueberzugpp) install to `$PENNYKIT_LOCAL_DIR` (default `~/.local/`) instead of system paths. Set via `install -r` or `PENNYKIT_ROOTLESS=1` env var.
+- Rootless mode (`PENNYKIT_ROOTLESS=1`): apt tiers are skipped entirely. Extern packages (Go, Neovim, dive, vivid, ueberzugpp) install to `$PENNYKIT_LOCAL_DIR` (default `~/.local/`) instead of system paths. Set via `install.sh -r` or `PENNYKIT_ROOTLESS=1` env var.

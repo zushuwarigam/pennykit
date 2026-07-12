@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_DIR"
 
-CONFIG_FILE="./config"
+CONFIG_FILE="./docker.config"
 [[ ! -f "$CONFIG_FILE" ]] && { echo "Error: $CONFIG_FILE not found" >&2; exit 1; }
 source "$CONFIG_FILE"
 
