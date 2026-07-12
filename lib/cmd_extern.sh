@@ -46,9 +46,13 @@ cmd_extern() {
         
         source "$PENNYKIT_HOME/packages/extern.packages" 2>/dev/null || true
         
+        # Map package names to binary names
+        local -A pkg_bin_map=([golang]="go" [ueberzugpp]="ueberzugpp")
+        
         echo "${BOLD}DEFAULT:${RESET}"
         for p in "${PENNYKIT_EXTERN_DEFAULT[@]}"; do
-            if command -v "$p" >/dev/null 2>&1; then
+            local bin="${pkg_bin_map[$p]:-$p}"
+            if command -v "$bin" >/dev/null 2>&1; then
                 echo "  ${GREEN}✓${RESET} $p"
             else
                 echo "  ${YELLOW}○${RESET} $p (not installed)"
