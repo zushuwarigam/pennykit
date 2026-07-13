@@ -222,6 +222,8 @@ _ALLOWED_PATH_PREFIXES = [os.path.normpath(p) + os.sep for p in [
     os.path.expanduser("~"),
 ]]
 
+_SHELL_META_RE = re.compile(r'[;|&$`\\!<>]')
+
 def _validate_post_cmd(cmd):
     for word in shlex.split(cmd):
         if word.startswith("/") or word.startswith("."):
@@ -237,7 +239,15 @@ def _validate_post_cmd(cmd):
                 return False
     return True
 
+def _validate_theme_value(key, value):
+    if _SHELL_META_RE.search(value):
+        raise ValueError(f"Theme value {key} contains shell metacharacters: {value!r}")
+    if len(value) > 200:
+        raise ValueError(f"Theme value {key} is too long ({len(value)} chars)")
+
 def apply_post_cmd(cmd, vars_, dry_run):
+    for k, v in vars_.items():
+        _validate_theme_value(k, v)
     cmd = subst(cmd, vars_)
     if not _validate_post_cmd(cmd):
         print(f"  WARNING: post_cmd blocked (unsafe characters): {cmd[:60]}", file=sys.stderr)

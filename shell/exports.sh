@@ -6,14 +6,16 @@ export VISUAL="nvim"
 export HISTSIZE=10000
 export HISTCONTROL=ignoredups
 
-export PATH="/usr/local/go/bin:${PATH}"
-export PATH="${HOME}/.local/go/bin:${PATH}"
-export PATH="${HOME}/go/bin:${PATH}"
-export PATH="${HOME}/.local/bin:${PATH}"
-export PATH="${HOME}/.cargo/bin:${PATH}"
-export PATH="${HOME}/.opam/5.2.0+ox/bin:${PATH}"
-export PATH="${HOME}/.npm-global/bin:${PATH}"
-export PATH="${HOME}/.pennykit/bin:${PATH}"
+_add_path() { [[ -d "$1" ]] && export PATH="$1:${PATH}"; }
+_add_path "/usr/local/go/bin"
+_add_path "${HOME}/.local/go/bin"
+_add_path "${HOME}/go/bin"
+_add_path "${HOME}/.local/bin"
+_add_path "${HOME}/.cargo/bin"
+_add_path "${HOME}/.opam/5.2.0+ox/bin"
+_add_path "${HOME}/.npm-global/bin"
+_add_path "${HOME}/.pennykit/bin"
+unset -f _add_path
 
 # https://github.com/sharkdp/vivid/tree/master/themes
 if command -v vivid >/dev/null 2>&1; then
@@ -21,7 +23,7 @@ if command -v vivid >/dev/null 2>&1; then
   LS_COLORS="$(vivid generate gruvbox-dark-soft)"
 fi
 
-export LANG=ru_RU.UTF-8
+export LANG="${LANG:-en_US.UTF-8}"
 # export LC_ALL=C.UTF-8
 
 export FZF_DEFAULT_COMMAND="rg --files --hidden -g '!.git/'"

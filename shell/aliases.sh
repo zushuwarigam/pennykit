@@ -52,7 +52,7 @@ alias ta="tmux a"
 alias glow="glow -w \$((\$(tput cols) - 5)) -p"
 
 # Bad connection
-alias wget="wget -c -t 0 --retry-connrefused --read-timeout=20 --waitretry=1"
+alias wget="wget -c -t 3 --retry-connrefused --read-timeout=20 --waitretry=1"
 
 if command -v batcat >/dev/null 2>&1; then
   alias cat='batcat --theme="gruvbox-dark"'

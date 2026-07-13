@@ -26,7 +26,7 @@ post_cmd = "ya pack -a %YAZI% 2>/dev/null || ya pkg add %YAZI% 2>/dev/null || tr
 file = "pennykit_shell.exports"
 type = "sed"
 search = "vivid generate .*"
-replace = 'vivid generate %VIVID%)\"'
+replace = 'vivid generate %VIVID%'
 grep = "vivid generate"
 
 [apps.harlequin]

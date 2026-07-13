@@ -83,6 +83,34 @@ cmd_doctor() {
         echo "  ${GREEN}✓${RESET} EditorConfig: present"
     fi
 
+    # External packages check
+    if [[ -f "$PENNYKIT_HOME/configs/extern.problematic" ]]; then
+        local problematic_count
+        problematic_count=$(wc -l < "$PENNYKIT_HOME/configs/extern.problematic")
+        if [[ "$problematic_count" -gt 0 ]]; then
+            echo "  ${YELLOW}⚠${RESET} External packages: $problematic_count problematic"
+            ((++warnings))
+        fi
+    fi
+
+    # Docker check
+    if command -v docker >/dev/null 2>&1; then
+        echo "  ${GREEN}✓${RESET} Docker: available"
+    else
+        echo "  ${YELLOW}⚠${RESET} Docker: not found (optional)"
+        ((++warnings))
+    fi
+
+    # Python check
+    if command -v python3 >/dev/null 2>&1; then
+        local py_version
+        py_version=$(python3 --version 2>&1 | awk '{print $2}')
+        echo "  ${GREEN}✓${RESET} Python: $py_version"
+    else
+        echo "  ${YELLOW}⚠${RESET} Python: not found (needed for theme apply)"
+        ((++warnings))
+    fi
+
     echo ""
     if [[ $errors -eq 0 && $warnings -eq 0 ]]; then
         echo "  ${GREEN}All checks passed.${RESET}"

@@ -87,11 +87,16 @@ _add_or_skip() {
     fi
     if "add_$pkg"; then
         _clear_problematic "$pkg"
+        _INSTALLED_PKGS+=("$pkg")
     else
         echo "  ${YELLOW}⚠ ${pkg}: install failed, marked as problematic${RESET}"
         _mark_problematic "$pkg"
+        _FAILED_PKGS+=("$pkg")
     fi
 }
+
+_INSTALLED_PKGS=()
+_FAILED_PKGS=()
 
 # --- Pyramid layer stack ---
 # DEFAULT: only base    ADMIN: base → admin
@@ -191,4 +196,16 @@ fi
 if [[ -v PENNYKIT_BREW_DEFAULT ]]; then
   _brew_install "${PENNYKIT_BREW_DEFAULT[@]}"
   _brew_clean
+fi
+
+# Install summary
+if [[ ${#_INSTALLED_PKGS[@]} -gt 0 || ${#_FAILED_PKGS[@]} -gt 0 ]]; then
+    echo ""
+    echo "Install summary:"
+    if [[ ${#_INSTALLED_PKGS[@]} -gt 0 ]]; then
+        echo "  ${GREEN}Installed: ${#_INSTALLED_PKGS[@]} packages${RESET}"
+    fi
+    if [[ ${#_FAILED_PKGS[@]} -gt 0 ]]; then
+        echo "  ${RED}Failed: ${#_FAILED_PKGS[@]} packages (${_FAILED_PKGS[*]})${RESET}"
+    fi
 fi

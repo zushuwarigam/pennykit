@@ -13,7 +13,7 @@ _curl() {
   curl --retry 5 --retry-all-errors --retry-delay 2 --connect-timeout 10 --max-time 60 -fL "$@"
 }
 _wget() {
-  wget -c --tries=0 --waitretry=15 --timeout=60 --read-timeout=60 "$@"
+  wget -c --tries=3 --waitretry=15 --timeout=60 --read-timeout=60 "$@"
 }
 export -f _curl _wget
 
@@ -63,9 +63,12 @@ _mark_problematic() {
     local pkg="$1"
     local problematic_file="${PENNYKIT_HOME:-$HOME/.pennykit}/configs/extern.problematic"
     mkdir -p "$(dirname "$problematic_file")"
-    if ! grep -qxF "$pkg" "$problematic_file" 2>/dev/null; then
-        echo "$pkg" >> "$problematic_file"
-    fi
+    (
+        flock -x 200
+        if ! grep -qxF "$pkg" "$problematic_file" 2>/dev/null; then
+            echo "$pkg" >> "$problematic_file"
+        fi
+    ) 200>"${problematic_file}.lock"
 }
 
 _clear_problematic() {

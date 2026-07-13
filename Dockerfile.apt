@@ -103,13 +103,13 @@ COPY --chown=${USER}:${USER} lib/ ${HOME}/.pennykit/lib/
 COPY --chown=${USER}:${USER} packages/ ${HOME}/.pennykit/packages/
 COPY --chown=${USER}:${USER} scripts/ ${HOME}/.pennykit/scripts/
 COPY --chown=${USER}:${USER} nvim-starter/ ${HOME}/.pennykit/nvim-starter/
-COPY --chown=${USER}:${USER} pennykit.bash ${HOME}/.pennykit/
-COPY --chown=${USER}:${USER} pennykit.zsh ${HOME}/.pennykit/
-COPY --chown=${USER}:${USER} pennykit_shell.alias ${HOME}/.pennykit/
-COPY --chown=${USER}:${USER} pennykit_shell.exports ${HOME}/.pennykit/
-COPY --chown=${USER}:${USER} pennykit_shell.functions ${HOME}/.pennykit/
-COPY --chown=${USER}:${USER} install ${HOME}/.pennykit/install
-COPY --chown=${USER}:${USER} config ${HOME}/.pennykit/config
+COPY --chown=${USER}:${USER} shell/pennykit.bash ${HOME}/.pennykit/shell/pennykit.bash
+COPY --chown=${USER}:${USER} shell/pennykit.zsh ${HOME}/.pennykit/shell/pennykit.zsh
+COPY --chown=${USER}:${USER} shell/aliases.sh ${HOME}/.pennykit/shell/aliases.sh
+COPY --chown=${USER}:${USER} shell/exports.sh ${HOME}/.pennykit/shell/exports.sh
+COPY --chown=${USER}:${USER} shell/functions.sh ${HOME}/.pennykit/shell/functions.sh
+COPY --chown=${USER}:${USER} install.sh ${HOME}/.pennykit/install.sh
+COPY --chown=${USER}:${USER} configs/config.shell ${HOME}/.pennykit/configs/config.shell
 
 USER ${USER}
 

@@ -66,7 +66,7 @@ case "$PENNYKIT_OS_ID" in
   "macos")
     ./scripts/install/package_installer.sh brew
     ;;
-  *) echo "Skipping other os..." && exit 1 ;;
+  *) echo "Unsupported OS: $PENNYKIT_OS_ID (only debian and macos supported)" && exit 2 ;;
 esac
 
 # Config package

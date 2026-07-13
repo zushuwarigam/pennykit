@@ -16,8 +16,13 @@ cmd_branch() {
     if [[ -z "${1:-}" ]]; then
         git -C "$PENNYKIT_HOME" branch
     else
-        echo "Switching to branch: $1"
-        git -C "$PENNYKIT_HOME" checkout "$1"
+        local branch="$1"
+        if [[ ! "$branch" =~ ^[a-zA-Z0-9._/-]+$ ]]; then
+            echo "Error: invalid branch name: $branch" >&2
+            return 1
+        fi
+        echo "Switching to branch: $branch"
+        git -C "$PENNYKIT_HOME" checkout "$branch"
     fi
 }
 
