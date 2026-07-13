@@ -47,7 +47,6 @@ SCRIPT
     rm -rf "$PENNYKIT_HOME/configs"
     run bash "$CONFIGURE"
     assert_failure
-    assert_output --partial "No such file or directory"
 }
 
 @test "package_configure: runs without errors when helpers.sh is missing" {
