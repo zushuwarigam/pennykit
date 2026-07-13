@@ -219,3 +219,45 @@ source_config() {
     assert_success
     [[ -d "$HOME/.config/yazi" ]]
 }
+
+# ── config.shell (zsh) ──────────────────────────────────────────
+
+# Helper to run config.shell with ZSH set (skips oh-my-zsh install)
+source_config_shell_zsh() {
+    bash -c "
+    export PENNYKIT_HOME='$PENNYKIT_HOME'
+    export HOME='$HOME'
+    export ZSH='$HOME/.oh-my-zsh'
+    source '$PENNYKIT_HOME/lib/helpers.sh'
+    source '$(dirname "$BATS_TEST_FILENAME")/../../configs/config.shell'
+    "
+}
+
+@test "config.shell: updates old pennykit.zsh path in .zshrc" {
+    cat > "$HOME/.zshrc" << 'ZSHRC'
+[[ -f ~/.pennykit/pennykit.zsh ]] && source ${HOME}/.pennykit/pennykit.zsh
+ZSHRC
+    run source_config_shell_zsh
+    assert_success
+    grep -q '~/.pennykit/shell/pennykit.zsh' "$HOME/.zshrc"
+}
+
+@test "config.shell: adds pennykit.zsh source line when missing" {
+    cat > "$HOME/.zshrc" << 'ZSHRC'
+# empty zshrc
+ZSHRC
+    run source_config_shell_zsh
+    assert_success
+    grep -q 'source.*pennykit' "$HOME/.zshrc"
+}
+
+@test "config.shell: does not duplicate pennykit.zsh source line" {
+    cat > "$HOME/.zshrc" << 'ZSHRC'
+[[ -f ~/.pennykit/shell/pennykit.zsh ]] && source ${HOME}/.pennykit/shell/pennykit.zsh
+ZSHRC
+    run source_config_shell_zsh
+    assert_success
+    local count
+    count=$(grep -c 'source.*pennykit' "$HOME/.zshrc")
+    [[ "$count" == "1" ]]
+}

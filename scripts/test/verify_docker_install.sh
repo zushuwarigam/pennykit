@@ -132,7 +132,7 @@ check "bat config symlink" "readlink -f ~/.config/bat/config | grep -q bat"
 check "lazygit config symlink" "readlink -f ~/.config/lazygit/config.yml | grep -q lazygit"
 check "theme conf exists" "[[ -f \$PENNYKIT_HOME/configs/theme.conf ]]"
 check "theme files exist" "ls \$PENNYKIT_HOME/configs/themes/*.conf 2>/dev/null | wc -l | grep -q [1-9]"
-check "shell exports file" "[[ -f ~/.pennykit/pennykit_shell.exports ]]"
+check "shell exports file" "[[ -f ~/.pennykit/shell/exports.sh ]]"
 check "EDITOR set to nvim" "echo \"\$EDITOR\" | grep -q nvim"
 
 echo ""
