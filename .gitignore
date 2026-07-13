@@ -23,8 +23,9 @@
 # Pin lazy-lock.json for deterministic Neovim installs
 nvim-starter/*/lazy-lock.json
 
-# BATS vendored helpers (generated)
-/tests/bats/test_helper/*/load.bash
+# BATS vendored helpers (cloned, not tracked)
+/tests/bats/test_helper/bats-assert/
+/tests/bats/test_helper/bats-support/
 
 # Node artifacts (bats test runner)
 node_modules/
