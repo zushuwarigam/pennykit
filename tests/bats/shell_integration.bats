@@ -50,8 +50,9 @@ setup() {
 }
 
 @test "shell/exports.sh sets LANG" {
+    unset LANG
     source "$(dirname "$BATS_TEST_FILENAME")/../../shell/exports.sh"
-    [[ "$LANG" == "ru_RU.UTF-8" ]]
+    [[ "$LANG" == "en_US.UTF-8" ]]
 }
 
 # ── shell/aliases.sh ──────────────────────────────────────────

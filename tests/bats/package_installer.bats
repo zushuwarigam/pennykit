@@ -5,7 +5,7 @@ setup() {
     export PENNYKIT_HOME="$BATS_TEST_TMPDIR/.pennykit"
     export HOME="$BATS_TEST_TMPDIR/home"
     export PENNYKIT_OS_ID=1
-    mkdir -p "$PENNYKIT_HOME"/{packages,scripts,lib}
+    mkdir -p "$PENNYKIT_HOME"/{packages,scripts/install,lib}
 
     cp "$(dirname "$BATS_TEST_FILENAME")/../../lib/helpers.sh" "$PENNYKIT_HOME/lib/helpers.sh"
 

@@ -215,12 +215,12 @@ setup_extern_set() {
 PENNYKIT_EXTERN_DEFAULT=(alpha)
 PENNYKIT_EXTERN_ADMIN=(beta)
 PENNYKIT_EXTERN_DEV=(gamma)
-PENNYKIT_EXTERN_PENTEST=(delta)
+PENNYKIT_EXTERN_PENTEST=(deltafake)
 
 add_alpha() { echo "Adding alpha"; }
 add_beta()  { echo "Adding beta"; }
 add_gamma() { echo "Adding gamma"; }
-add_delta() { echo "Adding delta"; }
+add_deltafake() { echo "Adding delta"; }
 EXTERNEOF
 
     cp "$(dirname "$BATS_TEST_FILENAME")/../../lib/helpers.sh" "$PENNYKIT_HOME/lib/helpers.sh"
@@ -273,11 +273,15 @@ EXTERNEOF
     assert_output --partial "Adding delta"
 }
 
-@test "cmd_extern: no args defaults to default set" {
+@test "cmd_extern: no args shows package status dashboard" {
     setup_extern_set
     run bash "$PENNYKIT_BIN" extern
     assert_success
-    assert_output --partial "Adding alpha"
+    assert_output --partial "External packages"
+    assert_output --partial "DEFAULT:"
+    assert_output --partial "ADMIN:"
+    assert_output --partial "DEV:"
+    assert_output --partial "PENTEST:"
 }
 
 @test "cmd_extern: unknown set shows usage error" {

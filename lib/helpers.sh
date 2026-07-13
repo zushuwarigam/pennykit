@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # shellcheck disable=SC1090,SC1091
 [[ -v _HELPERS_SH ]] && return || readonly _HELPERS_SH=1
 
@@ -25,6 +26,7 @@ if [[ -t 1 ]]; then
     CYAN=$(tput setaf 6)
     RESET=$(tput sgr0)
 else
+    # shellcheck disable=SC2034
     BOLD=""; GREEN=""; YELLOW=""; RED=""; CYAN=""; RESET=""
 fi
 

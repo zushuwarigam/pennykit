@@ -15,21 +15,21 @@ setup() {
 
 # ── _verify_or_warn_sha256 ──────────────────────────────────────
 
-@test "_verify_or_warn_sha256: missing checksum file warns and returns 0" {
+@test "_verify_or_warn_sha256: missing checksum file aborts and returns 1" {
     source "$(dirname "$BATS_TEST_FILENAME")/../../packages/extern.packages"
     run _verify_or_warn_sha256 "/tmp/nonexistent.bin" "/tmp/nonexistent.sum"
-    assert_success
-    assert_output --partial "WARNING"
+    assert_failure
+    assert_output --partial "ERROR"
     assert_output --partial "checksum file missing"
 }
 
-@test "_verify_or_warn_sha256: invalid checksum format warns and returns 0" {
+@test "_verify_or_warn_sha256: invalid checksum format aborts and returns 1" {
     printf '<!DOCTYPE html>\n<html>\n<head>\n</head>\n</html>\n' > "$BATS_TEST_TMPDIR/invalid.sum"
     echo "hello" > "$BATS_TEST_TMPDIR/dummy.bin"
     source "$(dirname "$BATS_TEST_FILENAME")/../../packages/extern.packages"
     run _verify_or_warn_sha256 "$BATS_TEST_TMPDIR/dummy.bin" "$BATS_TEST_TMPDIR/invalid.sum"
-    assert_success
-    assert_output --partial "WARNING"
+    assert_failure
+    assert_output --partial "ERROR"
     assert_output --partial "invalid checksum format"
 }
 
@@ -239,11 +239,11 @@ _add_or_skip() {
     assert_output "nonexistent"
 }
 
-# ── _update_or_skip (from bin/pennykit) ──────────────────────────
+# ── _update_or_skip (from lib/cmd_extern.sh) ─────────────────────
 
 setup_update_or_skip() {
     source "$(dirname "$BATS_TEST_FILENAME")/../../lib/helpers.sh"
-    eval "$(sed -n '/^_update_or_skip/,/^}/p' "$(dirname "$BATS_TEST_FILENAME")/../../bin/pennykit")"
+    eval "$(sed -n '/^_update_or_skip/,/^}/p' "$(dirname "$BATS_TEST_FILENAME")/../../lib/cmd_extern.sh")"
 }
 
 @test "_update_or_skip: skips deactivated package" {

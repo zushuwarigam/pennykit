@@ -6,7 +6,7 @@ export VISUAL="nvim"
 export HISTSIZE=10000
 export HISTCONTROL=ignoredups
 
-_add_path() { [[ -d "$1" ]] && export PATH="$1:${PATH}"; }
+_add_path() { [[ -d "$1" ]] && export PATH="$1:${PATH}"; return 0; }
 _add_path "/usr/local/go/bin"
 _add_path "${HOME}/.local/go/bin"
 _add_path "${HOME}/go/bin"

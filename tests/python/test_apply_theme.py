@@ -4,7 +4,7 @@ import subprocess
 
 HERE = pathlib.Path(__file__).resolve().parent
 PROJECT_ROOT = HERE.parent.parent
-APPLY_THEME = str(PROJECT_ROOT / "scripts" / "apply_theme.py")
+APPLY_THEME = str(PROJECT_ROOT / "scripts" / "util" / "apply_theme.py")
 
 
 def test_apply_theme_success(pennykit_home_with_files):

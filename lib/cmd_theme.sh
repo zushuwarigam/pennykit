@@ -3,7 +3,7 @@
 # Theme management command
 
 cmd_theme() {
-    cd "$PENNYKIT_HOME"
+    cd "$PENNYKIT_HOME" || return
 
     if [[ "${1:-}" == "list" || "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
         echo "Available themes:"
