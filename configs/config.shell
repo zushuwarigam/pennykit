@@ -39,7 +39,7 @@ if [[ -f "${HOME}/.bashrc" ]]; then
     # Update old paths to new paths
     sed -i 's|~/.pennykit/pennykit\.bash|~/.pennykit/shell/pennykit.bash|g' "${HOME}/.bashrc" 2>/dev/null || true
     sed -i 's|\.pennykit/pennykit\.bash|\.pennykit/shell/pennykit.bash|g' "${HOME}/.bashrc" 2>/dev/null || true
-    
+
     if ! grep -q "source.*pennykit" "${HOME}/.bashrc"; then
         echo -e "\n[[ -f ~/.pennykit/shell/pennykit.bash ]] && source \${HOME}/.pennykit/shell/pennykit.bash" >> "${HOME}/.bashrc"
     fi
@@ -51,8 +51,11 @@ if [[ -f "${HOME}/.bashrc" ]]; then
     fi
 fi
 
-if [[ -f "${HOME}/.zshrc" ]]; then
+# ── zsh ──────────────────────────────────────────────────────────
+# Skip entirely when zsh is not installed
+if command -v zsh >/dev/null 2>&1 || [[ -v ZSH ]]; then
 
+    # Install oh-my-zsh if not already present
     if [[ ! -v ZSH ]]; then
         omz_install="/tmp/oh-my-zsh-install.sh"
         _curl -fsSL -o "$omz_install" "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh"
@@ -65,6 +68,9 @@ if [[ -f "${HOME}/.zshrc" ]]; then
         unset omz_install
     fi
 
+    # Create .zshrc if it does not exist
+    [[ -f "${HOME}/.zshrc" ]] || touch "${HOME}/.zshrc"
+
     if ! grep -q "export PENNYKIT_HOME" "${HOME}/.zshrc"; then
         echo -e "\nexport PENNYKIT_HOME=\"\$HOME/.pennykit\"" >> "${HOME}/.zshrc"
     else
@@ -74,7 +80,7 @@ if [[ -f "${HOME}/.zshrc" ]]; then
     # Update old paths to new paths
     sed -i 's|~/.pennykit/pennykit\.zsh|~/.pennykit/shell/pennykit.zsh|g' "${HOME}/.zshrc" 2>/dev/null || true
     sed -i 's|\.pennykit/pennykit\.zsh|\.pennykit/shell/pennykit.zsh|g' "${HOME}/.zshrc" 2>/dev/null || true
-    
+
     if ! grep -q "source.*pennykit" "${HOME}/.zshrc"; then
         echo -e "\n[[ -f ~/.pennykit/shell/pennykit.zsh ]] && source \${HOME}/.pennykit/shell/pennykit.zsh" >> "${HOME}/.zshrc"
     fi

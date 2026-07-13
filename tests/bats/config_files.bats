@@ -261,3 +261,12 @@ ZSHRC
     count=$(grep -c 'source.*pennykit' "$HOME/.zshrc")
     [[ "$count" == "1" ]]
 }
+
+@test "config.shell: creates .zshrc and adds source line when missing" {
+    # Ensure no .zshrc exists
+    rm -f "$HOME/.zshrc"
+    run source_config_shell_zsh
+    assert_success
+    [[ -f "$HOME/.zshrc" ]]
+    grep -q 'source.*pennykit' "$HOME/.zshrc"
+}
