@@ -46,8 +46,24 @@ PENNYKIT_EXTERN_ADMIN+=("dive")
 _install_dive() {
     local ver="$1"
     local deb_file="/tmp/dive_${ver}_linux_amd64.deb"
-    rm -f "$deb_file"
+    local checksums="/tmp/dive_${ver}_checksums.txt"
+    rm -f "$deb_file" "$checksums"
     _curl --output-dir "/tmp" -fOL "https://github.com/wagoodman/dive/releases/download/v${ver}/dive_${ver}_linux_amd64.deb" || return 1
+    _curl --output-dir "/tmp" -fOL "https://github.com/wagoodman/dive/releases/download/v${ver}/dive_${ver}_checksums.txt" 2>/dev/null || true
+    if [[ -f "$checksums" ]]; then
+        local expected
+        expected=$(grep "dive_${ver}_linux_amd64.deb" "$checksums" | awk '{print $1}')
+        if [[ -n "$expected" ]] && [[ "$expected" =~ ^[a-f0-9]{64}$ ]]; then
+            _verify_sha256 "$deb_file" "$expected" || { rm -f "$deb_file" "$checksums"; return 1; }
+        else
+            echo "  WARNING: no valid checksum for dive deb in checksums.txt" >&2
+        fi
+        rm -f "$checksums"
+    else
+        local actual
+        actual=$(sha256sum "$deb_file" | awk '{print $1}')
+        echo "  WARNING: No checksum file for dive; log hash for audit: $actual" >&2
+    fi
     mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
     dpkg-deb -x "$deb_file" /tmp/dive-extract 2>/dev/null
     mv /tmp/dive-extract/usr/bin/dive "$PENNYKIT_LOCAL_DIR/bin/dive"
@@ -145,14 +161,34 @@ function update_golang() {
 
 _install_golang() {
     LATEST_VERSION="$(_curl -s "https://go.dev/VERSION?m=text" | grep '^go')"
-    _wget -O "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "https://go.dev/dl/${LATEST_VERSION}.linux-amd64.tar.gz"
-    _wget -O "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" "https://go.dev/dl/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" 2>/dev/null || true
-    _verify_or_warn_sha256 "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" || { rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz" "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256"; return 1; }
-    rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz.sha256" 2>/dev/null || true
+    local archive="${LATEST_VERSION}.linux-amd64.tar.gz"
+    # Fetch expected checksum from go.dev JSON API
+    local EXPECTED_SHA256
+    EXPECTED_SHA256=$(_curl -s "https://go.dev/dl/?mode=json" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+for ver in data:
+    if ver['version'] == '${LATEST_VERSION}':
+        for f in ver['files']:
+            if f['filename'] == '${archive}':
+                print(f.get('sha256', ''))
+                sys.exit(0)
+" 2>/dev/null || true)
+    if [[ -z "$EXPECTED_SHA256" ]]; then
+        echo "  WARNING: could not fetch checksum from go.dev API" >&2
+    fi
+    _wget -O "/tmp/${archive}" "https://go.dev/dl/${archive}"
+    if [[ -n "$EXPECTED_SHA256" ]]; then
+        _verify_sha256 "/tmp/${archive}" "$EXPECTED_SHA256" || { rm -f "/tmp/${archive}"; return 1; }
+    else
+        local actual
+        actual=$(sha256sum "/tmp/${archive}" | awk '{print $1}')
+        echo "  WARNING: No checksum for golang; log hash for audit: $actual" >&2
+    fi
     rm -rf "$PENNYKIT_LOCAL_DIR/go"
     mkdir -p "$PENNYKIT_LOCAL_DIR"
-    tar -C "$PENNYKIT_LOCAL_DIR" -xzf "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz"
-    rm -f "/tmp/${LATEST_VERSION}.linux-amd64.tar.gz"
+    tar -C "$PENNYKIT_LOCAL_DIR" -xzf "/tmp/${archive}"
+    rm -f "/tmp/${archive}"
 }
 
 # pkg: hadolint; desc: Dockerfile linter enforcing best practices and shell checks
@@ -324,6 +360,9 @@ _install_ueberzugpp() {
     rm -f "$deb_file"
     _wget -O "$deb_file" \
         "https://download.opensuse.org/repositories/home:/justkidding/Debian_13/amd64/ueberzugpp_${ver}_amd64.deb" || { rm -f "$deb_file"; return 1; }
+    local actual
+    actual=$(sha256sum "$deb_file" | awk '{print $1}')
+    echo "  WARNING: No checksum file for ueberzugpp from OBS; log hash for audit: $actual" >&2
     mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
     dpkg-deb -x "$deb_file" /tmp/ueberzugpp-extract 2>/dev/null
     mv /tmp/ueberzugpp-extract/usr/bin/ueberzugpp "$PENNYKIT_LOCAL_DIR/bin/ueberzugpp"

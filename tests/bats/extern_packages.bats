@@ -113,13 +113,14 @@ hadolint_mock_curl() {
     assert [ -x "$HOME/.local/bin/hadolint" ]
 }
 
-@test "update_hadolint: skips if not installed" {
-    _curl() { echo "should not be called"; return 1; }
+@test "update_hadolint: installs latest when not present" {
+    _curl() { hadolint_mock_curl "$@"; }
     export -f _curl
     source "$(dirname "$BATS_TEST_FILENAME")/../../packages/extern.packages"
-    PATH="$SANE_PATH" run update_hadolint
+    PATH="$SANE_PATH:$HOME/.local/bin" run update_hadolint
     assert_success
     assert_output --partial "Update external package: hadolint"
+    assert [ -x "$HOME/.local/bin/hadolint" ]
 }
 
 # ── _install_yazi_prebuilt ──────────────────────────────────────
