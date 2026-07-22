@@ -5,7 +5,29 @@ return {
 
     local dap = require "dap"
     local dapui = require "dapui"
-    local python3_bin = vim.fn.executable("python3") == 1 and vim.fn.exepath("python3") or "/usr/bin/python3"
+    local python3_bin = vim.fn.executable("python3") == 1 and vim.fn.exepath "python3" or "/usr/bin/python3"
+
+    --- Resolve the Python executable for debugpy.
+    --- Priority: conda env "pcagent" → local venv/.venv → system python3.
+    local function resolve_python()
+      -- 1. Conda env (PC-Agent primary)
+      local home = vim.fn.getenv "HOME"
+      local conda_python = home .. "/miniconda3/envs/pcagent/bin/python"
+      if vim.fn.executable(conda_python) == 1 then return conda_python end
+      -- Also check anaconda3 / miniforge3
+      for _, base in ipairs { "anaconda3", "miniforge3" } do
+        local alt = home .. "/" .. base .. "/envs/pcagent/bin/python"
+        if vim.fn.executable(alt) == 1 then return alt end
+      end
+      -- 2. Local virtualenv
+      local cwd = vim.fn.getcwd()
+      for _, dir in ipairs { "venv", ".venv" } do
+        local path = cwd .. "/" .. dir .. "/bin/python"
+        if vim.fn.executable(path) == 1 then return path end
+      end
+      -- 3. System fallback
+      return python3_bin
+    end
 
     dap.adapters.python = {
       type = "executable",
@@ -13,21 +35,25 @@ return {
       args = { "-m", "debugpy.adapter" },
     }
     dap.configurations.python = {
+      -- Launch the current file
       {
         type = "python",
         request = "launch",
         name = "Launch file",
         program = "${file}",
-        pythonPath = function()
-          local cwd = vim.fn.getcwd()
-          for _, dir in ipairs { "venv", ".venv" } do
-            local path = cwd .. "/" .. dir .. "/bin/python"
-            if vim.fn.executable(path) == 1 then return path end
-          end
-          return python3_bin
-        end,
+        pythonPath = resolve_python,
+        console = "integratedTerminal",
+        justMyCode = false,
       },
     }
+
+    -- Load project-local debug configs from .vscode/launch.json (if present).
+    -- This allows each project to define its own debug configurations while
+    -- keeping the generic "Launch file" config here for all projects.
+    local vscode = require "dap.ext.vscode"
+    vscode.load_launchjs(nil) -- auto-detect launch.json in cwd
+    -- Map launch.json "debugpy" type to our "python" adapter
+    vscode.type_to_ft = { debugpy = "python" }
 
     dap.adapters.codelldb = {
       type = "server",
