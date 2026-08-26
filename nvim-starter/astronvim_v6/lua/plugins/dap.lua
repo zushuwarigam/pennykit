@@ -34,6 +34,14 @@ return {
       command = python3_bin,
       args = { "-m", "debugpy.adapter" },
     }
+    -- launch.json uses "type": "debugpy"; alias it to our python adapter.
+    -- Use the pcagent python so the adapter (and the debuggee it spawns) both
+    -- have debugpy available.
+    dap.adapters.debugpy = {
+      type = "executable",
+      command = resolve_python(),
+      args = { "-m", "debugpy.adapter" },
+    }
     dap.configurations.python = {
       -- Launch the current file
       {
@@ -47,13 +55,10 @@ return {
       },
     }
 
-    -- Load project-local debug configs from .vscode/launch.json (if present).
-    -- This allows each project to define its own debug configurations while
-    -- keeping the generic "Launch file" config here for all projects.
-    local vscode = require "dap.ext.vscode"
-    vscode.load_launchjs(nil) -- auto-detect launch.json in cwd
-    -- Map launch.json "debugpy" type to our "python" adapter
-    vscode.type_to_ft = { debugpy = "python" }
+    -- Project-local debug configs from .vscode/launch.json are auto-loaded by
+    -- nvim-dap's built-in `dap.launch.json` provider (no manual load needed).
+    -- The launch.json "type": "debugpy" is resolved by the `dap.adapters.debugpy`
+    -- alias registered just above.
 
     dap.adapters.codelldb = {
       type = "server",
