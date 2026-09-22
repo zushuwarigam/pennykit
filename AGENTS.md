@@ -55,10 +55,11 @@ DEFAULT always installed. `-p` flag selects higher tiers (ADMIN, DEV, PENTEST, A
 
 - `pennykit doctor` needs a git repo initialized in `$PENNYKIT_HOME`
 - Theme `--dry-run` flag only supported via Python apply (not bash fallback)
-- BATS uses `load 'test_helper/bats-support/load'` — these helpers are generated, see `.gitignore`
+- BATS uses `load 'test_helper/bats-support/load'` — the helpers are **vendored** under `tests/bats/test_helper/` (bats-support v0.3.0 + bats-assert v0.3.0, MIT, LICENSE files included). No npm/git submodule step needed; a fresh clone can run the BATS suite directly.
 - `python3` with tomllib required for theme apply; bash fallback is basic sed
 - Install script clones branch from `PENNYKIT_BRANCH` env var (defaults to `kit`)
 - Container detection reads `/etc/os-release`; Homebrew skipped on Linux unless `brew.linux` sourced
 - Vivid/LS_COLORS, harlequin, and bat aliases are patched via sed in `shell/exports.sh`/`shell/aliases.sh`
 - Blue screen during install: sudo's `env_reset` drops `DEBIAN_FRONTEND`/`DEBCONF_FRONTEND`. Every `$SUDO apt` call in `scripts/install/package_installer.sh` and `packages/extern.packages` must inline env vars: `$SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt ...`
 - Rootless mode (`PENNYKIT_ROOTLESS=1`): apt tiers are skipped entirely. Extern packages (Go, Neovim, dive, vivid, ueberzugpp) install to `$PENNYKIT_LOCAL_DIR` (default `~/.local/`) instead of system paths. Set via `install.sh -r` or `PENNYKIT_ROOTLESS=1` env var.
+- Apt fallback: if an apt batch install fails (e.g. `git-delta`/`glow`/`btm`/`resvg` missing from Debian bookworm), `package_installer.sh` retries per-package: available ones via apt, unavailable ones with a `_ROOTLESS_APT` GitHub-release installer (from `packages/apt.rootless`) into `$PENNYKIT_LOCAL_DIR/bin` (added to PATH by `shell/exports.sh`), others recorded as failed. `_rootless_gh_release` uses the raw GitHub tag in the download URL, so tags with or without a leading `v` both work.

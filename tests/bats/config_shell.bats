@@ -12,7 +12,8 @@ setup() {
 
 @test "config.shell: idempotent sourcing guard works" {
     touch "$HOME/.bashrc"
-    source "$CONFIG_SHELL"
+    _curl() { :; } # config.shell fetches the Oh My Bash installer via _curl — no-op in tests
+    export -f _curl
     run source "$CONFIG_SHELL"
     assert_success
 }

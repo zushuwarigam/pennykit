@@ -2,17 +2,31 @@ load 'test_helper/bats-support/load'
 load 'test_helper/bats-assert/load'
 
 setup() {
-    export PENNYKIT_HOME="$BATS_TEST_TMPDIR/.pennykit"
+    # install.sh derives its own PENNYKIT_HOME from $HOME — keep the two in sync
     export HOME="$BATS_TEST_TMPDIR/home"
+    export PENNYKIT_HOME="$HOME/.pennykit"
     mkdir -p "$HOME"
 
     INSTALL_SCRIPT="$(dirname "$BATS_TEST_FILENAME")/../../install.sh"
-}
 
-@test "install: exits with error when git clone fails (no network)" {
-    export PENNYKIT_FORCE=true
-    run bash "$INSTALL_SCRIPT" 2>&1 || true
-    assert_output --partial "INFO" 2>/dev/null || skip "handles missing network gracefully"
+    # Hermetic network: a git shim on PATH that fails clone/rev-parse deterministically
+    # so no test ever touches the real remote. The shim forwards nothing to real git.
+    mkdir -p "$BATS_TEST_TMPDIR/bin"
+    cat > "$BATS_TEST_TMPDIR/bin/git" <<'SHIM'
+#!/usr/bin/env bash
+case "$*" in
+    *clone*)
+        echo "fatal: could not read from remote repository." >&2
+        exit 128 ;;
+    *rev-parse*)
+        echo "fatal: not a git repository (or any of the parent directories): .git" >&2
+        exit 128 ;;
+    *)
+        exit 0 ;;
+esac
+SHIM
+    chmod +x "$BATS_TEST_TMPDIR/bin/git"
+    export PATH="$BATS_TEST_TMPDIR/bin:$PATH"
 }
 
 @test "install: --help shows usage" {
@@ -27,19 +41,38 @@ setup() {
     assert_output --partial "Usage:"
 }
 
-@test "install: existing non-repo directory is removed" {
-    mkdir -p "$PENNYKIT_HOME"
-    run bash "$INSTALL_SCRIPT" 2>&1 || true
-    assert_output --partial "not a git repo" 2>/dev/null || skip "cleanup behavior depends on git"
+@test "install: clone failure surfaces ERROR and nonzero exit" {
+    run bash "$INSTALL_SCRIPT"
+    assert_failure
+    assert_output --partial "Failed to clone repository"
 }
 
-@test "install: --force flag removes existing directory" {
+@test "install: existing non-repo directory is removed before re-clone" {
     mkdir -p "$PENNYKIT_HOME"
-    run bash "$INSTALL_SCRIPT" --force 2>&1 || true
-    assert_output --partial "INFO" 2>/dev/null || skip "handles force flag"
+    echo "stale" > "$PENNYKIT_HOME/stale-file"
+    run bash "$INSTALL_SCRIPT"
+    assert_failure
+    assert_output --partial "not a git repo"
+    assert_output --partial "Failed to clone repository"
+}
+
+@test "install: --force removes existing directory" {
+    mkdir -p "$PENNYKIT_HOME"
+    echo "stale" > "$PENNYKIT_HOME/stale-file"
+    run bash "$INSTALL_SCRIPT" --force
+    assert_failure
+    assert_output --partial "INFO: --force supplied"
+    assert_output --partial "Failed to clone repository"
 }
 
 @test "install: accepts -p package set option" {
-    run bash "$INSTALL_SCRIPT" -p dev 2>&1 || true
-    assert_output --partial "INFO" 2>/dev/null || skip "handles package set option"
+    run bash "$INSTALL_SCRIPT" -p dev
+    # A valid set must proceed past usage parsing (failing later only at the mocked clone)
+    assert_output --partial "Cloning PennyKit"
+    refute_output --partial "Usage:"
+}
+
+@test "install: invalid package set prints usage" {
+    run bash "$INSTALL_SCRIPT" -p bogus
+    assert_output --partial "Usage:"
 }

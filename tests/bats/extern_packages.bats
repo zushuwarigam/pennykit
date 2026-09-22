@@ -56,6 +56,47 @@ setup() {
     assert_output --partial "SHA256 mismatch"
 }
 
+# ── _verify_release_checksum ────────────────────────────────────
+
+@test "_verify_release_checksum: verifies when checksum downloads successfully" {
+    echo "hello" > "$BATS_TEST_TMPDIR/dummy.bin"
+    _curl() {
+        if [[ "$*" == *nonexistent.sha256* ]]; then
+            local hash
+            hash=$(sha256sum "$BATS_TEST_TMPDIR/dummy.bin" | awk '{print $1}')
+            printf '%s  dummy.bin\n' "$hash" > /tmp/nonexistent.sha256
+            return 0
+        fi
+        return 1
+    }
+    export -f _curl
+    source "$(dirname "$BATS_TEST_FILENAME")/../../packages/extern.packages"
+    run _verify_release_checksum "$BATS_TEST_TMPDIR/dummy.bin" "https://example.invalid/nonexistent.sha256"
+    assert_success
+    assert_output --partial "SHA256 verified"
+    assert [ ! -f /tmp/nonexistent.sha256 ]
+}
+
+@test "_verify_release_checksum: logs audit hash when checksum download fails" {
+    echo "hello" > "$BATS_TEST_TMPDIR/dummy.bin"
+    _curl() { return 1; }
+    export -f _curl
+    source "$(dirname "$BATS_TEST_FILENAME")/../../packages/extern.packages"
+    run _verify_release_checksum "$BATS_TEST_TMPDIR/dummy.bin" "https://example.invalid/nonexistent.sha256"
+    assert_success
+    assert_output --partial "WARNING: checksum download failed"
+    assert_output --partial "hash"
+}
+
+@test "_verify_release_checksum: warns and returns 0 when file also missing" {
+    _curl() { return 1; }
+    export -f _curl
+    source "$(dirname "$BATS_TEST_FILENAME")/../../packages/extern.packages"
+    run _verify_release_checksum "/tmp/pennykit-nonexistent.bin" "https://example.invalid/nonexistent.sha256"
+    assert_success
+    assert_output --partial "WARNING: checksum download failed"
+}
+
 # ── add_hadolint ────────────────────────────────────────────────
 
 hadolint_mock_curl() {
@@ -73,6 +114,7 @@ hadolint_mock_curl() {
             ;;
         *hadolint-linux-x86_64)
             printf 'fake binary content\n' > /tmp/hadolint-linux-x86_64
+            chmod +x /tmp/hadolint-linux-x86_64 # real release binaries ship executable
             ;;
     esac
     return 0
@@ -82,7 +124,7 @@ hadolint_mock_curl() {
     _curl() { hadolint_mock_curl "$@"; }
     export -f _curl
     source "$(dirname "$BATS_TEST_FILENAME")/../../packages/extern.packages"
-    PATH="$SANE_PATH:$HOME/.local/bin" run add_hadolint
+    PATH="$HOME/.local/bin:/usr/bin:/bin" run add_hadolint
     assert_success
     assert_output --partial "Add external package: hadolint"
     assert [ -x "$HOME/.local/bin/hadolint" ]
@@ -96,7 +138,7 @@ hadolint_mock_curl() {
     _curl() { echo "should not be called"; return 1; }
     export -f _curl
     source "$(dirname "$BATS_TEST_FILENAME")/../../packages/extern.packages"
-    PATH="$SANE_PATH:$HOME/.local/bin" run add_hadolint
+    PATH="$HOME/.local/bin:/usr/bin:/bin" run add_hadolint
     assert_success
     assert_output --partial "Add external package: hadolint"
 }
@@ -107,7 +149,7 @@ hadolint_mock_curl() {
     _curl() { hadolint_mock_curl "$@"; }
     export -f _curl
     source "$(dirname "$BATS_TEST_FILENAME")/../../packages/extern.packages"
-    PATH="$SANE_PATH:$HOME/.local/bin" run update_hadolint
+    PATH="$HOME/.local/bin:/usr/bin:/bin" run update_hadolint
     assert_success
     assert_output --partial "Update external package: hadolint"
     assert [ -x "$HOME/.local/bin/hadolint" ]
@@ -117,7 +159,7 @@ hadolint_mock_curl() {
     _curl() { hadolint_mock_curl "$@"; }
     export -f _curl
     source "$(dirname "$BATS_TEST_FILENAME")/../../packages/extern.packages"
-    PATH="$SANE_PATH:$HOME/.local/bin" run update_hadolint
+    PATH="$HOME/.local/bin:/usr/bin:/bin" run update_hadolint
     assert_success
     assert_output --partial "Update external package: hadolint"
     assert [ -x "$HOME/.local/bin/hadolint" ]

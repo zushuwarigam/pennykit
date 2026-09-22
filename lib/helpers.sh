@@ -1,6 +1,7 @@
 # shellcheck shell=bash
 # shellcheck disable=SC1090,SC1091
-[[ -v _HELPERS_SH ]] && return || readonly _HELPERS_SH=1
+[[ -v _HELPERS_SH ]] && return
+readonly _HELPERS_SH=1
 
 _readlinkf() {
     if command -v greadlink >/dev/null 2>&1; then
@@ -11,7 +12,7 @@ _readlinkf() {
 }
 
 _curl() {
-  curl --retry 5 --retry-all-errors --retry-delay 2 --connect-timeout 10 --max-time 60 -fL "$@"
+  curl --retry 5 --retry-connrefused --retry-delay 2 --connect-timeout 10 --max-time 60 -fL "$@"
 }
 _wget() {
   wget -c --tries=3 --waitretry=15 --timeout=60 --read-timeout=60 "$@"
@@ -38,6 +39,10 @@ die() { echo "${RED}Error: $*${RESET}" >&2; exit 1; }
 _verify_sha256() {
     local file="$1"
     local expected="$2"
+    if [[ ! -f "$file" ]]; then
+        echo "  SHA256 verification file missing: $file" >&2
+        return 1
+    fi
     local actual
     actual=$(sha256sum "$file" | awk '{print $1}')
     if [[ "$actual" != "$expected" ]]; then
@@ -53,7 +58,11 @@ _is_deactivated() {
     local pkg="$1"
     local skip_file="${PENNYKIT_HOME:-$HOME/.pennykit}/configs/extern.skip"
     [[ ! -f "$skip_file" ]] && return 1
+    local line
     while IFS= read -r line; do
+        line="${line%$'\r'}"
+        line="${line#"${line%%[![:space:]]*}"}"
+        line="${line%"${line##*[![:space:]]}"}"
         [[ "$line" =~ ^# ]] && continue
         [[ -z "$line" ]] && continue
         [[ "$line" == "$pkg" ]] && return 0
@@ -77,9 +86,12 @@ _clear_problematic() {
     local pkg="$1"
     local problematic_file="${PENNYKIT_HOME:-$HOME/.pennykit}/configs/extern.problematic"
     [[ ! -f "$problematic_file" ]] && return
-    grep -vxF "$pkg" "$problematic_file" > "$problematic_file.tmp" || true
-    mv "$problematic_file.tmp" "$problematic_file" 2>/dev/null || true
-    if [[ ! -s "$problematic_file" ]]; then
-        rm -f "$problematic_file"
-    fi
+    (
+        flock -x 200
+        grep -vxF "$pkg" "$problematic_file" > "$problematic_file.tmp" || true
+        mv "$problematic_file.tmp" "$problematic_file" 2>/dev/null || true
+        if [[ ! -s "$problematic_file" ]]; then
+            rm -f "$problematic_file"
+        fi
+    ) 200>"${problematic_file}.lock"
 }

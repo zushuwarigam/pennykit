@@ -11,7 +11,7 @@ mkdir -p "${HOME}/.config"
 if [[ -e "$NVIM_CONFIG_HOME" ]]; then
     if [[ -L "$NVIM_CONFIG_HOME" && -d "$NVIM_CONFIG_HOME" ]]; then
         # Link
-        if [[ "$PENNYKIT_FORCE" == "true" ]]; then
+        if [[ "${PENNYKIT_FORCE:-false}" == "true" ]]; then
             if [[ "$(readlink -f "$NVIM_CONFIG_HOME")" =~ ${PENNYKIT_HOME}/nvim-starter/${NVIM_CONFIG} ]]; then
                 :
                 # echo "INFO: nvim config already on ${PENNYKIT_HOME}/nvim-starter/${NVIM_CONFIG}"
@@ -25,7 +25,7 @@ if [[ -e "$NVIM_CONFIG_HOME" ]]; then
         fi
     else
         # Directory
-        if [[ "$PENNYKIT_FORCE" == "true" ]]; then
+        if [[ "${PENNYKIT_FORCE:-false}" == "true" ]]; then
             echo "INFO: --force supplied – move existing $NVIM_CONFIG_HOME ..."
             mv -fv "$NVIM_CONFIG_HOME" "${NVIM_CONFIG_HOME}.backup_$(date +%d-%m-%Y)"
             ln -s "${PENNYKIT_HOME}/nvim-starter/${NVIM_CONFIG}" "$NVIM_CONFIG_HOME"

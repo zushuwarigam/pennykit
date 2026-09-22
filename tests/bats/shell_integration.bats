@@ -38,6 +38,8 @@ setup() {
 }
 
 @test "shell/exports.sh extends PATH with expected directories" {
+    # _add_path only appends directories that exist — build a realistic HOME first
+    mkdir -p "$HOME/.local/bin" "$HOME/.cargo/bin" "$HOME/go/bin"
     source "$(dirname "$BATS_TEST_FILENAME")/../../shell/exports.sh"
     [[ "$PATH" == *".local/bin"* ]]
     [[ "$PATH" == *".cargo/bin"* ]]

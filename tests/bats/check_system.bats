@@ -93,7 +93,7 @@ EOF
     source_detect_os() {
         local mock_osrelease=\"\$1\"
         local func
-        func=\$(sed -n '/^detect_os/,/^}/p' '$PENNYKIT_HOME/../scripts/check_system.sh' 2>/dev/null || sed -n '/^detect_os/,/^}/p' '$(dirname "$BATS_TEST_FILENAME")/../../scripts/check_system.sh')
+        func=\$(sed -n '/^detect_os/,/^}/p' '$PENNYKIT_HOME/../scripts/install/check_system.sh' 2>/dev/null || sed -n '/^detect_os/,/^}/p' '$(dirname "$BATS_TEST_FILENAME")/../../scripts/install/check_system.sh')
         func=\"\${func//\/etc\/os-release/\$mock_osrelease}\"
         eval \"\$func\"
     }

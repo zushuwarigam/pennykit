@@ -26,6 +26,12 @@ setup() {
     assert_output --partial "SHA256 mismatch"
 }
 
+@test "_verify_sha256: missing file fails with clear message" {
+    run _verify_sha256 "$BATS_TEST_TMPDIR/missing-file" "0000000000000000000000000000000000000000000000000000000000000000"
+    assert_failure
+    assert_output --partial "missing"
+}
+
 @test "_is_deactivated: active package returns false" {
     echo "# comment" > "$PENNYKIT_HOME/configs/extern.skip"
     echo "yazi" >> "$PENNYKIT_HOME/configs/extern.skip"
@@ -36,6 +42,42 @@ setup() {
 }
 
 @test "_is_deactivated: missing skip file returns false" {
+    run _is_deactivated "dive"
+    assert_failure
+}
+
+@test "_is_deactivated: trailing space on skip line still matches" {
+    printf 'yazi  \n' > "$PENNYKIT_HOME/configs/extern.skip"
+    run _is_deactivated "yazi"
+    assert_success
+}
+
+@test "_is_deactivated: CRLF line ending still matches" {
+    printf 'yazi\r\n' > "$PENNYKIT_HOME/configs/extern.skip"
+    run _is_deactivated "yazi"
+    assert_success
+}
+
+@test "_is_deactivated: leading whitespace on skip line still matches" {
+    printf '  yazi\n' > "$PENNYKIT_HOME/configs/extern.skip"
+    run _is_deactivated "yazi"
+    assert_success
+}
+
+@test "_is_deactivated: whitespace-only lines are skipped" {
+    printf '   \n\tnvim\n\n' > "$PENNYKIT_HOME/configs/extern.skip"
+    run _is_deactivated "nvim"
+    assert_success
+    run _is_deactivated "yazi"
+    assert_failure
+}
+
+@test "_is_deactivated: plain line and comment still work" {
+    printf '# comment\nyazi\nnvim\n' > "$PENNYKIT_HOME/configs/extern.skip"
+    run _is_deactivated "yazi"
+    assert_success
+    run _is_deactivated "nvim"
+    assert_success
     run _is_deactivated "dive"
     assert_failure
 }
@@ -54,9 +96,13 @@ setup() {
 }
 
 @test "_curl: includes -fL flags" {
-    run _curl --version
+    curl() { printf '%s\n' "$*" > "$BATS_TEST_TMPDIR/curl_args"; }
+    _curl --version
+    run cat "$BATS_TEST_TMPDIR/curl_args"
     assert_success
-    assert_output --partial "curl"
+    assert_output --partial "-fL"
+    assert_output --partial "--retry-connrefused"
+    refute_output --partial "--retry-all-errors"
 }
 
 # ── _mark_problematic / _clear_problematic ───────────────────────
@@ -88,6 +134,24 @@ setup() {
     _mark_problematic "fzf"
     _clear_problematic "fzf"
     assert [ ! -f "$PENNYKIT_HOME/configs/extern.problematic" ]
+}
+
+@test "_clear_problematic: leaves no tmp file behind" {
+    _mark_problematic "fzf"
+    _mark_problematic "dive"
+    _clear_problematic "fzf"
+    assert [ -f "$PENNYKIT_HOME/configs/extern.problematic" ]
+    assert [ ! -f "$PENNYKIT_HOME/configs/extern.problematic.tmp" ]
+    run cat "$PENNYKIT_HOME/configs/extern.problematic"
+    assert_output "dive"
+}
+
+@test "_clear_problematic: works when stale lock file exists" {
+    _mark_problematic "fzf"
+    touch "$PENNYKIT_HOME/configs/extern.problematic.lock"
+    _clear_problematic "fzf"
+    assert [ ! -f "$PENNYKIT_HOME/configs/extern.problematic" ]
+    assert [ ! -f "$PENNYKIT_HOME/configs/extern.problematic.tmp" ]
 }
 
 @test "_clear_problematic: does nothing for missing file" {

@@ -128,3 +128,17 @@ SCRIPT
     run readlink -f "$HOME/.config/nvim"
     assert_output --partial "astronvim_v6"
 }
+
+@test "config.nvim: survives re-source without PENNYKIT_FORCE set" {
+    # Regression: config.nvim referenced bare $PENNYKIT_FORCE under `set -u`.
+    # config.nvim only got the variable because install.sh exports it; sourcing it
+    # directly (or via a direct pennykit_install.sh run) aborted with
+    # "PENNYKIT_FORCE: unbound variable" when an existing symlink was present.
+    run bash "$CONFIGURE"
+    assert_success
+    [[ -L "$HOME/.config/nvim" ]]
+
+    run env -u PENNYKIT_FORCE bash -c 'source "$0"' "$PENNYKIT_HOME/configs/config.nvim"
+    assert_success
+    refute_output --partial "unbound variable"
+}

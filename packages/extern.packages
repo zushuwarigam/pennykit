@@ -29,7 +29,15 @@ _download_github_release() {
 
 _verify_release_checksum() {
     local file="$1" checksum_url="$2"
-    _curl --output-dir "/tmp" -fOL "$checksum_url" || { echo "  WARNING: checksum download failed" >&2; return 0; }
+    if ! _curl --output-dir "/tmp" -fOL "$checksum_url"; then
+        echo "  WARNING: checksum download failed" >&2
+        if [[ -f "$file" ]]; then
+            local actual
+            actual=$(sha256sum "$file" | awk '{print $1}')
+            echo "  WARNING: No checksum file; log hash for audit: $actual" >&2
+        fi
+        return 0
+    fi
     local sumfile="/tmp/$(basename "$checksum_url")"
     local expected
     expected=$(grep "$(basename "$file")" "$sumfile" 2>/dev/null | awk '{print $1}' || awk '{print $1}' "$sumfile" 2>/dev/null)

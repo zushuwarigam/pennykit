@@ -19,6 +19,12 @@ fi
 
 # Rootless mode: skip apt, install extern packages to ~/.local/
 PENNYKIT_LOCAL_DIR="${PENNYKIT_LOCAL_DIR:-$HOME/.local}"
+
+# Make _ROOTLESS_APT + _rootless_gh_release available in normal mode too so we
+# can fall back to GitHub-release installs when a package is missing from apt.
+# Self-guarded via _APT_ROOTLESS, so double-sourcing in rootless mode is harmless.
+source "${PENNYKIT_HOME}/packages/apt.rootless" 2>/dev/null || true
+
 if [[ -n "${PENNYKIT_ROOTLESS:-}" ]] && [[ $(id -u) != 0 ]]; then
   echo "  [ROOTLESS] Rootless mode — skipping apt, using $PENNYKIT_LOCAL_DIR"
   SUDO=""
@@ -37,7 +43,21 @@ if [[ -n "${PENNYKIT_DRY_RUN:-}" ]]; then
   _apt_clean()    { echo "  [DRY-RUN] $SUDO apt-get clean"; }
   _brew_clean()   { echo "  [DRY-RUN] brew cleanup --prune=all"; }
 else
-  _apt_install()  { DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a $SUDO apt-get install -qq -y --no-install-recommends --no-install-suggests "$@" 2>&1 | grep -v "already" || true; }
+  _apt_install()  {
+    local _apt_rc=0 _apt_out
+    _apt_out="$(DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a $SUDO apt-get install -qq -y --no-install-recommends --no-install-suggests "$@" 2>&1)" || _apt_rc=$?
+    _apt_out="$(printf '%s\n' "$_apt_out" | grep -v 'already' || true)"
+    if [[ $_apt_rc -ne 0 ]]; then
+      if [[ -n "$_apt_out" ]]; then
+        printf '%s\n' "$_apt_out" >&2
+      fi
+      return "$_apt_rc"
+    fi
+    if [[ -n "$_apt_out" ]]; then
+      printf '%s\n' "$_apt_out"
+    fi
+    return 0
+  }
   _pipx_install() { pipx install "$@"; }
   _npm_install()  {
     local retries=3
@@ -79,10 +99,56 @@ if [[ -n "${PENNYKIT_ROOTLESS:-}" ]] && [[ $(id -u) != 0 ]]; then
   _apt_clean()    { echo "  [ROOTLESS] Skipping apt clean"; }
 fi
 
+_apt_available() {
+  local pkg="$1"
+  command -v apt-cache >/dev/null 2>&1 || return 1
+  # NOTE: no `grep -q` here — under `set -o pipefail`, grep -q exits at the first
+  # match and closes the pipe, so apt-cache gets SIGPIPE (141) mid-write and the
+  # whole pipeline reports failure even for available packages. Plain grep reads
+  # the full stream and returns the real match status.
+  apt-cache policy "$pkg" 2>/dev/null | grep "Candidate: [0-9]" >/dev/null
+}
+
+_apt_install_or_fallback() {
+  local -a pkgs=("$@")
+  local pkg
+  if _apt_install "${pkgs[@]}"; then
+    return 0
+  fi
+  echo "  apt batch install failed — retrying per-package" >&2
+  for pkg in "${pkgs[@]}"; do
+    if _apt_available "$pkg"; then
+      if _apt_install "$pkg"; then
+        _INSTALLED_PKGS+=("$pkg")
+      else
+        _FAILED_PKGS+=("$pkg")
+      fi
+    elif [[ -n "${_ROOTLESS_APT[$pkg]+_}" ]]; then
+      echo "  $pkg: not in apt repos — installing via GitHub release fallback"
+      if "${_ROOTLESS_APT[$pkg]}"; then
+        _INSTALLED_PKGS+=("$pkg")
+      else
+        echo "  ${YELLOW}⚠ fallback install of $pkg failed${RESET}" >&2
+        _FAILED_PKGS+=("$pkg")
+      fi
+    else
+      echo "  $pkg: not in apt repos and no fallback installer — skipped" >&2
+      _FAILED_PKGS+=("$pkg")
+    fi
+  done
+  return 0
+}
+
 _add_or_skip() {
     local pkg="$1"
     if _is_deactivated "$pkg"; then
         echo "  Skipping $pkg (deactivated)"
+        return
+    fi
+    if ! declare -F "add_$pkg" >/dev/null 2>&1; then
+        echo "  no add_${pkg} function defined — package not registered in packages/extern.packages" >&2
+        _mark_problematic "$pkg"
+        _FAILED_PKGS+=("$pkg")
         return
     fi
     if "add_$pkg"; then
@@ -104,10 +170,16 @@ _FAILED_PKGS=()
 # ALL: base → admin → dev → pentest
 layers=()
 case "${PENNYKIT_PACKAGE_SET:-DEFAULT}" in
-  ADMIN)   layers=(admin) ;;
-  DEV)     layers=(dev) ;;
-  PENTEST) layers=(dev pentest) ;;
-  ALL)     layers=(admin dev pentest) ;;
+  DEFAULT)  layers=() ;;
+  ADMIN)    layers=(admin) ;;
+  DEV)      layers=(dev) ;;
+  PENTEST)  layers=(dev pentest) ;;
+  ALL)      layers=(admin dev pentest) ;;
+  *)
+    echo "  Error: unknown PENNYKIT_PACKAGE_SET '${PENNYKIT_PACKAGE_SET:-DEFAULT}'" >&2
+    echo "  Valid values: DEFAULT, ADMIN, DEV, PENTEST, ALL" >&2
+    exit 1
+    ;;
 esac
 
 # shellcheck source=./packages/apt.default
@@ -119,9 +191,9 @@ source "./packages/extern.packages"
 
 # apt
 if [[ -v PENNYKIT_APT_DEFAULT ]]; then
-  _apt_update && _apt_upgrade
+    _apt_update && _apt_upgrade
 
-  _apt_install "${PENNYKIT_APT_DEFAULT[@]}"
+    _apt_install_or_fallback "${PENNYKIT_APT_DEFAULT[@]}"
   # shellcheck source=./packages/apt.default.postinst
   source "./packages/apt.default.postinst"
 
@@ -143,7 +215,9 @@ if [[ -v PENNYKIT_APT_DEFAULT ]]; then
       fi
     done
   done
-  [[ ${#_apt_pkgs[@]} -gt 0 ]] && _apt_install "${_apt_pkgs[@]}"
+  if [[ ${#_apt_pkgs[@]} -gt 0 ]]; then
+    _apt_install_or_fallback "${_apt_pkgs[@]}"
+  fi
 
   # pipx
   declare -A _seen_pipx

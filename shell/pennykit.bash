@@ -1,3 +1,4 @@
+# shellcheck disable=SC1091 # sourced from the installed runtime path (~/.pennykit), unknown at lint time
 source "${HOME}/.pennykit/shell/exports.sh"
 source "${HOME}/.pennykit/shell/aliases.sh"
 source "${HOME}/.pennykit/shell/functions.sh"

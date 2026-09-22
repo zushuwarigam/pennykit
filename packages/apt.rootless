@@ -1,5 +1,7 @@
+# shellcheck shell=bash
 # shellcheck disable=SC1090,SC1091
-[[ -v _APT_ROOTLESS ]] && return || readonly _APT_ROOTLESS=1
+[[ -v _APT_ROOTLESS ]] && return
+readonly _APT_ROOTLESS=1
 
 # Rootless alternatives for apt packages.
 # Maps package names to installer functions.
@@ -18,11 +20,14 @@ declare -A _ROOTLESS_APT
 _rootless_gh_release() {
   local repo="$1" asset="$2" binary="$3"
   local dest="${4:-$binary}"
-  local ver url tmpdir
-  ver=$(_curl -sL "https://api.github.com/repos/${repo}/releases/latest" \
-    | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
-  [[ -z "$ver" ]] && { echo "  WARNING: Could not determine version for ${repo}" >&2; return 1; }
-  url="https://github.com/${repo}/releases/download/v${ver}/${asset//\{VERSION\}/$ver}"
+  local tag ver url tmpdir
+  # Tags may or may not carry a leading "v" (e.g. v3.0.0 vs 0.14.9).
+  # Grab the raw tag for the download URL, and strip "v" for {VERSION} assets.
+  tag=$(_curl -sL "https://api.github.com/repos/${repo}/releases/latest" \
+    | grep '"tag_name":' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')
+  [[ -z "$tag" ]] && { echo "  WARNING: Could not determine version for ${repo}" >&2; return 1; }
+  ver="${tag#v}"
+  url="https://github.com/${repo}/releases/download/${tag}/${asset//\{VERSION\}/$ver}"
   echo "  Installing ${dest} v${ver}"
   tmpdir=$(mktemp -d "/tmp/pk-rootless-${dest}.XXX")
   _curl -fL "$url" -o "${tmpdir}/archive" 2>/dev/null || { rm -rf "$tmpdir"; return 1; }
@@ -61,12 +66,13 @@ _apt_rootless_bat()     { _rootless_gh_release "sharkdp/bat"   "bat-v{VERSION}-x
 _apt_rootless_ripgrep() { _rootless_gh_release "BurntSushi/ripgrep" "ripgrep-{VERSION}-x86_64-unknown-linux-musl.tar.gz" "rg" "ripgrep"; }
 _apt_rootless_fd_find() { _rootless_gh_release "sharkdp/fd"    "fd-v{VERSION}-x86_64-unknown-linux-musl.tar.gz"   "fd" "fd"; }
 _apt_rootless_lsd()     { _rootless_gh_release "lsd-rs/lsd"    "lsd-{VERSION}-x86_64-unknown-linux-gnu.tar.gz"    "lsd"; }
-_apt_rootless_glow()    { _rootless_gh_release "charmbracelet/glow" "glow_{VERSION}_linux_amd64.tar.gz"            "glow"; }
+_apt_rootless_glow()    { _rootless_gh_release "charmbracelet/glow" "glow_{VERSION}_Linux_x86_64.tar.gz"      "glow"; }
 _apt_rootless_gdu()     { _rootless_gh_release "dundee/gdu"     "gdu_linux_amd64_static.tgz"                     "gdu"; }
 _apt_rootless_zoxide()  { _rootless_gh_release "ajeetdsouza/zoxide" "zoxide-{VERSION}-x86_64-unknown-linux-musl.tar.gz" "zoxide"; }
-_apt_rootless_bottom()  { _rootless_gh_release "ClementTsang/bottom" "bottom_x86_64-unknown-linux-gnu.tar.gz"    "btm" "bottom"; }
+_apt_rootless_bottom()  { _rootless_gh_release "ClementTsang/bottom" "bottom_x86_64-unknown-linux-gnu.tar.gz"    "btm"; }
 _apt_rootless_eza()     { _rootless_gh_release "eza-community/eza"  "eza_x86_64-unknown-linux-gnu.tar.gz"        "eza"; }
 _apt_rootless_delta()   { _rootless_gh_release "dandavison/delta" "delta-{VERSION}-x86_64-unknown-linux-gnu.tar.gz" "delta" "git-delta"; }
+_apt_rootless_resvg()   { _rootless_gh_release "linebender/resvg"  "resvg-linux-x86_64.tar.gz"                  "resvg"; }
 _apt_rootless_jq() {
   echo "  Installing jq"
   local ver
@@ -123,6 +129,7 @@ _ROOTLESS_APT[zoxide]=_apt_rootless_zoxide
 _ROOTLESS_APT[btm]=_apt_rootless_bottom
 _ROOTLESS_APT[eza]=_apt_rootless_eza
 _ROOTLESS_APT[git-delta]=_apt_rootless_delta
+_ROOTLESS_APT[resvg]=_apt_rootless_resvg
 _ROOTLESS_APT[jq]=_apt_rootless_jq
 
 # ADMIN tier

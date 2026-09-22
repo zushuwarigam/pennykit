@@ -184,12 +184,12 @@ source_config() {
     echo '#!/bin/bash' > "$stub_dir/fzf"
     echo 'echo "fzf --bash called"' >> "$stub_dir/fzf"
     chmod +x "$stub_dir/fzf"
-    PATH="$stub_dir:$PATH" run bash -c "
+    PATH="$stub_dir:$PATH" run bash -i -c "
     export PENNYKIT_HOME='$PENNYKIT_HOME'
     export HOME='$HOME'
     export SHELL=/bin/bash
     source '$(dirname "$BATS_TEST_FILENAME")/../../configs/config.fzf'
-    "
+    " </dev/null
     assert_success
     assert_output --partial "fzf --bash called"
 }
