@@ -36,6 +36,28 @@ return {
         [".*/etc/foo/.*"] = "fooscript",
       },
     },
+    -- auto commands to set up (:h nvim_create_autocmd)
+    autocmds = {
+      telescope_lsp_silence = {
+        {
+          event = "User",
+          pattern = "VeryLazy",
+          once = true,
+          desc = "Suppress Telescope LSP 'no results' notifications",
+          callback = function()
+            local notify = vim.notify
+            vim.notify = function(msg, level, opts)
+              if level == vim.log.levels.INFO and type(msg) == "string"
+                and msg:match("^%[telescope%.[^]]*%]: No ")
+              then
+                return
+              end
+              return notify(msg, level, opts)
+            end
+          end,
+        },
+      },
+    },
     -- vim options can be configured here
     options = {
       opt = { -- vim.opt.<key>

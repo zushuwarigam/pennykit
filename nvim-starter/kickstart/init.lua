@@ -97,6 +97,21 @@ vim.g.editorconfig = true
 local ok, theme = pcall(require, "_local_theme")
 local colorscheme = ok and theme.colorscheme or "tokyonight"
 
+-- Silence "No LSP ... found" notifications from Telescope LSP pickers
+-- (e.g. `grd`, `grr`, `gri` opening a picker with zero results)
+if not vim.g.__kickstart_notify_hooked then
+  vim.g.__kickstart_notify_hooked = true
+  local notify = vim.notify
+  vim.notify = function(msg, level, opts)
+    if level == vim.log.levels.INFO and type(msg) == "string"
+      and msg:match("^%[telescope%.[^]]*%]: No ")
+    then
+      return
+    end
+    return notify(msg, level, opts)
+  end
+end
+
 -- [[ Setting options ]]
 -- See `:help vim.o`
 -- NOTE: You can change these options as you wish!
