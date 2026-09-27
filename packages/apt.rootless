@@ -65,7 +65,7 @@ _rootless_go_install() {
 _apt_rootless_bat()     { _rootless_gh_release "sharkdp/bat"   "bat-v{VERSION}-x86_64-unknown-linux-gnu.tar.gz"   "bat"; }
 _apt_rootless_ripgrep() { _rootless_gh_release "BurntSushi/ripgrep" "ripgrep-{VERSION}-x86_64-unknown-linux-musl.tar.gz" "rg" "ripgrep"; }
 _apt_rootless_fd_find() { _rootless_gh_release "sharkdp/fd"    "fd-v{VERSION}-x86_64-unknown-linux-musl.tar.gz"   "fd" "fd"; }
-_apt_rootless_lsd()     { _rootless_gh_release "lsd-rs/lsd"    "lsd-{VERSION}-x86_64-unknown-linux-gnu.tar.gz"    "lsd"; }
+_apt_rootless_lsd()     { _rootless_gh_release "lsd-rs/lsd"    "lsd-v{VERSION}-x86_64-unknown-linux-gnu.tar.gz"   "lsd"; }
 _apt_rootless_glow()    { _rootless_gh_release "charmbracelet/glow" "glow_{VERSION}_Linux_x86_64.tar.gz"      "glow"; }
 _apt_rootless_gdu()     { _rootless_gh_release "dundee/gdu"     "gdu_linux_amd64_static.tgz"                     "gdu"; }
 _apt_rootless_zoxide()  { _rootless_gh_release "ajeetdsouza/zoxide" "zoxide-{VERSION}-x86_64-unknown-linux-musl.tar.gz" "zoxide"; }

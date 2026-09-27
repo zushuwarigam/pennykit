@@ -19,6 +19,15 @@ _wget() {
 }
 export -f _curl _wget
 
+# Resolves the newest release tag of a GitHub repo to a bare version (leading "v" stripped).
+# Lives here rather than in packages/extern.packages because pennykit_install.sh runs
+# before extern.packages is sourced and still needs it (nvm bootstrap).
+_github_latest_version() {
+    local owner="$1" repo="$2"
+    _curl -sL "https://api.github.com/repos/${owner}/${repo}/releases/latest" \
+        | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/'
+}
+
 if [[ -t 1 ]]; then
     BOLD=$(tput bold)
     GREEN=$(tput setaf 2)

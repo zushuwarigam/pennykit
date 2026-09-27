@@ -15,12 +15,6 @@ fi
 PENNYKIT_LOCAL_DIR="${PENNYKIT_LOCAL_DIR:-$HOME/.local}"
 export PATH="${PENNYKIT_LOCAL_DIR}/go/bin:${PATH}"
 
-_github_latest_version() {
-    local owner="$1" repo="$2"
-    _curl -sL "https://api.github.com/repos/${owner}/${repo}/releases/latest" \
-        | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/'
-}
-
 _download_github_release() {
     local version="$1" owner="$2" repo="$3" filename="$4"
     local url="https://github.com/${owner}/${repo}/releases/download/v${version}/${filename}"
@@ -40,7 +34,17 @@ _verify_release_checksum() {
     fi
     local sumfile="/tmp/$(basename "$checksum_url")"
     local expected
-    expected=$(grep "$(basename "$file")" "$sumfile" 2>/dev/null | awk '{print $1}' || awk '{print $1}' "$sumfile" 2>/dev/null)
+    expected=$(grep -F "$(basename "$file")" "$sumfile" 2>/dev/null | awk 'NR==1{print $1}')
+    if [[ -z "$expected" ]]; then
+        # Only trust a bare first-line hash when the sum-file covers a single artifact.
+        # A multi-entry file whose name grep missed would otherwise compare against the
+        # wrong platform (e.g. hadolint's checksums.sha256 lists arm64 first).
+        local entries
+        entries=$(grep -c . "$sumfile" 2>/dev/null || echo 0)
+        if [[ "$entries" == "1" ]]; then
+            expected=$(awk 'NR==1{print $1}' "$sumfile")
+        fi
+    fi
     rm -f "$sumfile"
     if [[ -n "$expected" ]] && [[ "$expected" =~ ^[a-f0-9]{64}$ ]]; then
         _verify_sha256 "$file" "$expected" || return 1
@@ -203,11 +207,10 @@ for ver in data:
 PENNYKIT_EXTERN_ADMIN+=("hadolint")
 _install_hadolint() {
     local ver="$1"
-    _curl --output-dir "/tmp" -fOL "https://github.com/hadolint/hadolint/releases/download/v${ver}/hadolint-linux-x86_64"
-    _curl --output-dir "/tmp" -fOL "https://github.com/hadolint/hadolint/releases/download/v${ver}/hadolint-linux-x86_64.sha256"
-    expected=$(awk '{print $1}' "/tmp/hadolint-linux-x86_64.sha256")
-    _verify_sha256 "/tmp/hadolint-linux-x86_64" "$expected" || { rm -f "/tmp/hadolint-linux-x86_64" "/tmp/hadolint-linux-x86_64.sha256"; return 1; }
-    rm -f "/tmp/hadolint-linux-x86_64.sha256"
+    local base="https://github.com/hadolint/hadolint/releases/download/v${ver}"
+    _curl --output-dir "/tmp" -fOL "${base}/hadolint-linux-x86_64" || return 1
+    _verify_release_checksum "/tmp/hadolint-linux-x86_64" "${base}/checksums.sha256" || return 1
+    mkdir -p "$HOME/.local/bin"
     mv -v /tmp/hadolint-linux-x86_64 "$HOME/.local/bin/hadolint"
     chmod +x "$HOME/.local/bin/hadolint"
 }
@@ -319,13 +322,15 @@ PENNYKIT_EXTERN_DEFAULT+=("nvim")
 _install_nvim() {
     local ver="$1"
     _download_github_release "$ver" neovim neovim "nvim-linux-x86_64.tar.gz"
-    _verify_release_checksum "/tmp/nvim-linux-x86_64.tar.gz" "https://github.com/neovim/neovim/releases/download/v${ver}/SHA256SUMS.txt"
     tar -xzf /tmp/nvim-linux-x86_64.tar.gz
     mkdir -p "$PENNYKIT_LOCAL_DIR/opt" "$PENNYKIT_LOCAL_DIR/bin"
     rm -rf "$PENNYKIT_LOCAL_DIR/opt/nvim"
     mv nvim-linux-x86_64 "$PENNYKIT_LOCAL_DIR/opt/nvim"
     ln -sf "$PENNYKIT_LOCAL_DIR/opt/nvim/bin/nvim" "$PENNYKIT_LOCAL_DIR/bin/nvim"
     rm -f /tmp/nvim-linux-x86_64.tar.gz
+    local AUDIT_HASH
+    AUDIT_HASH=$(sha256sum "$PENNYKIT_LOCAL_DIR/bin/nvim" | awk '{print $1}')
+    echo "  NOTE: neovim $ver publishes no upstream checksum (audit only): $AUDIT_HASH"
 }
 
 function add_nvim() {
@@ -400,20 +405,14 @@ _install_yazi_prebuilt() {
     version=$(_curl -sL "https://api.github.com/repos/sxyazi/yazi/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
     local archive="yazi-x86_64-unknown-linux-gnu.zip"
     _curl --output-dir "/tmp" -fOL "https://github.com/sxyazi/yazi/releases/download/v${version}/${archive}"
-    _curl --output-dir "/tmp" -fOL "https://github.com/sxyazi/yazi/releases/download/v${version}/${archive}.sha256"
-    expected=$(awk '{print $1}' "/tmp/${archive}.sha256" 2>/dev/null || true)
-    if [[ -n "$expected" ]]; then
-        _verify_sha256 "/tmp/${archive}" "$expected" || { rm -f "/tmp/${archive}" "/tmp/${archive}.sha256"; return 1; }
-        rm -f "/tmp/${archive}.sha256"
-    else
-        actual=$(sha256sum "/tmp/${archive}" | awk '{print $1}')
-        echo "  WARNING: No checksum file for yazi; log hash for audit: $actual" >&2
-    fi
     unzip -o "/tmp/${archive}" -d /tmp/yazi_prebuilt
     mkdir -p "${HOME}/.local/bin"
     mv /tmp/yazi_prebuilt/yazi-x86_64-unknown-linux-gnu/yazi "${HOME}/.local/bin/"
     mv /tmp/yazi_prebuilt/yazi-x86_64-unknown-linux-gnu/ya "${HOME}/.local/bin/"
     rm -f "/tmp/${archive}" && rm -rf /tmp/yazi_prebuilt
+    local AUDIT_HASH
+    AUDIT_HASH=$(sha256sum "${HOME}/.local/bin/yazi" | awk '{print $1}')
+    echo "  NOTE: yazi v${version} publishes no upstream checksum (audit only): $AUDIT_HASH"
     echo "  Installed yazi v${version} (prebuilt)"
 }
 
@@ -493,11 +492,13 @@ PENNYKIT_EXTERN_DEFAULT+=("vivid")
 _install_vivid() {
     local ver="$1"
     _download_github_release "$ver" sharkdp vivid "vivid_${ver}_amd64.deb"
-    _verify_release_checksum "/tmp/vivid_${ver}_amd64.deb" "https://github.com/sharkdp/vivid/releases/download/v${ver}/vivid_${ver}_amd64.deb.sha256"
     mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
     dpkg-deb -x "/tmp/vivid_${ver}_amd64.deb" /tmp/vivid-extract 2>/dev/null
     mv /tmp/vivid-extract/usr/bin/vivid "$PENNYKIT_LOCAL_DIR/bin/vivid"
     rm -rf /tmp/vivid-extract "/tmp/vivid_${ver}_amd64.deb"
+    local AUDIT_HASH
+    AUDIT_HASH=$(sha256sum "$PENNYKIT_LOCAL_DIR/bin/vivid" | awk '{print $1}')
+    echo "  NOTE: vivid v${ver} publishes no upstream checksum (audit only): $AUDIT_HASH"
 }
 
 function add_vivid() {

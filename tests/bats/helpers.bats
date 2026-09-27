@@ -105,6 +105,32 @@ setup() {
     refute_output --partial "--retry-all-errors"
 }
 
+# ── _github_latest_version ───────────────────────────────────────
+
+@test "_github_latest_version: strips leading v from tag_name" {
+    _curl() { echo '{"tag_name":"v1.2.3"}'; }
+    export -f _curl
+    run _github_latest_version nvm-sh nvm
+    assert_success
+    assert_output "1.2.3"
+}
+
+@test "_github_latest_version: requests the releases/latest API for the given repo" {
+    _curl() { printf '%s\n' "$*" > "$BATS_TEST_TMPDIR/curl_args"; echo '{"tag_name":"v9.9.9"}'; }
+    run _github_latest_version hadolint hadolint
+    assert_success
+    assert_output "9.9.9"
+    run cat "$BATS_TEST_TMPDIR/curl_args"
+    assert_output --partial "https://api.github.com/repos/hadolint/hadolint/releases/latest"
+}
+
+@test "_github_latest_version: returns empty for non-JSON input" {
+    _curl() { echo "not json at all"; }
+    export -f _curl
+    run _github_latest_version nvm-sh nvm
+    refute [ -n "$output" ]
+}
+
 # ── _mark_problematic / _clear_problematic ───────────────────────
 
 @test "_mark_problematic: creates file and adds package" {

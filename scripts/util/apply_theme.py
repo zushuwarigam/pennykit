@@ -71,7 +71,7 @@ def apply_tmux(entry, vars_, dry_run):
         "minimal": "# minimal theme (no status bar plugins)\n",
         "catppuccin": (
             'set -g @plugin \'tmux-plugins/tpm\'\n'
-            'set -g @plugin \'catppuccin/tmux#v2.1.3\'\n'
+            'set -g @plugin \'catppuccin/tmux#v2.3.1\'\n'
             'run \'~/.tmux/plugins/tpm/tpm\'\n'
         ),
         "dracula": (

@@ -26,7 +26,13 @@ cd "$PENNYKIT_HOME"
 NVM_DIR="${HOME}/.nvm"
 if [[ ! -d "$NVM_DIR" ]]; then
   echo "Installing NVM..."
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.5/install.sh | bash
+  NVM_VER=$(_github_latest_version nvm-sh nvm) || true
+  if [[ -z "$NVM_VER" ]]; then
+    # Fallback for when the GitHub API is unreachable or rate-limited.
+    NVM_VER="0.40.8"
+    echo "  WARNING: could not resolve latest nvm version, falling back to v${NVM_VER}" >&2
+  fi
+  curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/v${NVM_VER}/install.sh" | bash
 fi
 
 # Source NVM and install latest Node.js

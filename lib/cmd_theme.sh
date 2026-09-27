@@ -113,7 +113,7 @@ cmd_theme() {
             minimal)   printf '%s\n' '# minimal theme' > "$tmux_theme" ;;
             catppuccin) cat > "$tmux_theme" << 'TMUXEOF'
 set -g @plugin 'tmux-plugins/tpm'
-set -g @plugin 'catppuccin/tmux#v2.1.3'
+set -g @plugin 'catppuccin/tmux#v2.3.1'
 run '~/.tmux/plugins/tpm/tpm'
 TMUXEOF
                 ;;

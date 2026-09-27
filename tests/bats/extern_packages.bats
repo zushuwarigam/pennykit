@@ -97,6 +97,33 @@ setup() {
     assert_output --partial "WARNING: checksum download failed"
 }
 
+@test "_verify_release_checksum: multi-entry sum-file with no name match does not fall back to first line" {
+    # Regression: a multi-platform sum-file whose name grep misses must NOT fall back to
+    # the first line's hash (that compares e.g. x86_64 against the arm64 hash). Here the
+    # first line's hash is deliberately the file's real hash, so the old fallback would
+    # have reported a successful verification.
+    echo "hello" > "$BATS_TEST_TMPDIR/dummy.bin"
+    local hash
+    hash=$(sha256sum "$BATS_TEST_TMPDIR/dummy.bin" | awk '{print $1}')
+    _curl() {
+        if [[ "$*" == *checksums.sha256* ]]; then
+            {
+                printf '%s  %s\n' "$hash" "some-other-binary-arm64"
+                printf '%s  %s\n' "0000000000000000000000000000000000000000000000000000000000000000" "some-other-binary-x86_64"
+            } > /tmp/checksums.sha256
+            return 0
+        fi
+        return 1
+    }
+    export -f _curl
+    source "$(dirname "$BATS_TEST_FILENAME")/../../packages/extern.packages"
+    run _verify_release_checksum "$BATS_TEST_TMPDIR/dummy.bin" "https://example.invalid/checksums.sha256"
+    assert_success
+    assert_output --partial "WARNING: no valid checksum found, skipping verification"
+    refute_output --partial "SHA256 verified"
+    assert [ ! -f /tmp/checksums.sha256 ]
+}
+
 # ── add_hadolint ────────────────────────────────────────────────
 
 hadolint_mock_curl() {
@@ -104,12 +131,18 @@ hadolint_mock_curl() {
         *releases/latest*)
             echo '{"tag_name":"v2.12.0"}'
             ;;
-        *hadolint-linux-x86_64.sha256*)
+        *checksums.sha256*)
+            # Mirrors upstream: a multi-platform sum-file where arm64 is listed
+            # first. Reading the first line instead of grepping by filename would
+            # compare the x86_64 binary against the arm64 hash and must not happen.
             local f=/tmp/hadolint-linux-x86_64
             if [[ -f "$f" ]]; then
                 local hash
                 hash=$(sha256sum "$f" | awk '{print $1}')
-                printf '%s  %s\n' "$hash" "hadolint-linux-x86_64" > /tmp/hadolint-linux-x86_64.sha256
+                {
+                    printf '%s  %s\n' "0000000000000000000000000000000000000000000000000000000000000000" "hadolint-linux-arm64"
+                    printf '%s  %s\n' "$hash" "hadolint-linux-x86_64"
+                } > /tmp/checksums.sha256
             fi
             ;;
         *hadolint-linux-x86_64)
@@ -127,9 +160,10 @@ hadolint_mock_curl() {
     PATH="$HOME/.local/bin:/usr/bin:/bin" run add_hadolint
     assert_success
     assert_output --partial "Add external package: hadolint"
+    assert_output --partial "SHA256 verified"
     assert [ -x "$HOME/.local/bin/hadolint" ]
     assert [ ! -f /tmp/hadolint-linux-x86_64 ]
-    assert [ ! -f /tmp/hadolint-linux-x86_64.sha256 ]
+    assert [ ! -f /tmp/checksums.sha256 ]
 }
 
 @test "add_hadolint: skips if already installed" {
@@ -172,14 +206,6 @@ yazi_mock_curl() {
         *releases/latest*)
             echo '{"tag_name":"v0.4.0"}'
             ;;
-        *yazi-x86_64-unknown-linux-gnu.zip.sha256*)
-            local f=/tmp/yazi-x86_64-unknown-linux-gnu.zip
-            if [[ -f "$f" ]]; then
-                local hash
-                hash=$(sha256sum "$f" | awk '{print $1}')
-                printf '%s  %s\n' "$hash" "yazi-x86_64-unknown-linux-gnu.zip" > /tmp/yazi-x86_64-unknown-linux-gnu.zip.sha256
-            fi
-            ;;
         *yazi-x86_64-unknown-linux-gnu.zip)
             mkdir -p /tmp/yz/yazi-x86_64-unknown-linux-gnu
             printf 'yazi-binary\n' > /tmp/yz/yazi-x86_64-unknown-linux-gnu/yazi
@@ -210,28 +236,28 @@ yazi_mock_curl_no_sha256() {
     return 0
 }
 
-@test "_install_yazi_prebuilt: installs with valid checksum" {
+@test "_install_yazi_prebuilt: installs and logs audit hash when upstream has no checksum" {
     which zip 2>/dev/null || skip "zip not installed"
     _curl() { yazi_mock_curl "$@"; }
     export -f _curl
     source "$(dirname "$BATS_TEST_FILENAME")/../../packages/extern.packages"
     run _install_yazi_prebuilt
     assert_success
-    assert_output --partial "SHA256 verified"
+    assert_output --partial "publishes no upstream checksum (audit only)"
     assert_output --partial "Installed yazi v0.4.0 (prebuilt)"
     assert [ -f "$HOME/.local/bin/yazi" ]
     assert [ -f "$HOME/.local/bin/ya" ]
     assert [ ! -f /tmp/yazi-x86_64-unknown-linux-gnu.zip ]
 }
 
-@test "_install_yazi_prebuilt: warns and continues when no checksum file" {
+@test "_install_yazi_prebuilt: continues when no checksum file is published" {
     which zip 2>/dev/null || skip "zip not installed"
     _curl() { yazi_mock_curl_no_sha256 "$@"; }
     export -f _curl
     source "$(dirname "$BATS_TEST_FILENAME")/../../packages/extern.packages"
     run _install_yazi_prebuilt
     assert_success
-    assert_output --partial "WARNING: No checksum file"
+    assert_output --partial "publishes no upstream checksum (audit only)"
     assert_output --partial "Installed yazi v0.4.0 (prebuilt)"
     assert [ -f "$HOME/.local/bin/yazi" ]
     assert [ -f "$HOME/.local/bin/ya" ]
