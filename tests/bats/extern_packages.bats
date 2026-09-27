@@ -250,6 +250,49 @@ yazi_mock_curl_no_sha256() {
     assert [ ! -f /tmp/yazi-x86_64-unknown-linux-gnu.zip ]
 }
 
+# ── _log_audit_hash / silent-failure regression ───────────────────
+
+@test "_log_audit_hash: logs a real sha256 for an existing binary" {
+    source "$(dirname "$BATS_TEST_FILENAME")/../../packages/extern.packages"
+    printf 'some binary\n' > "$BATS_TEST_TMPDIR/fake.bin"
+    local expected
+    expected=$(sha256sum "$BATS_TEST_TMPDIR/fake.bin" | awk '{print $1}')
+    run _log_audit_hash neovim 0.12.5 "$BATS_TEST_TMPDIR/fake.bin"
+    assert_success
+    assert_output --partial "publishes no upstream checksum (audit only): $expected"
+}
+
+@test "_log_audit_hash: fails instead of logging an empty hash when the binary is missing" {
+    source "$(dirname "$BATS_TEST_FILENAME")/../../packages/extern.packages"
+    run _log_audit_hash neovim 0.12.5 "$BATS_TEST_TMPDIR/does-not-exist"
+    assert_failure
+    assert_output --partial "produced no binary"
+    # The regression: previously this printed a NOTE line with a blank hash.
+    refute_output --partial "audit only"
+}
+
+@test "_install_nvim: returns non-zero when the release download fails" {
+    _curl() { return 1; }
+    export -f _curl
+    source "$(dirname "$BATS_TEST_FILENAME")/../../packages/extern.packages"
+    rm -f /tmp/nvim-linux-x86_64.tar.gz
+    # Regression guard: this used to exit 0, so a failed download looked like a
+    # successful install. The download guard short-circuits before the audit-hash
+    # step, hence no "no binary" message here.
+    run _install_nvim 0.12.5
+    assert_failure
+    refute_output --partial "audit only"
+}
+
+@test "_install_vivid: returns non-zero when the release download fails" {
+    _curl() { return 1; }
+    export -f _curl
+    source "$(dirname "$BATS_TEST_FILENAME")/../../packages/extern.packages"
+    run _install_vivid 0.11.1
+    assert_failure
+    refute_output --partial "audit only"
+}
+
 @test "_install_yazi_prebuilt: continues when no checksum file is published" {
     which zip 2>/dev/null || skip "zip not installed"
     _curl() { yazi_mock_curl_no_sha256 "$@"; }

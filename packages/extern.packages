@@ -159,6 +159,21 @@ _verify_or_warn_sha256() {
     _verify_sha256 "$file" "$expected" || return 1
 }
 
+# For tools whose upstream publishes no checksum asset at all (nvim, yazi, vivid).
+# There is nothing to verify against, so record the installed artifact's sha256 for
+# audit purposes. A missing binary means the install failed, so fail loudly rather
+# than logging an empty hash that reads as if verification had happened.
+_log_audit_hash() {
+    local pkg="$1" ver="$2" bin="$3"
+    if [[ ! -f "$bin" ]]; then
+        echo "  ERROR: $pkg v${ver} install produced no binary at $bin" >&2
+        return 1
+    fi
+    local hash
+    hash=$(sha256sum "$bin" | awk '{print $1}')
+    echo "  NOTE: $pkg v${ver} publishes no upstream checksum (audit only): $hash"
+}
+
 function add_golang() {
 	echo "Add external package: golang"
     if ! command -v go >/dev/null; then
@@ -321,16 +336,14 @@ function update_lazygit() {
 PENNYKIT_EXTERN_DEFAULT+=("nvim")
 _install_nvim() {
     local ver="$1"
-    _download_github_release "$ver" neovim neovim "nvim-linux-x86_64.tar.gz"
-    tar -xzf /tmp/nvim-linux-x86_64.tar.gz
+    _download_github_release "$ver" neovim neovim "nvim-linux-x86_64.tar.gz" || return 1
+    tar -xzf /tmp/nvim-linux-x86_64.tar.gz || return 1
     mkdir -p "$PENNYKIT_LOCAL_DIR/opt" "$PENNYKIT_LOCAL_DIR/bin"
     rm -rf "$PENNYKIT_LOCAL_DIR/opt/nvim"
-    mv nvim-linux-x86_64 "$PENNYKIT_LOCAL_DIR/opt/nvim"
+    mv nvim-linux-x86_64 "$PENNYKIT_LOCAL_DIR/opt/nvim" || return 1
     ln -sf "$PENNYKIT_LOCAL_DIR/opt/nvim/bin/nvim" "$PENNYKIT_LOCAL_DIR/bin/nvim"
     rm -f /tmp/nvim-linux-x86_64.tar.gz
-    local AUDIT_HASH
-    AUDIT_HASH=$(sha256sum "$PENNYKIT_LOCAL_DIR/bin/nvim" | awk '{print $1}')
-    echo "  NOTE: neovim $ver publishes no upstream checksum (audit only): $AUDIT_HASH"
+    _log_audit_hash neovim "$ver" "$PENNYKIT_LOCAL_DIR/bin/nvim" || return 1
 }
 
 function add_nvim() {
@@ -403,17 +416,15 @@ PENNYKIT_EXTERN_DEFAULT+=("yazi")
 _install_yazi_prebuilt() {
     local version
     version=$(_curl -sL "https://api.github.com/repos/sxyazi/yazi/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
-    local archive="yazi-x86_64-unknown-linux-gnu.zip"
-    _curl --output-dir "/tmp" -fOL "https://github.com/sxyazi/yazi/releases/download/v${version}/${archive}"
-    unzip -o "/tmp/${archive}" -d /tmp/yazi_prebuilt
-    mkdir -p "${HOME}/.local/bin"
-    mv /tmp/yazi_prebuilt/yazi-x86_64-unknown-linux-gnu/yazi "${HOME}/.local/bin/"
-    mv /tmp/yazi_prebuilt/yazi-x86_64-unknown-linux-gnu/ya "${HOME}/.local/bin/"
-    rm -f "/tmp/${archive}" && rm -rf /tmp/yazi_prebuilt
-    local AUDIT_HASH
-    AUDIT_HASH=$(sha256sum "${HOME}/.local/bin/yazi" | awk '{print $1}')
-    echo "  NOTE: yazi v${version} publishes no upstream checksum (audit only): $AUDIT_HASH"
-    echo "  Installed yazi v${version} (prebuilt)"
+      local archive="yazi-x86_64-unknown-linux-gnu.zip"
+      _curl --output-dir "/tmp" -fOL "https://github.com/sxyazi/yazi/releases/download/v${version}/${archive}" || return 1
+      unzip -o "/tmp/${archive}" -d /tmp/yazi_prebuilt || return 1
+      mkdir -p "${HOME}/.local/bin"
+      mv /tmp/yazi_prebuilt/yazi-x86_64-unknown-linux-gnu/yazi "${HOME}/.local/bin/" || return 1
+      mv /tmp/yazi_prebuilt/yazi-x86_64-unknown-linux-gnu/ya "${HOME}/.local/bin/" || return 1
+      rm -f "/tmp/${archive}" && rm -rf /tmp/yazi_prebuilt
+      _log_audit_hash yazi "$version" "${HOME}/.local/bin/yazi" || return 1
+      echo "  Installed yazi v${version} (prebuilt)"
 }
 
 _install_yazi_source() {
@@ -491,14 +502,12 @@ function update_strace-tui() {
 PENNYKIT_EXTERN_DEFAULT+=("vivid")
 _install_vivid() {
     local ver="$1"
-    _download_github_release "$ver" sharkdp vivid "vivid_${ver}_amd64.deb"
+    _download_github_release "$ver" sharkdp vivid "vivid_${ver}_amd64.deb" || return 1
     mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
-    dpkg-deb -x "/tmp/vivid_${ver}_amd64.deb" /tmp/vivid-extract 2>/dev/null
-    mv /tmp/vivid-extract/usr/bin/vivid "$PENNYKIT_LOCAL_DIR/bin/vivid"
+    dpkg-deb -x "/tmp/vivid_${ver}_amd64.deb" /tmp/vivid-extract 2>/dev/null || return 1
+    mv /tmp/vivid-extract/usr/bin/vivid "$PENNYKIT_LOCAL_DIR/bin/vivid" || return 1
     rm -rf /tmp/vivid-extract "/tmp/vivid_${ver}_amd64.deb"
-    local AUDIT_HASH
-    AUDIT_HASH=$(sha256sum "$PENNYKIT_LOCAL_DIR/bin/vivid" | awk '{print $1}')
-    echo "  NOTE: vivid v${ver} publishes no upstream checksum (audit only): $AUDIT_HASH"
+    _log_audit_hash vivid "$ver" "$PENNYKIT_LOCAL_DIR/bin/vivid" || return 1
 }
 
 function add_vivid() {
