@@ -188,6 +188,85 @@ EOF
     [[ "$count" -eq 1 ]]
 }
 
+# ── harlequin extras spec ───────────────────────────────────────
+
+@test "harlequin: pipx tiers install the extras spec on trixie only" {
+    # The spec lives in packages/pipx.shared and is pulled into all three pipx
+    # tiers; each tier must expose exactly that one entry on trixie and nothing
+    # anywhere else (the old bare "harlequin" install is gone).
+    local repo="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)"
+    local spec='harlequin[postgres,s3,mysql,odbc,trino]'
+
+    cp "$repo/packages/pipx.shared" "$PENNYKIT_HOME/packages/pipx.shared"
+
+    local tier arr
+    for tier in admin dev pentest; do
+        cp "$repo/packages/pipx.$tier" "$PENNYKIT_HOME/packages/pipx.$tier"
+        arr="PENNYKIT_PIPX_${tier^^}"
+
+        export PENNYKIT_OS_VERSION_CODENAME=trixie
+        run bash -c 'source "$1" && eval "printf \"%s\\n\" \"\${$2[@]}\""' _ "$PENNYKIT_HOME/packages/pipx.$tier" "$arr"
+        assert_success
+        assert_output "$spec"
+
+        export PENNYKIT_OS_VERSION_CODENAME=bookworm
+        run bash -c 'source "$1" && eval "printf \"%s\\n\" \"\${$2[@]}\""' _ "$PENNYKIT_HOME/packages/pipx.$tier" "$arr"
+        assert_success
+        assert_output ""
+        refute_output --partial "$spec"
+    done
+}
+
+@test "harlequin: all pipx tiers resolve the identical spec (dedup drift guard)" {
+    # package_installer.sh dedups pipx entries by exact string (_seen_pipx), so a
+    # copy/paste drift between tiers means the same venv gets pipx-installed twice
+    # and the second call silently no-ops. The spec must be byte-identical in all
+    # three tiers, and be the only entry each of them contributes.
+    local repo="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)"
+    local spec='harlequin[postgres,s3,mysql,odbc,trino]'
+
+    export PENNYKIT_OS_VERSION_CODENAME=trixie
+    run bash -c '
+        source "$1/packages/pipx.admin"
+        source "$1/packages/pipx.dev"
+        source "$1/packages/pipx.pentest"
+        printf "%s\n" "${PENNYKIT_PIPX_ADMIN[@]}" "${PENNYKIT_PIPX_DEV[@]}" "${PENNYKIT_PIPX_PENTEST[@]}"
+    ' _ "$repo"
+    assert_success
+    assert_output "$spec
+$spec
+$spec"
+    assert_line --index 0 "$spec"
+    assert_line --index 1 "$spec"
+    assert_line --index 2 "$spec"
+    # a single distinct value across the three tiers — no drift
+    local distinct
+    distinct=$(sort -u <<< "$output" | wc -l)
+    [[ "$distinct" -eq 1 ]]
+}
+
+@test "harlequin: installer collapses the shared spec into one pipx install arg" {
+    local repo="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)"
+    local spec='harlequin[postgres,s3,mysql,odbc,trino]'
+
+    export PENNYKIT_DRY_RUN=1
+    export PENNYKIT_PACKAGE_SET=ALL
+    export PENNYKIT_OS_VERSION_CODENAME=trixie
+
+    cp "$repo/packages/pipx.shared" "$PENNYKIT_HOME/packages/pipx.shared"
+    cp "$repo/packages/pipx.admin" "$PENNYKIT_HOME/packages/pipx.admin"
+    cp "$repo/packages/pipx.dev" "$PENNYKIT_HOME/packages/pipx.dev"
+    cp "$repo/packages/pipx.pentest" "$PENNYKIT_HOME/packages/pipx.pentest"
+
+    run bash "$PENNYKIT_HOME/scripts/install/package_installer.sh" apt
+    assert_success
+    assert_output --partial "pipx install $spec"
+    # Count occurrences of the spec in the whole dry-run output
+    local count
+    count=$(grep -cF "$spec" <<< "$output" || true)
+    [[ "$count" -eq 1 ]]
+}
+
 # ── npm layer processing ────────────────────────────────────────
 
 @test "package_installer: processes npm default packages in dry-run" {

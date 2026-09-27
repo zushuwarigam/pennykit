@@ -498,6 +498,8 @@ pennykit extern list-deactivated  # show skipped
 pennykit update             # git pull --rebase self-update
 ```
 
+On Linux trixie, harlequin is installed via pipx with the Postgres, MySQL, Trino, ODBC and S3 adapters bundled. On macOS it comes from the Homebrew formula, which only bundles the Postgres, MySQL and ODBC adapters (no S3 or Trino).
+
 ---
 
 ## Shell Integration

@@ -12,3 +12,4 @@ PENNYKIT_APT_ADMIN+=("tcpdump")         # pkg: tcpdump; desc: Command-line packe
 PENNYKIT_APT_ADMIN+=("termshark")       # pkg: termshark; desc: Terminal UI for Wireshark/tshark packet inspection
 PENNYKIT_APT_ADMIN+=("tshark")          # pkg: tshark; desc: Command-line network protocol analyzer (Wireshark CLI)
 PENNYKIT_APT_ADMIN+=("xh")              # pkg: xh; desc: Fast, friendly HTTP client (httpie-compatible, Rust-based)
+PENNYKIT_APT_ADMIN+=("unixodbc")        # pkg: unixodbc; desc: ODBC driver manager runtime lib for harlequin's odbc adapter

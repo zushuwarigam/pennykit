@@ -1,0 +1,10 @@
+[[ -v _PIPX_SHARED ]] && return || readonly _PIPX_SHARED=1
+
+# Shared pipx specs used by more than one tier. Sourced by packages/pipx.{admin,dev,pentest}
+# via ${BASH_SOURCE[0]%/*}/pipx.shared so every tier resolves the identical string and
+# package_installer.sh's _seen_pipx dedup collapses them into a single pipx install arg.
+#
+# harlequin adapters: postgres (psycopg), s3 (boto3), mysql, odbc (needs unixodbc), trino.
+# adbc is deliberately excluded: it ships a driver *manager* with no actual driver, and
+# the real drivers are sub-extras of harlequin-adbc that pip cannot express here.
+readonly PENNYKIT_HARLEQUIN="harlequin[postgres,s3,mysql,odbc,trino]"

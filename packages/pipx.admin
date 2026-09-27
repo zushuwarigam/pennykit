@@ -1,10 +1,9 @@
 [[ -v _PIPX_ADMIN ]] && return || readonly _PIPX_ADMIN=1
 
+source "${BASH_SOURCE[0]%/*}/pipx.shared"
+
 if [ "$PENNYKIT_OS_VERSION_CODENAME" == "trixie" ]; then
-    # TODO: need add postgres support via:
-    # pipx inject harlequin harlequin-postgres
-    PENNYKIT_PIPX_ADMIN+=("harlequin")      # pkg: harlequin; desc: Terminal SQL IDE with schema browser and query results
+    PENNYKIT_PIPX_ADMIN+=("$PENNYKIT_HARLEQUIN")   # pkg: harlequin; desc: Terminal SQL IDE with Postgres, MySQL, Trino, ODBC and S3 adapters
 else
     :
 fi
-
