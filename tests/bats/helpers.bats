@@ -1,0 +1,193 @@
+load 'test_helper/bats-support/load'
+load 'test_helper/bats-assert/load'
+
+setup() {
+    export PENNYKIT_HOME="$BATS_TEST_TMPDIR/.pennykit"
+    export HOME="$BATS_TEST_TMPDIR/home"
+    mkdir -p "$PENNYKIT_HOME"/configs
+    mkdir -p "$HOME"
+    source "$PENNYKIT_HOME/../lib/helpers.sh" 2>/dev/null || \
+        source "$(dirname "$BATS_TEST_FILENAME")/../../lib/helpers.sh"
+}
+
+@test "_verify_sha256: matches passes" {
+    echo "hello" > "$BATS_TEST_TMPDIR/testfile"
+    local expected
+    expected=$(sha256sum "$BATS_TEST_TMPDIR/testfile" | awk '{print $1}')
+    run _verify_sha256 "$BATS_TEST_TMPDIR/testfile" "$expected"
+    assert_success
+    assert_output --partial "SHA256 verified"
+}
+
+@test "_verify_sha256: mismatch fails" {
+    echo "hello" > "$BATS_TEST_TMPDIR/testfile"
+    run _verify_sha256 "$BATS_TEST_TMPDIR/testfile" "0000000000000000000000000000000000000000000000000000000000000000"
+    assert_failure
+    assert_output --partial "SHA256 mismatch"
+}
+
+@test "_verify_sha256: missing file fails with clear message" {
+    run _verify_sha256 "$BATS_TEST_TMPDIR/missing-file" "0000000000000000000000000000000000000000000000000000000000000000"
+    assert_failure
+    assert_output --partial "missing"
+}
+
+@test "_is_deactivated: active package returns false" {
+    echo "# comment" > "$PENNYKIT_HOME/configs/extern.skip"
+    echo "yazi" >> "$PENNYKIT_HOME/configs/extern.skip"
+    run _is_deactivated "yazi"
+    assert_success
+    run _is_deactivated "nvim"
+    assert_failure
+}
+
+@test "_is_deactivated: missing skip file returns false" {
+    run _is_deactivated "dive"
+    assert_failure
+}
+
+@test "_is_deactivated: trailing space on skip line still matches" {
+    printf 'yazi  \n' > "$PENNYKIT_HOME/configs/extern.skip"
+    run _is_deactivated "yazi"
+    assert_success
+}
+
+@test "_is_deactivated: CRLF line ending still matches" {
+    printf 'yazi\r\n' > "$PENNYKIT_HOME/configs/extern.skip"
+    run _is_deactivated "yazi"
+    assert_success
+}
+
+@test "_is_deactivated: leading whitespace on skip line still matches" {
+    printf '  yazi\n' > "$PENNYKIT_HOME/configs/extern.skip"
+    run _is_deactivated "yazi"
+    assert_success
+}
+
+@test "_is_deactivated: whitespace-only lines are skipped" {
+    printf '   \n\tnvim\n\n' > "$PENNYKIT_HOME/configs/extern.skip"
+    run _is_deactivated "nvim"
+    assert_success
+    run _is_deactivated "yazi"
+    assert_failure
+}
+
+@test "_is_deactivated: plain line and comment still work" {
+    printf '# comment\nyazi\nnvim\n' > "$PENNYKIT_HOME/configs/extern.skip"
+    run _is_deactivated "yazi"
+    assert_success
+    run _is_deactivated "nvim"
+    assert_success
+    run _is_deactivated "dive"
+    assert_failure
+}
+
+@test "_readlinkf: resolves symlinks" {
+    echo "target" > "$BATS_TEST_TMPDIR/target"
+    ln -s "$BATS_TEST_TMPDIR/target" "$BATS_TEST_TMPDIR/link"
+    run _readlinkf "$BATS_TEST_TMPDIR/link"
+    assert_output "$BATS_TEST_TMPDIR/target"
+}
+
+@test "_readlinkf: returns same path for regular file" {
+    echo "data" > "$BATS_TEST_TMPDIR/regular"
+    run _readlinkf "$BATS_TEST_TMPDIR/regular"
+    assert_output "$BATS_TEST_TMPDIR/regular"
+}
+
+@test "_curl: includes -fL flags" {
+    curl() { printf '%s\n' "$*" > "$BATS_TEST_TMPDIR/curl_args"; }
+    _curl --version
+    run cat "$BATS_TEST_TMPDIR/curl_args"
+    assert_success
+    assert_output --partial "-fL"
+    assert_output --partial "--retry-connrefused"
+    refute_output --partial "--retry-all-errors"
+}
+
+# ── _github_latest_version ───────────────────────────────────────
+
+@test "_github_latest_version: strips leading v from tag_name" {
+    _curl() { echo '{"tag_name":"v1.2.3"}'; }
+    export -f _curl
+    run _github_latest_version nvm-sh nvm
+    assert_success
+    assert_output "1.2.3"
+}
+
+@test "_github_latest_version: requests the releases/latest API for the given repo" {
+    _curl() { printf '%s\n' "$*" > "$BATS_TEST_TMPDIR/curl_args"; echo '{"tag_name":"v9.9.9"}'; }
+    run _github_latest_version hadolint hadolint
+    assert_success
+    assert_output "9.9.9"
+    run cat "$BATS_TEST_TMPDIR/curl_args"
+    assert_output --partial "https://api.github.com/repos/hadolint/hadolint/releases/latest"
+}
+
+@test "_github_latest_version: returns empty for non-JSON input" {
+    _curl() { echo "not json at all"; }
+    export -f _curl
+    run _github_latest_version nvm-sh nvm
+    refute [ -n "$output" ]
+}
+
+# ── _mark_problematic / _clear_problematic ───────────────────────
+
+@test "_mark_problematic: creates file and adds package" {
+    run _mark_problematic "fzf"
+    assert_success
+    assert [ -f "$PENNYKIT_HOME/configs/extern.problematic" ]
+    run cat "$PENNYKIT_HOME/configs/extern.problematic"
+    assert_output "fzf"
+}
+
+@test "_mark_problematic: does not duplicate entries" {
+    _mark_problematic "fzf"
+    _mark_problematic "fzf"
+    run cat "$PENNYKIT_HOME/configs/extern.problematic"
+    assert_output "fzf"
+}
+
+@test "_clear_problematic: removes package from file" {
+    _mark_problematic "fzf"
+    _mark_problematic "dive"
+    _clear_problematic "fzf"
+    run cat "$PENNYKIT_HOME/configs/extern.problematic"
+    assert_output "dive"
+}
+
+@test "_clear_problematic: removes file when empty" {
+    _mark_problematic "fzf"
+    _clear_problematic "fzf"
+    assert [ ! -f "$PENNYKIT_HOME/configs/extern.problematic" ]
+}
+
+@test "_clear_problematic: leaves no tmp file behind" {
+    _mark_problematic "fzf"
+    _mark_problematic "dive"
+    _clear_problematic "fzf"
+    assert [ -f "$PENNYKIT_HOME/configs/extern.problematic" ]
+    assert [ ! -f "$PENNYKIT_HOME/configs/extern.problematic.tmp" ]
+    run cat "$PENNYKIT_HOME/configs/extern.problematic"
+    assert_output "dive"
+}
+
+@test "_clear_problematic: works when stale lock file exists" {
+    _mark_problematic "fzf"
+    touch "$PENNYKIT_HOME/configs/extern.problematic.lock"
+    _clear_problematic "fzf"
+    assert [ ! -f "$PENNYKIT_HOME/configs/extern.problematic" ]
+    assert [ ! -f "$PENNYKIT_HOME/configs/extern.problematic.tmp" ]
+}
+
+@test "_clear_problematic: does nothing for missing file" {
+    run _clear_problematic "nonexistent"
+    assert_success
+}
+
+@test "_clear_problematic: does nothing for non-listed package" {
+    _mark_problematic "fzf"
+    _clear_problematic "dive"
+    run cat "$PENNYKIT_HOME/configs/extern.problematic"
+    assert_output "fzf"
+}

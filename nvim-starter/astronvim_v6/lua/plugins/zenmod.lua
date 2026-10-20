@@ -1,9 +1,10 @@
--- if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
+local ok, pk = pcall(require, "pennykit")
 
 ---@type LazySpec
 return {
   {
     "folke/zen-mode.nvim",
+    enabled = ok and pk.is_enabled("zenmod"),
     opts = {
       window = {
         backdrop = 0.95,
@@ -20,13 +21,13 @@ return {
           -- statusline will be shown only if 'laststatus' == 3
           laststatus = 0, -- turn off the statusline in zen mode
         },
-        gitsings = { enabled = false },
+        gitsigns = { enabled = false },
         tmux = { enabled = false }, -- disables the tmux statusline
         todo = { enabled = false }, -- if set to "true", todo-comments.nvim highlights will be disabled
         wezterm = {
           enabled = false,
           -- can be either an absolute font size or the number of incremental steps
-          font = "+4", -- (10% increase per step)
+          font = "+4", -- (10% per step)
         },
       },
     },

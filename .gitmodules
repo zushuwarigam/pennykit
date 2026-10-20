@@ -1,9 +1,0 @@
-[submodule "nvim-starter/kickstart.git"]
-	path = nvim-starter/kickstart.git
-	url = https://github.com/zushuwarigam/kickstart.nvim.git
-[submodule "nvim-starter/astronvim.git"]
-	path = nvim-starter/astronvim.git
-	url = https://github.com/zushuwarigam/AstroNvim-template.git
-[submodule "nvim-starter/lazyvim.git"]
-	path = nvim-starter/lazyvim.git
-	url = https://github.com/zushuwarigam/LazyVim-starter.git

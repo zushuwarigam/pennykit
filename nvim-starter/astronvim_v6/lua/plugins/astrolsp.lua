@@ -1,5 +1,3 @@
--- if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
-
 -- AstroLSP allows you to customize the features in AstroNvim's LSP configuration engine
 -- Configuration documentation can be found with `:h astrolsp`
 -- NOTE: We highly recommend setting up the Lua Language Server (`:LspInstall lua_ls`)
@@ -20,6 +18,7 @@ end
 local en_words = load_wordlist "en.utf-8.add"
 local ru_words = load_wordlist "ru.utf-8.add"
 
+
 ---@type LazySpec
 return {
   "AstroNvim/astrolsp",
@@ -35,9 +34,9 @@ return {
     formatting = {
       -- control auto formatting on save
       format_on_save = {
-        enabled = false, -- enable or disable format on save globally
+        enabled = true, -- enable or disable format on save globally
         allow_filetypes = { -- enable format on save for specified filetypes only
-          -- "go",
+          "c", "cpp", "go", "python",
         },
         ignore_filetypes = { -- disable format on save for specified filetypes
           -- "python",
@@ -56,7 +55,8 @@ return {
     servers = {
       "ltex",
       "ltex_plus",
-      -- "pyright"
+      "ruff",
+      "basedpyright",
     },
     ---@diagnostic disable: missing-fields
     config = {
@@ -106,6 +106,12 @@ return {
               rangeVariableTypes = true,
             },
           },
+        },
+      },
+      ruff = {
+        settings = {
+          enable = true,
+          organizeImports = true,
         },
       },
     },

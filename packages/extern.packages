@@ -1,6 +1,5 @@
-#!/usr/bin/env bash
-set -euo pipefail
-printf "### extern.packages %s\n" "$(readlink -f "$0")"
+# shellcheck disable=SC1090,SC1091
+[[ -v _EXTERN_PACKAGES ]] && return || readonly _EXTERN_PACKAGES=1
 
 if [[ $(id -u) != 0 ]]; then
     SUDO="sudo"
@@ -8,19 +7,102 @@ else
     SUDO=""
 fi
 
-export PATH="/usr/local/go/bin:${PATH}"
+# Rootless mode: skip sudo, use local dir
+if [[ -n "${PENNYKIT_ROOTLESS:-}" ]] && [[ $(id -u) != 0 ]]; then
+    SUDO=""
+fi
+
+PENNYKIT_LOCAL_DIR="${PENNYKIT_LOCAL_DIR:-$HOME/.local}"
+export PATH="${PENNYKIT_LOCAL_DIR}/go/bin:${PATH}"
+
+_download_github_release() {
+    local version="$1" owner="$2" repo="$3" filename="$4"
+    local url="https://github.com/${owner}/${repo}/releases/download/v${version}/${filename}"
+    _curl --output-dir "/tmp" -fOL "$url" || return 1
+}
+
+_verify_release_checksum() {
+    local file="$1" checksum_url="$2"
+    if ! _curl --output-dir "/tmp" -fOL "$checksum_url"; then
+        echo "  WARNING: checksum download failed" >&2
+        if [[ -f "$file" ]]; then
+            local actual
+            actual=$(sha256sum "$file" | awk '{print $1}')
+            echo "  WARNING: No checksum file; log hash for audit: $actual" >&2
+        fi
+        return 0
+    fi
+    local sumfile="/tmp/$(basename "$checksum_url")"
+    local expected
+    expected=$(grep -F "$(basename "$file")" "$sumfile" 2>/dev/null | awk 'NR==1{print $1}')
+    if [[ -z "$expected" ]]; then
+        # Only trust a bare first-line hash when the sum-file covers a single artifact.
+        # A multi-entry file whose name grep missed would otherwise compare against the
+        # wrong platform (e.g. hadolint's checksums.sha256 lists arm64 first).
+        local entries
+        entries=$(grep -c . "$sumfile" 2>/dev/null || echo 0)
+        if [[ "$entries" == "1" ]]; then
+            expected=$(awk 'NR==1{print $1}' "$sumfile")
+        fi
+    fi
+    rm -f "$sumfile"
+    if [[ -n "$expected" ]] && [[ "$expected" =~ ^[a-f0-9]{64}$ ]]; then
+        _verify_sha256 "$file" "$expected" || return 1
+    else
+        echo "  WARNING: no valid checksum found, skipping verification" >&2
+    fi
+}
 
 # pkg: dive; desc: Explore Docker image layers and optimize image size
 PENNYKIT_EXTERN_ADMIN+=("dive")
+_install_dive() {
+    local ver="$1"
+    local deb_file="/tmp/dive_${ver}_linux_amd64.deb"
+    local checksums="/tmp/dive_${ver}_checksums.txt"
+    rm -f "$deb_file" "$checksums"
+    _curl --output-dir "/tmp" -fOL "https://github.com/wagoodman/dive/releases/download/v${ver}/dive_${ver}_linux_amd64.deb" || return 1
+    _curl --output-dir "/tmp" -fOL "https://github.com/wagoodman/dive/releases/download/v${ver}/dive_${ver}_checksums.txt" 2>/dev/null || true
+    if [[ -f "$checksums" ]]; then
+        local expected
+        expected=$(grep "dive_${ver}_linux_amd64.deb" "$checksums" | awk '{print $1}')
+        if [[ -n "$expected" ]] && [[ "$expected" =~ ^[a-f0-9]{64}$ ]]; then
+            _verify_sha256 "$deb_file" "$expected" || { rm -f "$deb_file" "$checksums"; return 1; }
+        else
+            echo "  WARNING: no valid checksum for dive deb in checksums.txt" >&2
+        fi
+        rm -f "$checksums"
+    else
+        local actual
+        actual=$(sha256sum "$deb_file" | awk '{print $1}')
+        echo "  WARNING: No checksum file for dive; log hash for audit: $actual" >&2
+    fi
+    mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
+    dpkg-deb -x "$deb_file" /tmp/dive-extract 2>/dev/null
+    mv /tmp/dive-extract/usr/bin/dive "$PENNYKIT_LOCAL_DIR/bin/dive"
+    rm -rf /tmp/dive-extract "$deb_file"
+}
+
+_dive_install_if_needed() {
+    local check_cmd="$1"
+    if ! eval "$check_cmd" >/dev/null 2>&1; then
+        local DIVE_VERSION
+        DIVE_VERSION=$(_github_latest_version wagoodman dive)
+        if [[ -z "$DIVE_VERSION" ]]; then
+            echo "  ERROR: Failed to get dive version from GitHub API"
+            return 1
+        fi
+        _install_dive "$DIVE_VERSION"
+    fi
+}
+
 function add_dive() {
 	echo "Add external package: dive"
-    if ! command -v dive >/dev/null; then
-        # https://github.com/wagoodman/dive
-        DIVE_VERSION=$(_curl -sL "https://api.github.com/repos/wagoodman/dive/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
-        _curl --output-dir "/tmp" -fOL "https://github.com/wagoodman/dive/releases/download/v${DIVE_VERSION}/dive_${DIVE_VERSION}_linux_amd64.deb"
-        $SUDO apt install -y "/tmp/dive_${DIVE_VERSION}_linux_amd64.deb"
-        rm -f "/tmp/dive_${DIVE_VERSION}_linux_amd64.deb"
-    fi
+    _dive_install_if_needed "command -v dive"
+}
+
+function update_dive() {
+	echo "Update external package: dive"
+    _dive_install_if_needed "false"
 }
 
 # pkg: fzf; desc: Fuzzy finder for files, history, and arbitrary lists
@@ -34,123 +116,343 @@ function add_fzf() {
     fi
 }
 
+function update_fzf() {
+	echo "Update external package: fzf"
+    if command -v fzf >/dev/null && [[ -d "$HOME/.fzf" ]]; then
+        git -C "$HOME/.fzf" pull
+        "$HOME/.fzf/install" --all
+    fi
+}
+
 # pkg: godap; desc: Terminal UI for browsing and querying LDAP/Active Directory
 PENNYKIT_EXTERN_ADMIN+=("godap")
 function add_godap() {
 	echo "Add external package: godap"
     if ! command -v godap >/dev/null; then
-        git clone --depth 1 https://github.com/Macmod/godap /tmp/godap
-        cd /tmp/godap
-        go install .
-        rm -rf /tmp/godap
-        cd -
+        local tmp_dir
+        tmp_dir=$(mktemp -d /tmp/pennykit-godap.XXX)
+        git clone --depth 1 https://github.com/Macmod/godap "$tmp_dir"
+        (cd "$tmp_dir" && go install .)
+        rm -rf "$tmp_dir"
     fi
+}
+
+function update_godap() {
+	echo "Update external package: godap"
+    go install github.com/Macmod/godap@latest
 }
 
 # pkg: golang; desc: Go programming language toolchain and standard library
 PENNYKIT_EXTERN_DEFAULT+=("golang")
+_verify_or_warn_sha256() {
+    local file="$1" sumfile="$2"
+    if [[ ! -f "$sumfile" ]]; then
+        echo "  ERROR: checksum file missing, aborting for security" >&2
+        return 1
+    fi
+    local expected
+    expected=$(awk '{print $1}' "$sumfile" 2>/dev/null)
+    if [[ ! "$expected" =~ ^[a-f0-9]{64}$ ]]; then
+        echo "  ERROR: invalid checksum format in $(basename "$sumfile"), aborting" >&2
+        return 1
+    fi
+    _verify_sha256 "$file" "$expected" || return 1
+}
+
+# For tools whose upstream publishes no checksum asset at all (nvim, yazi, vivid).
+# There is nothing to verify against, so record the installed artifact's sha256 for
+# audit purposes. A missing binary means the install failed, so fail loudly rather
+# than logging an empty hash that reads as if verification had happened.
+_log_audit_hash() {
+    local pkg="$1" ver="$2" bin="$3"
+    if [[ ! -f "$bin" ]]; then
+        echo "  ERROR: $pkg v${ver} install produced no binary at $bin" >&2
+        return 1
+    fi
+    local hash
+    hash=$(sha256sum "$bin" | awk '{print $1}')
+    echo "  NOTE: $pkg v${ver} publishes no upstream checksum (audit only): $hash"
+}
+
 function add_golang() {
 	echo "Add external package: golang"
     if ! command -v go >/dev/null; then
-        LATEST_VERSION="$(_curl -s "https://go.dev/VERSION?m=text" | grep go)"
-        _wget "https://go.dev/dl/${LATEST_VERSION}.linux-amd64.tar.gz"
-        $SUDO rm -rf /usr/local/go
-        $SUDO tar -C /usr/local -xzf "${LATEST_VERSION}.linux-amd64.tar.gz"
-        rm -rf "${LATEST_VERSION}.linux-amd64.tar.gz"
+        _install_golang
     fi
+}
+
+function update_golang() {
+	echo "Update external package: golang"
+    _install_golang
+}
+
+_install_golang() {
+    LATEST_VERSION="$(_curl -s "https://go.dev/VERSION?m=text" | grep '^go')"
+    local archive="${LATEST_VERSION}.linux-amd64.tar.gz"
+    # Fetch expected checksum from go.dev JSON API
+    local EXPECTED_SHA256
+    EXPECTED_SHA256=$(_curl -s "https://go.dev/dl/?mode=json" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+for ver in data:
+    if ver['version'] == '${LATEST_VERSION}':
+        for f in ver['files']:
+            if f['filename'] == '${archive}':
+                print(f.get('sha256', ''))
+                sys.exit(0)
+" 2>/dev/null || true)
+    if [[ -z "$EXPECTED_SHA256" ]]; then
+        echo "  WARNING: could not fetch checksum from go.dev API" >&2
+    fi
+    _wget -O "/tmp/${archive}" "https://go.dev/dl/${archive}"
+    if [[ -n "$EXPECTED_SHA256" ]]; then
+        _verify_sha256 "/tmp/${archive}" "$EXPECTED_SHA256" || { rm -f "/tmp/${archive}"; return 1; }
+    else
+        local actual
+        actual=$(sha256sum "/tmp/${archive}" | awk '{print $1}')
+        echo "  WARNING: No checksum for golang; log hash for audit: $actual" >&2
+    fi
+    rm -rf "$PENNYKIT_LOCAL_DIR/go"
+    mkdir -p "$PENNYKIT_LOCAL_DIR"
+    tar -C "$PENNYKIT_LOCAL_DIR" -xzf "/tmp/${archive}"
+    rm -f "/tmp/${archive}"
 }
 
 # pkg: hadolint; desc: Dockerfile linter enforcing best practices and shell checks
 PENNYKIT_EXTERN_ADMIN+=("hadolint")
+_install_hadolint() {
+    local ver="$1"
+    local base="https://github.com/hadolint/hadolint/releases/download/v${ver}"
+    _curl --output-dir "/tmp" -fOL "${base}/hadolint-linux-x86_64" || return 1
+    _verify_release_checksum "/tmp/hadolint-linux-x86_64" "${base}/checksums.sha256" || return 1
+    mkdir -p "$HOME/.local/bin"
+    mv -v /tmp/hadolint-linux-x86_64 "$HOME/.local/bin/hadolint"
+    chmod +x "$HOME/.local/bin/hadolint"
+}
+
+_hadolint_install_if_needed() {
+    local check_cmd="$1"
+    if ! eval "$check_cmd" >/dev/null 2>&1; then
+        local HADOLINT_VERSION
+        HADOLINT_VERSION=$(_github_latest_version hadolint hadolint)
+        if [[ -z "$HADOLINT_VERSION" ]]; then
+            echo "  ERROR: Failed to get hadolint version from GitHub API"
+            return 1
+        fi
+        _install_hadolint "$HADOLINT_VERSION" || return 1
+    fi
+}
+
 function add_hadolint() {
 	echo "Add external package: hadolint"
-    if ! command -v hadolint >/dev/null; then
-        # https://github.com/hadolint/hadolint
-        HADOLINT_VERSION=$(_curl -sL "https://api.github.com/repos/hadolint/hadolint/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
-        _curl --output-dir "/tmp" -fOL "https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-linux-x86_64"
-        _curl --output-dir "/tmp" -fOL "https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-linux-x86_64.sha256"
-        if [[ "$(sha256sum /tmp/hadolint-linux-x86_64 | awk '{print $1}')" != "$(cat /tmp/hadolint-linux-x86_64.sha256 | awk '{print $1}')" ]]; then
-            echo "Wrong sha!"
-            exit 1
-        fi
-        mv -v /tmp/hadolint-linux-x86_64 "$HOME/.local/bin/hadolint"
-        chmod +x "$HOME/.local/bin/hadolint"
-        rm -f "/tmp/hadolint-linux-x86_64.sha256"
-    fi
+    _hadolint_install_if_needed "command -v hadolint"
+}
+
+function update_hadolint() {
+	echo "Update external package: hadolint"
+    _hadolint_install_if_needed "false"
 }
 
 # pkg: lazydocker; desc: Terminal UI for managing Docker containers and images
 PENNYKIT_EXTERN_DEFAULT+=("lazydocker")
+_install_lazydocker() {
+    local ver="$1"
+    local archive="lazydocker_${ver}_Linux_x86_64.tar.gz"
+    _download_github_release "$ver" jesseduffield lazydocker "$archive"
+    _verify_release_checksum "/tmp/${archive}" "https://github.com/jesseduffield/lazydocker/releases/download/v${ver}/checksums.txt"
+    tar -xf "/tmp/${archive}" lazydocker
+    mkdir -p "$HOME/.local/bin"
+    mv lazydocker "$HOME/.local/bin/"
+    rm -f "/tmp/${archive}"
+}
+
 function add_lazydocker() {
 	echo "Add external package: lazydocker"
     if ! command -v lazydocker >/dev/null; then
-        # https://github.com/jesseduffield/lazydocker
-        LD_VERSION=$(_curl -sL "https://api.github.com/repos/jesseduffield/lazydocker/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
-        _curl --output-dir "/tmp" -fOL "https://github.com/jesseduffield/lazydocker/releases/download/v${LD_VERSION}/lazydocker_${LD_VERSION}_Linux_x86_64.tar.gz"
-        tar -xf "/tmp/lazydocker_${LD_VERSION}_Linux_x86_64.tar.gz" lazydocker
-        mkdir -p "$HOME/.local/bin"
-        mv lazydocker "$HOME/.local/bin/"
-        rm -f "/tmp/lazydocker_${LD_VERSION}_Linux_x86_64.tar.gz"
+        local LD_VERSION
+        LD_VERSION=$(_github_latest_version jesseduffield lazydocker)
+        if [[ -z "$LD_VERSION" ]]; then
+            echo "  ERROR: Failed to get lazydocker version from GitHub API"
+            return 1
+        fi
+        _install_lazydocker "$LD_VERSION"
     fi
+}
+
+function update_lazydocker() {
+	echo "Update external package: lazydocker"
+    local LD_VERSION
+    LD_VERSION=$(_github_latest_version jesseduffield lazydocker)
+    if [[ -z "$LD_VERSION" ]]; then
+        echo "  ERROR: Failed to get lazydocker version from GitHub API"
+        return 1
+    fi
+    _install_lazydocker "$LD_VERSION"
 }
 
 # pkg: lazygit; desc: Terminal UI for Git with intuitive keyboard-driven workflow
 PENNYKIT_EXTERN_DEFAULT+=("lazygit")
+_install_lazygit() {
+    local ver="$1"
+    local archive="/tmp/lazygit_${ver}_linux_x86_64.tar.gz"
+    local checksums="/tmp/lazygit_checksums.txt"
+    _download_github_release "$ver" jesseduffield lazygit "lazygit_${ver}_linux_x86_64.tar.gz"
+    _download_github_release "$ver" jesseduffield lazygit "checksums.txt"
+    mv /tmp/checksums.txt "$checksums"
+    expected=$(grep "lazygit_${ver}_linux_x86_64.tar.gz" "$checksums" | awk '{print $1}')
+    _verify_sha256 "$archive" "$expected" || { rm -f "$archive" "$checksums"; return 1; }
+    rm -f "$checksums"
+    tar -xzf "$archive" lazygit
+    mkdir -p "${HOME}/.local/bin"
+    mv lazygit "$HOME/.local/bin/"
+    rm -f "$archive"
+}
+
 function add_lazygit() {
 	echo "Add external package: lazygit"
     if ! command -v lazygit >/dev/null; then
-        _curl -LO https://github.com/jesseduffield/lazygit/releases/download/v0.60.0/lazygit_0.60.0_linux_x86_64.tar.gz
-        tar -xzf lazygit_0.60.0_linux_x86_64.tar.gz lazygit
-        mkdir -p "${HOME}/.local/bin"
-        mv lazygit "$HOME/.local/bin/"
-        rm lazygit_0.60.0_linux_x86_64.tar.gz
+        local LG_VERSION
+        LG_VERSION=$(_github_latest_version jesseduffield lazygit)
+        if [[ -z "$LG_VERSION" ]]; then
+            echo "  ERROR: Failed to get lazygit version from GitHub API"
+            return 1
+        fi
+        _install_lazygit "$LG_VERSION"
     fi
+}
+
+function update_lazygit() {
+	echo "Update external package: lazygit"
+    local LG_VERSION
+    LG_VERSION=$(_github_latest_version jesseduffield lazygit)
+    if [[ -z "$LG_VERSION" ]]; then
+        echo "  ERROR: Failed to get lazygit version from GitHub API"
+        return 1
+    fi
+    _install_lazygit "$LG_VERSION"
 }
 
 # pkg: nvim; desc: Neovim — hyperextensible Vim-based text editor
 PENNYKIT_EXTERN_DEFAULT+=("nvim")
+_install_nvim() {
+    local ver="$1"
+    _download_github_release "$ver" neovim neovim "nvim-linux-x86_64.tar.gz" || return 1
+    tar -xzf /tmp/nvim-linux-x86_64.tar.gz || return 1
+    mkdir -p "$PENNYKIT_LOCAL_DIR/opt" "$PENNYKIT_LOCAL_DIR/bin"
+    rm -rf "$PENNYKIT_LOCAL_DIR/opt/nvim"
+    mv nvim-linux-x86_64 "$PENNYKIT_LOCAL_DIR/opt/nvim" || return 1
+    ln -sf "$PENNYKIT_LOCAL_DIR/opt/nvim/bin/nvim" "$PENNYKIT_LOCAL_DIR/bin/nvim"
+    rm -f /tmp/nvim-linux-x86_64.tar.gz
+    _log_audit_hash neovim "$ver" "$PENNYKIT_LOCAL_DIR/bin/nvim" || return 1
+}
+
 function add_nvim() {
 	echo "Add external package: nvim"
     if ! command -v nvim >/dev/null; then
-        # _curl -LO https://github.com/neovim/neovim/releases/download/v0.11.7/nvim-linux-x86_64.tar.gz
-        _curl -LO https://github.com/neovim/neovim/releases/download/v0.12.1/nvim-linux-x86_64.tar.gz
-        tar -xzf nvim-linux-x86_64.tar.gz
-        $SUDO mv nvim-linux-x86_64 /opt/nvim
-        $SUDO ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim
-        rm nvim-linux-x86_64.tar.gz
+        local nvim_version
+        nvim_version=$(_github_latest_version neovim neovim)
+        if [[ -z "$nvim_version" ]]; then
+            echo "  ERROR: Failed to get nvim version from GitHub API"
+            return 1
+        fi
+        _install_nvim "$nvim_version"
     fi
 }
 
+function update_nvim() {
+	echo "Update external package: nvim"
+    local nvim_version
+    nvim_version=$(_github_latest_version neovim neovim)
+    if [[ -z "$nvim_version" ]]; then
+        echo "  ERROR: Failed to get nvim version from GitHub API"
+        return 1
+    fi
+    _install_nvim "$nvim_version"
+}
+
 # pkg: ueberzugpp; desc: Display images in terminal file managers via X11/Wayland
+#
+# NOTE: ueberzugpp is only available on Debian via the home:justkidding OBS repo.
+# The OBS repo uses fixed filenames per version, so we fetch the latest tag from
+# GitHub (like all other extern packages) and derive the OBS URL accordingly.
 PENNYKIT_EXTERN_DEFAULT+=("ueberzugpp")
+function _ueberzugpp_version() {
+    _github_latest_version jstkdng ueberzugpp
+}
+
+_install_ueberzugpp() {
+    local ver="$1"
+    local deb_file="/tmp/ueberzugpp_${ver}_amd64.deb"
+    rm -f "$deb_file"
+    _wget -O "$deb_file" \
+        "https://download.opensuse.org/repositories/home:/justkidding/Debian_13/amd64/ueberzugpp_${ver}_amd64.deb" || { rm -f "$deb_file"; return 1; }
+    local actual
+    actual=$(sha256sum "$deb_file" | awk '{print $1}')
+    echo "  WARNING: No checksum file for ueberzugpp from OBS; log hash for audit: $actual" >&2
+    mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
+    dpkg-deb -x "$deb_file" /tmp/ueberzugpp-extract 2>/dev/null
+    mv /tmp/ueberzugpp-extract/usr/bin/ueberzugpp "$PENNYKIT_LOCAL_DIR/bin/ueberzugpp"
+    rm -rf /tmp/ueberzugpp-extract "$deb_file"
+}
+
 function add_ueberzugpp() {
 	echo "Add external package: ueberzugpp"
     if ! command -v ueberzugpp >/dev/null; then
-        _wget -O /tmp/ueberzugpp_2.9.8_amd64.deb \
-            https://download.opensuse.org/repositories/home:/justkidding/Debian_13/amd64/ueberzugpp_2.9.8_amd64.deb
-        $SUDO apt install -y /tmp/ueberzugpp_2.9.8_amd64.deb
-        rm -vf /tmp/ueberzugpp_2.9.8_amd64.deb
+        local ver
+        ver=$(_ueberzugpp_version)
+        _install_ueberzugpp "$ver"
     fi
+}
+
+function update_ueberzugpp() {
+	echo "Update external package: ueberzugpp"
+    local ver
+    ver=$(_ueberzugpp_version)
+    _install_ueberzugpp "$ver"
 }
 
 # pkg: yazi; desc: Blazing-fast terminal file manager with image preview
 PENNYKIT_EXTERN_DEFAULT+=("yazi")
+_install_yazi_prebuilt() {
+    local version
+    version=$(_curl -sL "https://api.github.com/repos/sxyazi/yazi/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+      local archive="yazi-x86_64-unknown-linux-gnu.zip"
+      _curl --output-dir "/tmp" -fOL "https://github.com/sxyazi/yazi/releases/download/v${version}/${archive}" || return 1
+      unzip -o "/tmp/${archive}" -d /tmp/yazi_prebuilt || return 1
+      mkdir -p "${HOME}/.local/bin"
+      mv /tmp/yazi_prebuilt/yazi-x86_64-unknown-linux-gnu/yazi "${HOME}/.local/bin/" || return 1
+      mv /tmp/yazi_prebuilt/yazi-x86_64-unknown-linux-gnu/ya "${HOME}/.local/bin/" || return 1
+      rm -f "/tmp/${archive}" && rm -rf /tmp/yazi_prebuilt
+      _log_audit_hash yazi "$version" "${HOME}/.local/bin/yazi" || return 1
+      echo "  Installed yazi v${version} (prebuilt)"
+}
+
+_install_yazi_source() {
+    echo "  Prebuilt unavailable, building from source..."
+    local tmp_dir
+    tmp_dir=$(mktemp -d /tmp/pennykit.XXX)
+    git clone --depth 1 https://github.com/sxyazi/yazi.git "$tmp_dir"
+    (
+        cd "$tmp_dir"
+        cargo build --release --locked
+        mkdir -p "${HOME}/.local/bin"
+        mv target/release/ya "${HOME}/.local/bin/"
+        mv target/release/yazi "${HOME}/.local/bin/"
+    )
+    rm -rf "$tmp_dir"
+}
+
 function add_yazi() {
 	echo "Add external package: yazi"
     if ! command -v yazi >/dev/null; then
-        if [ "$PENNYKIT_ON_CONTAINER" == "false" ]; then
-            TMP_DIR=$(mktemp -d /tmp/pennykit.XXX)
-            git clone https://github.com/sxyazi/yazi.git "$TMP_DIR"
-            (
-                cd "$TMP_DIR"
-                cargo build --release --locked
-                # mv target/release/yazi target/release/ya "${HOME}/.local/bin/"
-                mkdir -p "${HOME}/.local/bin"
-                mv target/release/ya "${HOME}/.local/bin/"
-                mv target/release/yazi "${HOME}/.local/bin/"
-            )
-            rm -rf "$TMP_DIR"
-        fi
+        _install_yazi_prebuilt || _install_yazi_source
+    fi
+}
+
+function update_yazi() {
+	echo "Update external package: yazi"
+    if command -v yazi >/dev/null; then
+        _install_yazi_prebuilt || _install_yazi_source
     fi
 }
 
@@ -163,6 +465,11 @@ function add_regex-tui() {
     fi
 }
 
+function update_regex-tui() {
+	echo "Update external package: regex-tui"
+    go install github.com/vitor-mariano/regex-tui@latest
+}
+
 # pkg: jqp; desc: a TUI playground for exploring jq
 PENNYKIT_EXTERN_DEFAULT+=("jqp")
 function add_jqp() {
@@ -170,4 +477,59 @@ function add_jqp() {
     if ! command -v jqp >/dev/null; then
         go install github.com/noahgorstein/jqp@latest
     fi
+}
+
+function update_jqp() {
+	echo "Update external package: jqp"
+    go install github.com/noahgorstein/jqp@latest
+}
+
+# pkg: strace-tui; desc: Terminal UI for visualizing and exploring strace output
+PENNYKIT_EXTERN_DEV+=("strace-tui")
+function add_strace-tui() {
+    echo "Add external package: strace-tui"
+    if ! command -v strace-tui >/dev/null; then
+        cargo install strace-tui
+    fi
+}
+
+function update_strace-tui() {
+    echo "Update external package: strace-tui"
+    cargo install strace-tui --force
+}
+
+# pkg: vivid; desc: LS_COLORS generator with built-in theme support
+PENNYKIT_EXTERN_DEFAULT+=("vivid")
+_install_vivid() {
+    local ver="$1"
+    _download_github_release "$ver" sharkdp vivid "vivid_${ver}_amd64.deb" || return 1
+    mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
+    dpkg-deb -x "/tmp/vivid_${ver}_amd64.deb" /tmp/vivid-extract 2>/dev/null || return 1
+    mv /tmp/vivid-extract/usr/bin/vivid "$PENNYKIT_LOCAL_DIR/bin/vivid" || return 1
+    rm -rf /tmp/vivid-extract "/tmp/vivid_${ver}_amd64.deb"
+    _log_audit_hash vivid "$ver" "$PENNYKIT_LOCAL_DIR/bin/vivid" || return 1
+}
+
+function add_vivid() {
+	echo "Add external package: vivid"
+    if ! command -v vivid >/dev/null; then
+        local VIVID_VERSION
+        VIVID_VERSION=$(_github_latest_version sharkdp vivid)
+        if [[ -z "$VIVID_VERSION" ]]; then
+            echo "  ERROR: Failed to get vivid version from GitHub API"
+            return 1
+        fi
+        _install_vivid "$VIVID_VERSION"
+    fi
+}
+
+function update_vivid() {
+	echo "Update external package: vivid"
+    local VIVID_VERSION
+    VIVID_VERSION=$(_github_latest_version sharkdp vivid)
+    if [[ -z "$VIVID_VERSION" ]]; then
+        echo "  ERROR: Failed to get vivid version from GitHub API"
+        return 1
+    fi
+    _install_vivid "$VIVID_VERSION"
 }

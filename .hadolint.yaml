@@ -1,0 +1,8 @@
+failure-threshold: warning
+override:
+  info:
+    - DL3008
+    - DL3009
+    - DL3013
+trustedRegistries:
+  - docker.io

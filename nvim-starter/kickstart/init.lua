@@ -92,6 +92,25 @@ vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
 vim.g.have_nerd_font = false
+vim.g.editorconfig = true
+
+local ok, theme = pcall(require, "_local_theme")
+local colorscheme = ok and theme.colorscheme or "tokyonight"
+
+-- Silence "No LSP ... found" notifications from Telescope LSP pickers
+-- (e.g. `grd`, `grr`, `gri` opening a picker with zero results)
+if not vim.g.__kickstart_notify_hooked then
+  vim.g.__kickstart_notify_hooked = true
+  local notify = vim.notify
+  vim.notify = function(msg, level, opts)
+    if level == vim.log.levels.INFO and type(msg) == "string"
+      and msg:match("^%[telescope%.[^]]*%]: No ")
+    then
+      return
+    end
+    return notify(msg, level, opts)
+  end
+end
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
@@ -894,7 +913,7 @@ require('lazy').setup({
       -- Load the colorscheme here.
       -- Like many other themes, this one has different styles, and you could load
       -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
+      pcall(vim.cmd.colorscheme, colorscheme)
     end,
   },
 
@@ -1014,7 +1033,7 @@ require('lazy').setup({
 
 -- bme
 vim.o.background = 'dark' -- or "light" for light mode
-vim.cmd [[colorscheme gruvbox]]
+pcall(vim.cmd.colorscheme, colorscheme)
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et

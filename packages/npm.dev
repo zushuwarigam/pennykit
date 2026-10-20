@@ -1,9 +1,1 @@
-#!/usr/bin/env bash
-set -euo pipefail
-printf "### npm.dev %s\n" "$(readlink -f "$0")"
-
-if [ "$PENNYKIT_OS_VERSION_CODENAME" == "trixie" ]; then
-    :
-else
-    PENNYKIT_NPM_DEV+=("tree-sitter-cli")   # pkg: tree-sitter-cli; desc: CLI for building and testing Tree-sitter grammars
-fi
+[[ -v _NPM_DEV ]] && return || readonly _NPM_DEV=1

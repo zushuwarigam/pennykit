@@ -1,8 +1,10 @@
--- if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
+local ok, pk = pcall(require, "pennykit")
 
 -- ~/.config/astronvim/lua/plugins/go.lua
+
 return {
   "ray-x/go.nvim",
+    enabled = ok and pk.is_enabled("go"),
   dependencies = { "ray-x/guihua.lua" },
   ft = { "go", "gomod", "gosum", "gowork" },   -- lazy load on Go files
   build = ':lua require("go.install").update_all_sync()',

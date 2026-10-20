@@ -1,11 +1,13 @@
-#!/usr/bin/env bash
-set -euo pipefail
-printf "### apt.dev %s\n" "$(readlink -f "$0")"
+[[ -v _APT_DEV ]] && return || readonly _APT_DEV=1
 
 PENNYKIT_APT_DEV+=("binutils")          # pkg: binutils; desc: Binary tools (objdump, nm, readelf, strip, ld, etc.)
 PENNYKIT_APT_DEV+=("binwalk")           # pkg: binwalk; desc: Firmware analysis and embedded file extraction tool
 PENNYKIT_APT_DEV+=("bsdmainutils")      # pkg: bsdmainutils; desc: BSD utilities including hexdump, col, and calendar
 PENNYKIT_APT_DEV+=("build-essential")   # pkg: build-essential; desc: Meta-package for C/C++ compilation (gcc, g++, make)
+PENNYKIT_APT_DEV+=("bubblewrap")       # pkg: bubblewrap; desc: Sandboxing for opam OCaml package builds
+PENNYKIT_APT_DEV+=("m4")                # pkg: m4; desc: Macro processor for opam OCaml compiler builds
+PENNYKIT_APT_DEV+=("opam")              # pkg: opam; desc: OCaml package manager
+PENNYKIT_APT_DEV+=("unzip")             # pkg: unzip; desc: ZIP extraction required by opam
 PENNYKIT_APT_DEV+=("checksec")          # pkg: checksec; desc: Check binary security mitigations (NX, RELRO, PIE, etc.)
 PENNYKIT_APT_DEV+=("clangd")            # pkg: clangd; desc: Clang-based Language Server Protocol implementation
 PENNYKIT_APT_DEV+=("clang")             # pkg: clang; desc: LLVM-based C/C++/ObjC compiler frontend
@@ -16,7 +18,9 @@ PENNYKIT_APT_DEV+=("gdb")               # pkg: gdb; desc: GNU debugger for C, C+
 PENNYKIT_APT_DEV+=("glibc-source")      # pkg: glibc-source; desc: GNU C library source code for reference and debugging
 PENNYKIT_APT_DEV+=("gopls")             # pkg: gopls; desc: Official Go Language Server Protocol implementation
 PENNYKIT_APT_DEV+=("libc6-dbg")         # pkg: libc6-dbg; desc: glibc debug symbols for stepping through libc in GDB
+PENNYKIT_APT_DEV+=("libgmp-dev")        # pkg: libgmp-dev; desc: GMP multiprecision library dev (opam depext for zarith)
 PENNYKIT_APT_DEV+=("shellcheck")        # pkg: shellcheck; desc: Static analysis and linting tool for shell scripts
 PENNYKIT_APT_DEV+=("shfmt")             # pkg: shfmt; desc: Shell script formatter supporting bash, sh, and mksh
 PENNYKIT_APT_DEV+=("strace")            # pkg: strace; desc: Trace system calls and signals for debugging
 PENNYKIT_APT_DEV+=("xxd")               # pkg: xxd; desc: Hex dump and reverse hex dump utility
+PENNYKIT_APT_DEV+=("unixodbc")          # pkg: unixodbc; desc: ODBC driver manager runtime lib for harlequin's odbc adapter

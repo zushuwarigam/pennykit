@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+set -euo pipefail
+printf "### %s\n" "$0"
+
+readonly PENNYKIT_REPO_URL="https://github.com/zushuwarigam/pennykit.git"
+readonly PENNYKIT_HOME="${HOME}/.pennykit"
+
+export PENNYKIT_HOME
+
+PENNYKIT_BRANCH="${PENNYKIT_BRANCH:-kit}"
+
+PENNYKIT_FORCE=false
+PENNYKIT_PACKAGE_SET=DEFAULT
+
+usage() {
+    cat <<EOF
+    Usage: $(basename "$0") [options]
+
+    Options:
+    -f, --force           Force re‑clone even if $PENNYKIT_HOME already exists
+    -p, --package-set     Package set: a/adm/admin, d/dev/develop, p/pen/pentest, all
+    -r, --rootless        Rootless mode (skip apt, install to ~/.local/)
+    -h, --help            Show this help message and exit
+
+EOF
+exit 0
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -f|--force) PENNYKIT_FORCE=true; shift ;;
+        -p|--package-set)
+            PENNYKIT_PACKAGE_SET="$2"
+            case "$PENNYKIT_PACKAGE_SET" in
+                a|adm|admin) PENNYKIT_PACKAGE_SET=ADMIN ;;
+                d|dev|develop) PENNYKIT_PACKAGE_SET=DEV ;;
+                p|pen|pentest) PENNYKIT_PACKAGE_SET=PENTEST;;
+                all) PENNYKIT_PACKAGE_SET=ALL;;
+                *) usage ;;
+            esac
+            shift
+            ;;
+        -r|--rootless) PENNYKIT_ROOTLESS=true; shift ;;
+        -h|--help)  usage ;;
+        *)          shift ;;   # unknown options are ignored – they will be passed through
+    esac
+done
+
+export PENNYKIT_FORCE
+export PENNYKIT_PACKAGE_SET
+export PENNYKIT_ROOTLESS
+
+if [[ -d "$PENNYKIT_HOME" ]]; then
+    if [[ "$PENNYKIT_FORCE" == "true" ]]; then
+        echo "INFO: --force supplied – removing existing $PENNYKIT_HOME ..."
+        rm -rf "$PENNYKIT_HOME"
+    elif git -C "$PENNYKIT_HOME" rev-parse --git-dir >/dev/null 2>&1; then
+        echo "INFO: $PENNYKIT_HOME already exists – using existing copy."
+        git -C "$PENNYKIT_HOME" pull --rebase || {
+            echo "WARNING: git pull failed – removing and re-cloning ..."
+            rm -rf "$PENNYKIT_HOME"
+        }
+    else
+        echo "INFO: $PENNYKIT_HOME exists but is not a git repo – removing and re-cloning ..."
+        rm -rf "$PENNYKIT_HOME"
+    fi
+fi
+
+if [[ ! -d "$PENNYKIT_HOME" ]]; then
+    echo "Cloning PennyKit($PENNYKIT_BRANCH) from $PENNYKIT_REPO_URL into $PENNYKIT_HOME ..."
+    if ! git clone --depth=1 --branch="$PENNYKIT_BRANCH" "$PENNYKIT_REPO_URL" "$PENNYKIT_HOME"; then
+        echo "ERROR: Failed to clone repository." >&2
+        exit 1
+    fi
+else
+    echo "Skipping clone – repository already present."
+fi
+
+CURRENT_DIR="$(pwd)"
+cd "$PENNYKIT_HOME"
+
+echo "Sourcing and executing pennykit_install.sh ..."
+source ./pennykit_install.sh
+
+cd "$CURRENT_DIR"

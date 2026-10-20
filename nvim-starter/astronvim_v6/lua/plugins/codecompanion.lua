@@ -1,5 +1,9 @@
+local ok, pk = pcall(require, "pennykit")
+
+
 return {
   "olimorris/codecompanion.nvim",
+    enabled = ok and pk.is_enabled("codecompanion"),
   dependencies = {
     "nvim-lua/plenary.nvim",
     "nvim-treesitter/nvim-treesitter",

@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC1090,SC1091
+set -euo pipefail
+
+PENNYKIT_HOME="${PENNYKIT_HOME:-$HOME/.pennykit}"
+
+if [[ ! -d "$PENNYKIT_HOME" ]]; then
+    echo "Error: PENNYKIT_HOME ($PENNYKIT_HOME) does not exist." >&2
+    echo "Run the install script first:" >&2
+    echo "  bash <(curl -fsSL https://raw.githubusercontent.com/zushuwarigam/pennykit/refs/heads/kit/install.sh)" >&2
+    exit 1
+fi
+
+source "$PENNYKIT_HOME/lib/helpers.sh"
+
+# Load command modules
+for cmd_file in "$PENNYKIT_HOME"/lib/cmd_*.sh; do
+    source "$cmd_file"
+done
+
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [command] [args]
+
+Commands:
+  (no command)       Show pennykit status dashboard
+  nvim               Interactive nvim config switcher
+  theme              Show current theme and available themes
+  theme <name>       Apply a theme (e.g. $(basename "$0") theme catppuccin)
+  extern                   List all external packages and their status
+  extern [set]             Update external packages (set: default|admin|dev|pentest|all)
+  extern deactivate <pkg>  Deactivate a package (skip install/update)
+  extern activate <pkg>    Reactivate a deactivated package
+  extern list-deactivated  List all deactivated packages
+  extern list-problematic  List packages whose install/update failed
+  extern reset-problematic Clear the list of problematic packages
+  update             Update pennykit itself (git pull --rebase)
+  doctor             Run health checks on the environment
+  branch             Show current git branch
+  branch <name>      Switch to a different git branch
+  clean              Remove all pennykit-managed symlinks and nvim data
+  help               Show this help message
+
+EOF
+    exit 0
+}
+
+# ── Main dispatch ──────────────────────────────────────────────
+
+case "${1:-}" in
+    ""|status)     cmd_status ;;
+    nvim)          cmd_nvim ;;
+    theme)         shift; cmd_theme "$@" ;;
+    extern)        shift; cmd_extern "$@" ;;
+    doctor)        cmd_doctor ;;
+    update)        cmd_update ;;
+    branch)        shift; cmd_branch "$@" ;;
+    clean)         cmd_clean ;;
+    help|-h|--help) usage ;;
+    *)             echo "Error: unknown command '$1'"; usage ;;
+esac

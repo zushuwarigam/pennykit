@@ -1,6 +1,10 @@
+local ok, pk = pcall(require, "pennykit")
+
 -- https://github.com/basecamp/omarchy/discussions/4899
+
 return {
   "christoomey/vim-tmux-navigator",
+    enabled = ok and pk.is_enabled("tmux-navigation"),
   cmd = {
     "TmuxNavigateLeft",
     "TmuxNavigateDown",

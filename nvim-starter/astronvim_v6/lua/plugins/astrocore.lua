@@ -1,9 +1,8 @@
--- if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
-
 -- AstroCore provides a central place to modify mappings, vim options, autocommands, and more!
 -- Configuration documentation can be found with `:h astrocore`
 -- NOTE: We highly recommend setting up the Lua Language Server (`:LspInstall lua_ls`)
 --       as this provides autocomplete and documentation while editing
+
 
 ---@type LazySpec
 return {
@@ -37,6 +36,28 @@ return {
         [".*/etc/foo/.*"] = "fooscript",
       },
     },
+    -- auto commands to set up (:h nvim_create_autocmd)
+    autocmds = {
+      telescope_lsp_silence = {
+        {
+          event = "User",
+          pattern = "VeryLazy",
+          once = true,
+          desc = "Suppress Telescope LSP 'no results' notifications",
+          callback = function()
+            local notify = vim.notify
+            vim.notify = function(msg, level, opts)
+              if level == vim.log.levels.INFO and type(msg) == "string"
+                and msg:match("^%[telescope%.[^]]*%]: No ")
+              then
+                return
+              end
+              return notify(msg, level, opts)
+            end
+          end,
+        },
+      },
+    },
     -- vim options can be configured here
     options = {
       opt = { -- vim.opt.<key>
@@ -47,15 +68,15 @@ return {
         spellsuggest = "best,9",
         signcolumn = "yes", -- sets vim.opt.signcolumn to yes
         wrap = false, -- sets vim.opt.wrap
+        mouse = 'a',
         langmap = {
           "ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯ;ABCDEFGHIJKLMNOPQRSTUVWXYZ",
           "фисвуапршолдьтщзйкыегмцчня;abcdefghijklmnopqrstuvwxyz",
         },
       },
-      g = { -- vim.g.<key>
-        -- configure global vim variables (vim.g)
-        -- NOTE: `mapleader` and `maplocalleader` must be set in the AstroNvim opts or before `lazy.setup`
-        -- This can be found in the `lua/lazy_setup.lua` file
+      g = {
+        clipboard = "osc52",
+        editorconfig = true,
       },
     },
     -- Mappings can be configured through AstroCore as well.
@@ -85,26 +106,27 @@ return {
 
         -- setting a mapping to false will disable it
         -- ["<C-S>"] = false,
+        ["<leader>p"] = { name = "PennyKit/Plugins" },
         ["<leader>a"] = { name = "AI/CodeCompanion" },
         ["<Leader>aa"] = { "<cmd>CodeCompanionChat Toggle<cr>", desc = "Toggle Chat" },
         ["<Leader>ap"] = { "<cmd>CodeCompanionActions<cr>", desc = "Action Palette" },
+        -- Plugin Manager (Telescope-based)
+        ["<Leader>pp"] = { "<cmd>PKPlugins<cr>", desc = "PennyKit plugins" },
+        ["<Leader>pa"] = { "<cmd>PKPluginAdd<cr>", desc = "Add plugin" },
+        ["<Leader>ps"] = { "<cmd>PKPluginSync<cr>", desc = "Sync plugins" },
+        ["<Leader>pi"] = { "<cmd>PKPluginStatus<cr>", desc = "Plugin status" },
+        ["<Leader>ph"] = { "<cmd>PKPluginHelp<cr>", desc = "Plugin help" },
+        ["<Tab>"] = { "<cmd>bnext<CR>", desc = "Next buffer" },
+        ["<S-Tab>"] = { "<cmd>bprev<CR>", desc = "Previous buffer" },
+        ["<M-Up>"] = { function() vim.cmd("resize +2") end, desc = "Increase window height" },
+        ["<M-Down>"] = { function() vim.cmd("resize -2") end, desc = "Decrease window height" },
+        ["<M-Left>"] = { function() vim.cmd("vertical resize -2") end, desc = "Decrease window width" },
+        ["<M-Right>"] = { function() vim.cmd("vertical resize +2") end, desc = "Increase window width" },
       },
       v = {
         ["<Leader>aa"] = { "<cmd>CodeCompanionChat<cr>", desc = "Add to Chat" },
       },
     },
-    mason = {
-      ensure_installed = {
-        "gopls",
-        "gofump",
-        "golangci-lint",
-        "golangci-lint-langserver",
-        "gomodifytags",
-        "impl",
-        "delve",
-        "ltex-ls",
-        "ltex-ls-plus",
-      },
-    },
+
   },
 }

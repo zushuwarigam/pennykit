@@ -1,6 +1,4 @@
-#!/usr/bin/env bash
-set -euo pipefail
-printf "### apt.admin %s\n" "$(readlink -f "$0")"
+[[ -v _APT_ADMIN ]] && return || readonly _APT_ADMIN=1
 
 PENNYKIT_APT_ADMIN+=("bind9-dnsutils")  # pkg: bind9-dnsutils; desc: DNS lookup utilities (dig, nslookup, nsupdate)
 PENNYKIT_APT_ADMIN+=("httpie")          # pkg: httpie; desc: User-friendly HTTP client for APIs and web testing
@@ -14,3 +12,4 @@ PENNYKIT_APT_ADMIN+=("tcpdump")         # pkg: tcpdump; desc: Command-line packe
 PENNYKIT_APT_ADMIN+=("termshark")       # pkg: termshark; desc: Terminal UI for Wireshark/tshark packet inspection
 PENNYKIT_APT_ADMIN+=("tshark")          # pkg: tshark; desc: Command-line network protocol analyzer (Wireshark CLI)
 PENNYKIT_APT_ADMIN+=("xh")              # pkg: xh; desc: Fast, friendly HTTP client (httpie-compatible, Rust-based)
+PENNYKIT_APT_ADMIN+=("unixodbc")        # pkg: unixodbc; desc: ODBC driver manager runtime lib for harlequin's odbc adapter

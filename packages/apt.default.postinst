@@ -2,8 +2,6 @@
 set -euo pipefail
 printf "### apt.default.postinst %s\n" "$(readlink -f "$0")"
 
-if [ "$PENNYKIT_OS_VERSION_CODENAME" == "trixie" ]; then
-    if [ "$PENNYKIT_ON_CONTAINER" == "false" ]; then
-        rustup default stable
-    fi
+if [ "$PENNYKIT_OS_VERSION_CODENAME" == "trixie" ] && command -v rustup >/dev/null; then
+    rustup default stable
 fi

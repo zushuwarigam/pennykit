@@ -1,5 +1,3 @@
--- if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
-
 -- AstroCommunity: import any community modules here
 -- We import this file in `lazy_setup.lua` before the `plugins/` folder.
 -- This guarantees that the specs are processed before any user plugins.
@@ -8,7 +6,6 @@
 return {
   -- import/override with your plugins folder
   "AstroNvim/astrocommunity",
-  { import = "astrocommunity.colorscheme.gruvbox-nvim" },
   { import = "astrocommunity.diagnostics.trouble-nvim" }, -- claude: better diagnostics list
   { import = "astrocommunity.git.diffview-nvim" }, -- claude: rich git diff view
   { import = "astrocommunity.icon.mini-icons" },
@@ -21,7 +18,9 @@ return {
   { import = "astrocommunity.pack.json" },
   { import = "astrocommunity.pack.lua" },
   { import = "astrocommunity.pack.markdown" },
-  { import = "astrocommunity.pack.python" },
+  { import = "astrocommunity.pack.python.base" },
+  { import = "astrocommunity.pack.python.ruff" },
+  { import = "astrocommunity.pack.python.basedpyright" },
   { import = "astrocommunity.pack.toml" },
   { import = "astrocommunity.pack.yaml" },
   { import = "astrocommunity.terminal-integration.toggleterm-manager-nvim" }, -- claude:
