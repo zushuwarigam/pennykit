@@ -14,8 +14,8 @@ Pennykit is a **development environment orchestrator** — a dotfiles manager th
 
 | Entry | Invocation | Purpose |
 |-------|-----------|---------|
-| `install` | `curl ... \| bash` | Bootstrap installer (clone repo, run setup) |
-| `pennykit_install.sh` | Sourced by `install` | Post-clone: OS detection → package install → config symlinks |
+| `install.sh` | `curl ... \| bash` | Bootstrap installer (clone repo, run setup) |
+| `pennykit_install.sh` | Sourced by `install.sh` | Post-clone: OS detection → package install → config symlinks |
 | `bin/pennykit` | `pennykit status\|nvim\|theme\|extern\|doctor\|update\|branch\|clean` | CLI for day-to-day management |
 
 ---
@@ -24,7 +24,7 @@ Pennykit is a **development environment orchestrator** — a dotfiles manager th
 
 ```
 /pennykit/
-├── install                    # [Entry 1] Bootstrap: clone → install → configure
+├── install.sh                 # [Entry 1] Bootstrap: clone → install → configure
 ├── pennykit_install.sh        # [Entry 2] Post-clone orchestrator
 │
 ├── bin/pennykit               # [Entry 3] CLI (status, nvim, theme, extern, doctor, update, branch, clean)
@@ -97,9 +97,10 @@ Pennykit is a **development environment orchestrator** — a dotfiles manager th
 ### Install Flow
 
 ```
-User runs: bash install [-p all] [-r] [-f]
+User runs: bash install.sh [-p all] [-r] [-f]
   │
   ├── Clone PENNYKIT_BRANCH (default: kit) into ~/.pennykit
+  │     (branch missing upstream -> warn + fall back to the remote default branch)
   │
   └── source pennykit_install.sh
         ├── source lib/helpers.sh           (#0: most-sourced file, 4x)
@@ -312,15 +313,15 @@ gruvbox (active), dracula, catppuccin, tokyonight, nord, solarized-dark
 
 | Variable | Default | Setter | Readers | Effect |
 |----------|---------|--------|---------|--------|
-| `PENNYKIT_HOME` | `~/.pennykit` | install, many | Every script | Project root |
-| `PENNYKIT_BRANCH` | `kit` | User/install | install | Git branch to clone |
-| `PENNYKIT_PACKAGE_SET` | `DEFAULT` | `-p` flag | install, package_installer | Tier selector |
-| `PENNYKIT_ROOTLESS` | unset | `-r` flag | install, package_installer | Skip apt → ~/.local/ |
+| `PENNYKIT_HOME` | `~/.pennykit` | install.sh, many | Every script | Project root |
+| `PENNYKIT_BRANCH` | `kit` | User/install.sh | install.sh | Git branch to clone; falls back to the remote default branch when missing |
+| `PENNYKIT_PACKAGE_SET` | `DEFAULT` | `-p` flag | install.sh, package_installer | Tier selector |
+| `PENNYKIT_ROOTLESS` | unset | `-r` flag | install.sh, package_installer | Skip apt → ~/.local/ |
 | `PENNYKIT_DRY_RUN` | unset | User env | package_installer | Print commands |
 | `PENNYKIT_LOCAL_DIR` | `~/.local` | package_installer | extern.packages | Rootless target |
 | `PENNYKIT_OS_ID` | (detected) | check_system.sh | Installer scripts | OS type |
 | `PENNYKIT_NVIM_CONFIG` | `astronvim_v6` | User | config.nvim | Starter choice |
-| `PENNYKIT_FORCE` | `false` | `-f` flag | install, config.nvim | Force overwrite |
+| `PENNYKIT_FORCE` | `false` | `-f` flag | install.sh, config.nvim | Force overwrite |
 | `PENNYKIT_THEME` | `gruvbox` | theme cmd | status, doctor | Active theme |
 
 ---
