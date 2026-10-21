@@ -83,6 +83,11 @@ _apt_rootless_jq() {
   chmod +x "$PENNYKIT_LOCAL_DIR/bin/jq"
   echo "  jq installed to ${PENNYKIT_LOCAL_DIR}/bin/"
 }
+# khard ships no standalone binary upstream — install the Python CLI with pipx
+# (same requirement as the other pipx-based fallbacks: httpie, binwalk, ...).
+_apt_rootless_khard()  { _rootless_pipx "khard"; }
+# neomutt has no rootless alternative: upstream publishes source tarballs only,
+# so it is skipped in rootless mode (it stays available via apt/brew).
 
 # ADMIN tier
 _apt_rootless_httpie()  { _rootless_pipx "httpie"; }
@@ -131,6 +136,7 @@ _ROOTLESS_APT[eza]=_apt_rootless_eza
 _ROOTLESS_APT[git-delta]=_apt_rootless_delta
 _ROOTLESS_APT[resvg]=_apt_rootless_resvg
 _ROOTLESS_APT[jq]=_apt_rootless_jq
+_ROOTLESS_APT[khard]=_apt_rootless_khard
 
 # ADMIN tier
 _ROOTLESS_APT[httpie]=_apt_rootless_httpie
