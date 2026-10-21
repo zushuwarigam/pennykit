@@ -57,7 +57,7 @@ DEFAULT always installed. `-p` flag selects higher tiers (ADMIN, DEV, PENTEST, A
 - Theme `--dry-run` flag only supported via Python apply (not bash fallback)
 - BATS uses `load 'test_helper/bats-support/load'` — the helpers are **vendored** under `tests/bats/test_helper/` (bats-support v0.3.0 + bats-assert v0.3.0, MIT, LICENSE files included). No npm/git submodule step needed; a fresh clone can run the BATS suite directly.
 - `python3` with tomllib required for theme apply; bash fallback is basic sed
-- Install script clones branch from `PENNYKIT_BRANCH` env var (defaults to `kit`)
+- Install script clones branch from `PENNYKIT_BRANCH` env var (defaults to `kit`). If that branch no longer exists on the remote, `install.sh` warns and falls back to the remote's default branch instead of failing the clone.
 - Container detection reads `/etc/os-release`; Homebrew skipped on Linux unless `brew.linux` sourced
 - Vivid/LS_COLORS, harlequin, and bat aliases are patched via sed in `shell/exports.sh`/`shell/aliases.sh`
 - Blue screen during install: sudo's `env_reset` drops `DEBIAN_FRONTEND`/`DEBCONF_FRONTEND`. Every `$SUDO apt` call in `scripts/install/package_installer.sh` and `packages/extern.packages` must inline env vars: `$SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_FRONTEND=noninteractive NEEDRESTART_MODE=a apt ...`

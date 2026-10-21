@@ -76,3 +76,78 @@ SHIM
     run bash "$INSTALL_SCRIPT" -p bogus
     assert_output --partial "Usage:"
 }
+# Writes a git shim that models a remote whose only branch is $3 (default: kit).
+#   $1 = ls-remote exit code for a branch that does not exist (2 = missing, 128 = network error)
+#   $2 = clone exit code (0 = clone succeeds and produces a fake checkout)
+#   $3 = name of the branch that exists on the remote
+write_git_shim() {
+    local unknown_rc="$1" clone_rc="$2" remote_branch="${3:-kit}"
+    cat > "$BATS_TEST_TMPDIR/bin/git" <<SHIM
+#!/usr/bin/env bash
+case "\$*" in
+    *ls-remote*)
+        if [[ "\$*" == *"--symref"* ]]; then
+            printf 'ref: refs/heads/${remote_branch}\tHEAD\n'
+            exit 0
+        fi
+        for arg in "\$@"; do
+            case "\$arg" in
+                refs/heads/${remote_branch})
+                    printf 'aaaaaaa\trefs/heads/${remote_branch}\n'
+                    exit 0 ;;
+            esac
+        done
+        exit ${unknown_rc} ;;
+    *clone*)
+        target="\${!#}"
+        if [[ ${clone_rc} -eq 0 ]]; then
+            mkdir -p "\$target"
+            printf 'echo "FAKE INSTALL COMPLETE"\n' > "\$target/pennykit_install.sh"
+        fi
+        exit ${clone_rc} ;;
+    *rev-parse*)
+        echo "fatal: not a git repository" >&2
+        exit 128 ;;
+    *) exit 0 ;;
+esac
+SHIM
+    chmod +x "$BATS_TEST_TMPDIR/bin/git"
+}
+
+@test "install: branch deleted upstream falls back to the remote default branch" {
+    write_git_shim 2 0 kit
+    export PENNYKIT_BRANCH=improve-kit-dev
+    run bash "$INSTALL_SCRIPT"
+    assert_success
+    assert_output --partial "no longer exists"
+    assert_output --partial "Falling back to 'kit'"
+    assert_output --partial "Cloning PennyKit(kit)"
+    assert_output --partial "FAKE INSTALL COMPLETE"
+}
+
+@test "install: existing branch is cloned without fallback warning" {
+    write_git_shim 2 0 kit
+    export PENNYKIT_BRANCH=kit
+    run bash "$INSTALL_SCRIPT"
+    assert_success
+    refute_output --partial "no longer exists"
+    assert_output --partial "Cloning PennyKit(kit)"
+}
+
+@test "install: unreachable remote keeps the requested branch and reports clone failure" {
+    write_git_shim 128 128 kit
+    export PENNYKIT_BRANCH=improve-kit-dev
+    run bash "$INSTALL_SCRIPT"
+    assert_failure
+    refute_output --partial "no longer exists"
+    assert_output --partial "Cloning PennyKit(improve-kit-dev)"
+    assert_output --partial "Failed to clone repository"
+}
+
+@test "install: remote default branch is used when the shipped default is gone" {
+    write_git_shim 2 0 main
+    run bash "$INSTALL_SCRIPT"
+    assert_success
+    assert_output --partial "Falling back to 'main'"
+    assert_output --partial "Cloning PennyKit(main)"
+}
