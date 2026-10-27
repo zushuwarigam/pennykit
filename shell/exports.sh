@@ -23,6 +23,15 @@ if command -v vivid >/dev/null 2>&1; then
   LS_COLORS="$(vivid generate gruvbox-dark-soft)"
 fi
 
+# zoxide: smarter `cd` — provides the `z` command
+if command -v zoxide >/dev/null 2>&1; then
+    if [[ "$(basename "$SHELL")" == "bash" ]]; then
+        eval "$(zoxide init bash)"
+    elif [[ "$(basename "$SHELL")" == "zsh" ]]; then
+        eval "$(zoxide init zsh)"
+    fi
+fi
+
 export LANG="${LANG:-en_US.UTF-8}"
 # export LC_ALL=C.UTF-8
 
