@@ -547,10 +547,19 @@ _install_yq() {
     local ver="$1"
     local archive="yq_linux_amd64.tar.gz"
     _download_github_release "$ver" mikefarah yq "$archive" || return 1
-    tar -xf "/tmp/${archive}" yq || return 1
+    # The tarball ships the binary as ./yq_linux_amd64 alongside man-page
+    # helpers (older releases used a bare "yq" member), so extract to a
+    # scratch dir and pick the binary by name.
+    local tmpdir
+    tmpdir=$(mktemp -d /tmp/pennykit-yq.XXX)
+    tar -xzf "/tmp/${archive}" -C "$tmpdir" || { rm -rf "$tmpdir"; return 1; }
+    local found
+    found=$(find "$tmpdir" -type f -name yq_linux_amd64 2>/dev/null | head -1)
+    [[ -z "$found" ]] && found=$(find "$tmpdir" -type f -name yq 2>/dev/null | head -1)
+    [[ -z "$found" ]] && { echo "  ERROR: yq binary not found in archive" >&2; rm -rf "$tmpdir"; return 1; }
     mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
-    mv yq "$PENNYKIT_LOCAL_DIR/bin/yq" || return 1
-    rm -f "/tmp/${archive}"
+    mv "$found" "$PENNYKIT_LOCAL_DIR/bin/yq" || return 1
+    rm -rf "$tmpdir" "/tmp/${archive}"
     _log_audit_hash yq "$ver" "$PENNYKIT_LOCAL_DIR/bin/yq" || return 1
 }
 
