@@ -24,3 +24,4 @@ PENNYKIT_APT_DEV+=("shfmt")             # pkg: shfmt; desc: Shell script formatt
 PENNYKIT_APT_DEV+=("strace")            # pkg: strace; desc: Trace system calls and signals for debugging
 PENNYKIT_APT_DEV+=("xxd")               # pkg: xxd; desc: Hex dump and reverse hex dump utility
 PENNYKIT_APT_DEV+=("unixodbc")          # pkg: unixodbc; desc: ODBC driver manager runtime lib for harlequin's odbc adapter
+PENNYKIT_APT_DEV+=("visidata")          # pkg: visidata; desc: Terminal spreadsheet multitool for exploring and arranging data

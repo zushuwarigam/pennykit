@@ -99,6 +99,7 @@ _apt_rootless_shfmt()      { _rootless_go_install "shfmt" "mvdan.cc/sh/v3/cmd/sh
 _apt_rootless_gopls()      { _rootless_go_install "gopls" "golang.org/x/tools/gopls"; }
 _apt_rootless_delve()      { _rootless_go_install "delve" "github.com/go-delve/delve/cmd/dlv"; }
 _apt_rootless_binwalk()    { _rootless_pipx "binwalk"; }
+_apt_rootless_visidata()   { _rootless_pipx "visidata"; }
 
 # PENTEST tier
 _apt_rootless_gobuster()   { _rootless_go_install "gobuster" "github.com/OJ/gobuster/v3"; }
@@ -148,6 +149,7 @@ _ROOTLESS_APT[shfmt]=_apt_rootless_shfmt
 _ROOTLESS_APT[gopls]=_apt_rootless_gopls
 _ROOTLESS_APT[delve]=_apt_rootless_delve
 _ROOTLESS_APT[binwalk]=_apt_rootless_binwalk
+_ROOTLESS_APT[visidata]=_apt_rootless_visidata
 
 # PENTEST tier
 _ROOTLESS_APT[gobuster]=_apt_rootless_gobuster

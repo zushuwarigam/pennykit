@@ -159,7 +159,8 @@ _verify_or_warn_sha256() {
     _verify_sha256 "$file" "$expected" || return 1
 }
 
-# For tools whose upstream publishes no checksum asset at all (nvim, yazi, vivid).
+# For tools whose upstream publishes no parseable checksum asset (nvim, yazi,
+# vivid, yq, oxker, gitlogue, grex, kondo).
 # There is nothing to verify against, so record the installed artifact's sha256 for
 # audit purposes. A missing binary means the install failed, so fail loudly rather
 # than logging an empty hash that reads as if verification had happened.
@@ -532,4 +533,267 @@ function update_vivid() {
         return 1
     fi
     _install_vivid "$VIVID_VERSION"
+}
+
+# pkg: yq; desc: Portable command-line YAML/JSON/XML/CSV/TOML processor (mikefarah)
+#
+# NOTE: the release ships a "checksums" asset, but in a non-standard format
+# (filename first, multi-algorithm hash columns) that _verify_release_checksum
+# cannot parse, so the installed binary is audit-hashed like vivid/nvim.
+# Also: Debian's apt "yq" is the kislyuk python jq-wrapper, not this tool —
+# the extern installer is the only way pennykit gets mikefarah/yq.
+PENNYKIT_EXTERN_DEFAULT+=("yq")
+_install_yq() {
+    local ver="$1"
+    local archive="yq_linux_amd64.tar.gz"
+    _download_github_release "$ver" mikefarah yq "$archive" || return 1
+    tar -xf "/tmp/${archive}" yq || return 1
+    mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
+    mv yq "$PENNYKIT_LOCAL_DIR/bin/yq" || return 1
+    rm -f "/tmp/${archive}"
+    _log_audit_hash yq "$ver" "$PENNYKIT_LOCAL_DIR/bin/yq" || return 1
+}
+
+function add_yq() {
+	echo "Add external package: yq"
+    if ! command -v yq >/dev/null; then
+        local ver
+        ver=$(_github_latest_version mikefarah yq)
+        [[ -z "$ver" ]] && { echo "  ERROR: Failed to get yq version from GitHub API"; return 1; }
+        _install_yq "$ver"
+    fi
+}
+
+function update_yq() {
+	echo "Update external package: yq"
+    local ver
+    ver=$(_github_latest_version mikefarah yq)
+    [[ -z "$ver" ]] && { echo "  ERROR: Failed to get yq version from GitHub API"; return 1; }
+    _install_yq "$ver"
+}
+
+# pkg: oxker; desc: Simple TUI to manage and monitor Docker containers
+# No checksum asset upstream — audit-hash only.
+PENNYKIT_EXTERN_DEFAULT+=("oxker")
+_install_oxker() {
+    local ver="$1"
+    local archive="oxker_linux_x86_64.tar.gz"
+    _download_github_release "$ver" mrjackwills oxker "$archive" || return 1
+    tar -xf "/tmp/${archive}" oxker || return 1
+    mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
+    mv oxker "$PENNYKIT_LOCAL_DIR/bin/oxker" || return 1
+    rm -f "/tmp/${archive}"
+    _log_audit_hash oxker "$ver" "$PENNYKIT_LOCAL_DIR/bin/oxker" || return 1
+}
+
+function add_oxker() {
+	echo "Add external package: oxker"
+    if ! command -v oxker >/dev/null; then
+        local ver
+        ver=$(_github_latest_version mrjackwills oxker)
+        [[ -z "$ver" ]] && { echo "  ERROR: Failed to get oxker version from GitHub API"; return 1; }
+        _install_oxker "$ver"
+    fi
+}
+
+function update_oxker() {
+	echo "Update external package: oxker"
+    local ver
+    ver=$(_github_latest_version mrjackwills oxker)
+    [[ -z "$ver" ]] && { echo "  ERROR: Failed to get oxker version from GitHub API"; return 1; }
+    _install_oxker "$ver"
+}
+
+# Rust releases below extract into a temp dir and locate the binary with find,
+# because cargo-dist-style archives may carry a <name>-<version>-<target>/ prefix.
+
+# pkg: gitlogue; desc: Cinematic Git commit replay tool for the terminal
+# No checksum asset upstream — audit-hash only.
+PENNYKIT_EXTERN_DEV+=("gitlogue")
+_install_gitlogue() {
+    local ver="$1"
+    local archive="gitlogue-v${ver}-x86_64-unknown-linux-gnu.tar.gz"
+    _download_github_release "$ver" unhappychoice gitlogue "$archive" || return 1
+    local tmpdir
+    tmpdir=$(mktemp -d /tmp/pennykit-gitlogue.XXX)
+    tar -xf "/tmp/${archive}" -C "$tmpdir" || { rm -rf "$tmpdir"; return 1; }
+    local found
+    found=$(find "$tmpdir" -type f -name gitlogue 2>/dev/null | head -1)
+    [[ -z "$found" ]] && { echo "  ERROR: gitlogue binary not found in archive" >&2; rm -rf "$tmpdir"; return 1; }
+    mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
+    mv "$found" "$PENNYKIT_LOCAL_DIR/bin/gitlogue" || return 1
+    rm -rf "$tmpdir" "/tmp/${archive}"
+    _log_audit_hash gitlogue "$ver" "$PENNYKIT_LOCAL_DIR/bin/gitlogue" || return 1
+}
+
+function add_gitlogue() {
+	echo "Add external package: gitlogue"
+    if ! command -v gitlogue >/dev/null; then
+        local ver
+        ver=$(_github_latest_version unhappychoice gitlogue)
+        [[ -z "$ver" ]] && { echo "  ERROR: Failed to get gitlogue version from GitHub API"; return 1; }
+        _install_gitlogue "$ver"
+    fi
+}
+
+function update_gitlogue() {
+	echo "Update external package: gitlogue"
+    local ver
+    ver=$(_github_latest_version unhappychoice gitlogue)
+    [[ -z "$ver" ]] && { echo "  ERROR: Failed to get gitlogue version from GitHub API"; return 1; }
+    _install_gitlogue "$ver"
+}
+
+# pkg: grex; desc: Generates regular expressions from user-provided example strings
+# No checksum asset upstream — audit-hash only. Static musl build.
+PENNYKIT_EXTERN_DEV+=("grex")
+_install_grex() {
+    local ver="$1"
+    local archive="grex-v${ver}-x86_64-unknown-linux-musl.tar.gz"
+    _download_github_release "$ver" pemistahl grex "$archive" || return 1
+    local tmpdir
+    tmpdir=$(mktemp -d /tmp/pennykit-grex.XXX)
+    tar -xf "/tmp/${archive}" -C "$tmpdir" || { rm -rf "$tmpdir"; return 1; }
+    local found
+    found=$(find "$tmpdir" -type f -name grex 2>/dev/null | head -1)
+    [[ -z "$found" ]] && { echo "  ERROR: grex binary not found in archive" >&2; rm -rf "$tmpdir"; return 1; }
+    mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
+    mv "$found" "$PENNYKIT_LOCAL_DIR/bin/grex" || return 1
+    rm -rf "$tmpdir" "/tmp/${archive}"
+    _log_audit_hash grex "$ver" "$PENNYKIT_LOCAL_DIR/bin/grex" || return 1
+}
+
+function add_grex() {
+	echo "Add external package: grex"
+    if ! command -v grex >/dev/null; then
+        local ver
+        ver=$(_github_latest_version pemistahl grex)
+        [[ -z "$ver" ]] && { echo "  ERROR: Failed to get grex version from GitHub API"; return 1; }
+        _install_grex "$ver"
+    fi
+}
+
+function update_grex() {
+	echo "Update external package: grex"
+    local ver
+    ver=$(_github_latest_version pemistahl grex)
+    [[ -z "$ver" ]] && { echo "  ERROR: Failed to get grex version from GitHub API"; return 1; }
+    _install_grex "$ver"
+}
+
+# pkg: kondo; desc: Recursively removes unwanted build artifacts (Cargo, Node, Python, ...)
+# No checksum asset upstream — audit-hash only. Tarball ships two binaries: kondo and kd.
+PENNYKIT_EXTERN_DEV+=("kondo")
+_install_kondo() {
+    local ver="$1"
+    local archive="kondo-x86_64-unknown-linux-gnu.tar.gz"
+    _download_github_release "$ver" tbillington kondo "$archive" || return 1
+    local tmpdir
+    tmpdir=$(mktemp -d /tmp/pennykit-kondo.XXX)
+    tar -xf "/tmp/${archive}" -C "$tmpdir" || { rm -rf "$tmpdir"; return 1; }
+    mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
+    local found
+    found=$(find "$tmpdir" -type f -name kondo 2>/dev/null | head -1)
+    [[ -z "$found" ]] && { echo "  ERROR: kondo binary not found in archive" >&2; rm -rf "$tmpdir"; return 1; }
+    mv "$found" "$PENNYKIT_LOCAL_DIR/bin/kondo" || return 1
+    found=$(find "$tmpdir" -type f -name kd 2>/dev/null | head -1)
+    [[ -z "$found" ]] && { echo "  ERROR: kd binary not found in archive" >&2; rm -rf "$tmpdir"; return 1; }
+    mv "$found" "$PENNYKIT_LOCAL_DIR/bin/kd" || return 1
+    rm -rf "$tmpdir" "/tmp/${archive}"
+    _log_audit_hash kondo "$ver" "$PENNYKIT_LOCAL_DIR/bin/kondo" || return 1
+    _log_audit_hash kd "$ver" "$PENNYKIT_LOCAL_DIR/bin/kd" || return 1
+}
+
+function add_kondo() {
+	echo "Add external package: kondo"
+    if ! command -v kondo >/dev/null; then
+        local ver
+        ver=$(_github_latest_version tbillington kondo)
+        [[ -z "$ver" ]] && { echo "  ERROR: Failed to get kondo version from GitHub API"; return 1; }
+        _install_kondo "$ver"
+    fi
+}
+
+function update_kondo() {
+	echo "Update external package: kondo"
+    local ver
+    ver=$(_github_latest_version tbillington kondo)
+    [[ -z "$ver" ]] && { echo "  ERROR: Failed to get kondo version from GitHub API"; return 1; }
+    _install_kondo "$ver"
+}
+
+# pkg: worktrunk; desc: Git worktree launch assistant and manager (binary: wt)
+#
+# NOTE: cargo-dist archive: versionless .tar.xz (GNU tar -xf auto-detects xz),
+# verified against the single-entry <archive>.sha256 sidecar. The binary is
+# named "wt", not "worktrunk".
+PENNYKIT_EXTERN_DEV+=("worktrunk")
+_install_worktrunk() {
+    local ver="$1"
+    local archive="worktrunk-x86_64-unknown-linux-musl.tar.xz"
+    _download_github_release "$ver" max-sixty worktrunk "$archive" || return 1
+    _verify_release_checksum "/tmp/${archive}" "https://github.com/max-sixty/worktrunk/releases/download/v${ver}/${archive}.sha256" || return 1
+    local tmpdir
+    tmpdir=$(mktemp -d /tmp/pennykit-worktrunk.XXX)
+    tar -xf "/tmp/${archive}" -C "$tmpdir" || { rm -rf "$tmpdir"; return 1; }
+    local found
+    found=$(find "$tmpdir" -type f -name wt 2>/dev/null | head -1)
+    [[ -z "$found" ]] && { echo "  ERROR: wt binary not found in archive" >&2; rm -rf "$tmpdir"; return 1; }
+    mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
+    mv "$found" "$PENNYKIT_LOCAL_DIR/bin/wt" || return 1
+    rm -rf "$tmpdir" "/tmp/${archive}"
+}
+
+function add_worktrunk() {
+	echo "Add external package: worktrunk"
+    if ! command -v wt >/dev/null; then
+        local ver
+        ver=$(_github_latest_version max-sixty worktrunk)
+        [[ -z "$ver" ]] && { echo "  ERROR: Failed to get worktrunk version from GitHub API"; return 1; }
+        _install_worktrunk "$ver"
+    fi
+}
+
+function update_worktrunk() {
+	echo "Update external package: worktrunk"
+    local ver
+    ver=$(_github_latest_version max-sixty worktrunk)
+    [[ -z "$ver" ]] && { echo "  ERROR: Failed to get worktrunk version from GitHub API"; return 1; }
+    _install_worktrunk "$ver"
+}
+
+# pkg: llmfit; desc: Finds which LLMs fit your hardware, with one command
+PENNYKIT_EXTERN_DEV+=("llmfit")
+_install_llmfit() {
+    local ver="$1"
+    local archive="llmfit-v${ver}-x86_64-unknown-linux-gnu.tar.gz"
+    _download_github_release "$ver" AlexsJones llmfit "$archive" || return 1
+    _verify_release_checksum "/tmp/${archive}" "https://github.com/AlexsJones/llmfit/releases/download/v${ver}/${archive}.sha256" || return 1
+    local tmpdir
+    tmpdir=$(mktemp -d /tmp/pennykit-llmfit.XXX)
+    tar -xf "/tmp/${archive}" -C "$tmpdir" || { rm -rf "$tmpdir"; return 1; }
+    local found
+    found=$(find "$tmpdir" -type f -name llmfit 2>/dev/null | head -1)
+    [[ -z "$found" ]] && { echo "  ERROR: llmfit binary not found in archive" >&2; rm -rf "$tmpdir"; return 1; }
+    mkdir -p "$PENNYKIT_LOCAL_DIR/bin"
+    mv "$found" "$PENNYKIT_LOCAL_DIR/bin/llmfit" || return 1
+    rm -rf "$tmpdir" "/tmp/${archive}"
+}
+
+function add_llmfit() {
+	echo "Add external package: llmfit"
+    if ! command -v llmfit >/dev/null; then
+        local ver
+        ver=$(_github_latest_version AlexsJones llmfit)
+        [[ -z "$ver" ]] && { echo "  ERROR: Failed to get llmfit version from GitHub API"; return 1; }
+        _install_llmfit "$ver"
+    fi
+}
+
+function update_llmfit() {
+	echo "Update external package: llmfit"
+    local ver
+    ver=$(_github_latest_version AlexsJones llmfit)
+    [[ -z "$ver" ]] && { echo "  ERROR: Failed to get llmfit version from GitHub API"; return 1; }
+    _install_llmfit "$ver"
 }
